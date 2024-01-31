@@ -1,7 +1,3 @@
-# format code
-pnpm update-version
-#pnpm format
-
 msg=$1
 type=$2
 
