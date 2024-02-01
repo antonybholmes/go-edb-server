@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 
@@ -98,7 +97,7 @@ func parseAssembly(c echo.Context) string {
 	return assembly
 }
 
-func parseDNAQuery(c echo.Context) (*DNAQuery, error) {
+func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
 	loc, err := parseLocation(c)
 
 	if err != nil {
@@ -107,12 +106,12 @@ func parseDNAQuery(c echo.Context) (*DNAQuery, error) {
 
 	assembly := parseAssembly(c)
 
-	dir := filepath.Join(os.Getenv("MODULESDIR"), "dna", assembly)
+	dir := filepath.Join(modulesDir, "dna", assembly)
 
 	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir}, nil
 }
 
-func parseGeneQuery(c echo.Context) (*GeneQuery, error) {
+func parseGeneQuery(c echo.Context, modulesDir string) (*GeneQuery, error) {
 	loc, err := parseLocation(c)
 
 	if err != nil {
@@ -131,7 +130,7 @@ func parseGeneQuery(c echo.Context) (*GeneQuery, error) {
 		c.Logger().Warn(fmt.Sprintf("level was not set, using default %d...", DEFAULT_LEVEL))
 	}
 
-	file := filepath.Join(os.Getenv("MODULESDIR"), "loctogene", fmt.Sprintf("%s.db", assembly))
+	file := filepath.Join(modulesDir, "loctogene", fmt.Sprintf("%s.db", assembly))
 	db, err := loctogene.GetDB(file)
 
 	if err != nil {

@@ -23,6 +23,11 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Logger.SetLevel(log.DEBUG)
 
+	modulesDir := os.Getenv("MODULESDIR")
+	if modulesDir == "" {
+		modulesDir = "data/"
+	}
+
 	e.GET("/", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "Hello, Docker! <3")
 	})
@@ -33,7 +38,7 @@ func main() {
 
 	e.GET("/dna", func(c echo.Context) error {
 
-		loc, err := parseDNAQuery(c)
+		loc, err := parseDNAQuery(c, modulesDir)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
@@ -49,7 +54,7 @@ func main() {
 	})
 
 	e.GET("/genes/within", func(c echo.Context) error {
-		loc, err := parseGeneQuery(c)
+		loc, err := parseGeneQuery(c, modulesDir)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
@@ -146,7 +151,7 @@ func main() {
 
 	e.GET("/genes/closest", func(c echo.Context) error {
 
-		loc, err := parseGeneQuery(c)
+		loc, err := parseGeneQuery(c, modulesDir)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
