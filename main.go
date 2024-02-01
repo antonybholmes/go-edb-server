@@ -1,119 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 )
-
-// func loggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-// 		// Log incoming request
-// 		log.Printf("Incoming Request: %s %s", c.Request().Method, c.Request().URL.String())
-
-// 		// Call next handler
-// 		if err := next(c); err != nil {
-// 			c.Error(err)
-// 		}
-
-// 		// Log outgoing response
-// 		log.Printf("Outgoing Response: %d %s", c.Response().Status, http.StatusText(c.Response().Status))
-
-// 		return nil
-// 	}
-// }
-
-const DEFAULT_ASSEMBLY = "grch38"
-const DEFAULT_LEVEL = 1
-const DEFAULT_CHR = "chr3"
-const DEFAULT_START = 187728170
-const DEFAULT_END = 187752257
-const DEFAULT_CLOSEST_N = 10
-
-type ParsedLocation struct {
-	Loc      *loctogene.Location
-	Level    int
-	DB       *sql.DB
-	Assembly string
-}
-
-func parseLocation(c echo.Context) (*ParsedLocation, error) {
-	assembly := DEFAULT_ASSEMBLY
-	chr := DEFAULT_CHR
-	start := DEFAULT_START
-	end := DEFAULT_END
-	level := DEFAULT_LEVEL
-
-	var v string
-	var err error
-
-	v = c.QueryParam("assembly")
-
-	if v != "" {
-		assembly = v
-	} else {
-		c.Logger().Warn(fmt.Sprintf("assembly was not, using default %s", DEFAULT_ASSEMBLY))
-	}
-
-	v = c.QueryParam("chr")
-
-	if v != "" {
-		chr = v
-	} else {
-		c.Logger().Warn("chr was not, using default...")
-	}
-
-	v = c.QueryParam("start")
-
-	if v != "" {
-		start, err = strconv.Atoi(v)
-
-		if err != nil {
-			c.Logger().Warn(fmt.Sprintf("%s is an invalid start, using default %d...", v, DEFAULT_START))
-			start = DEFAULT_START
-		}
-	} else {
-		c.Logger().Warn(fmt.Sprintf("start was not set, using default %d...", DEFAULT_START))
-	}
-
-	v = c.QueryParam("end")
-
-	if v != "" {
-		end, err = strconv.Atoi(v)
-
-		if err != nil {
-			c.Logger().Warn(fmt.Sprintf("%s is an invalid end, using default %d...", v, DEFAULT_END))
-			end = DEFAULT_END
-		}
-	} else {
-		c.Logger().Warn(fmt.Sprintf("end was not set, using default %d...", DEFAULT_END))
-	}
-
-	v = c.QueryParam("level")
-
-	if v != "" {
-		level = loctogene.GetLevel(v)
-	} else {
-		c.Logger().Warn(fmt.Sprintf("level was not set, using default %d...", DEFAULT_LEVEL))
-	}
-
-	loc := loctogene.Location{Chr: chr, Start: start, End: end}
-
-	db, err := loctogene.GetDB(fmt.Sprintf("data/modules/loctogene/%s.db", assembly))
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &ParsedLocation{Loc: &loc, Assembly: assembly, DB: db, Level: level}, nil
-}
 
 func main() {
 	//zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -133,8 +31,25 @@ func main() {
 		return c.JSON(http.StatusOK, struct{ Status string }{Status: "OK"})
 	})
 
+	e.GET("/dna", func(c echo.Context) error {
+
+		loc, err := parseDNAQuery(c)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
+		}
+
+		dna, err := dna.GetDNA(loc.Dir, loc.Loc)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
+		}
+
+		return c.JSON(http.StatusOK, dna)
+	})
+
 	e.GET("/genes/within", func(c echo.Context) error {
-		loc, err := parseLocation(c)
+		loc, err := parseGeneQuery(c)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
@@ -231,7 +146,7 @@ func main() {
 
 	e.GET("/genes/closest", func(c echo.Context) error {
 
-		loc, err := parseLocation(c)
+		loc, err := parseGeneQuery(c)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
