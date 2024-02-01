@@ -51,7 +51,7 @@ func main() {
 		return c.JSON(http.StatusOK, StatusMessage{Status: "OK"})
 	})
 
-	e.GET("/dna", func(c echo.Context) error {
+	e.GET("v1/dna", func(c echo.Context) error {
 
 		query, err := parseDNAQuery(c, modulesDir)
 
@@ -68,7 +68,7 @@ func main() {
 		return c.JSON(http.StatusOK, dna)
 	})
 
-	e.GET("/genes/within", func(c echo.Context) error {
+	e.GET("v1/genes/within", func(c echo.Context) error {
 		query, err := parseGeneQuery(c, modulesDir)
 
 		if err != nil {
@@ -84,7 +84,7 @@ func main() {
 		return c.JSON(http.StatusOK, genes)
 	})
 
-	e.GET("/genes/closest", func(c echo.Context) error {
+	e.GET("v1/genes/closest", func(c echo.Context) error {
 
 		query, err := parseGeneQuery(c, modulesDir)
 
