@@ -84,7 +84,7 @@ func main() {
 
 		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
 
-		dna, err := dna.GetDNA(query.Dir, query.Loc, query.RevComp)
+		dna, err := dna.GetDNA(query.Dir, query.Loc, query.Rev, query.Comp)
 
 		//c.Logger().Debugf("%s", dna)
 
