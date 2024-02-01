@@ -59,7 +59,7 @@ func main() {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
 		}
 
-		dna, err := dna.GetDNA(query.Dir, query.Loc)
+		dna, err := dna.GetDNA(query.Dir, query.Loc, query.RevComp)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
