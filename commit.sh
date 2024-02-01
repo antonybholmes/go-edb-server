@@ -1,5 +1,5 @@
 type="fix"
-msg="fix: Bug fixes and updates."
+msg="Bug fixes and updates."
 branch="dev"
 
 OPTSTRING="t:m:b:"
