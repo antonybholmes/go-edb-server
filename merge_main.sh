@@ -35,6 +35,6 @@ git switch main
 git merge dev -m "${type}: ${msg}"
 
 #git push -u origin main
-./commit.sh -t ${type} -m ${msg} -b main
+./commit.sh -t "${type}" -m "${msg}" -b main
 
 git switch dev
