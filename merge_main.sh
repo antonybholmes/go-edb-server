@@ -2,8 +2,6 @@
 #yarn update-version
 #yarn format
 
-
-
 type="fix"
 msg="Bug fixes and updates."
 branch="dev"
