@@ -46,7 +46,7 @@ func main() {
 	e.Use(middleware.Logger())
 	//e.Use(loggerMiddleware)
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	//e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
 
 	modulesDir := os.Getenv("MODULESDIR")
