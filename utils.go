@@ -40,7 +40,7 @@ type GeneQuery struct {
 // If parameters are not provided defaults are used, but if parameters are
 // considered invalid, it will throw an error.
 
-func parseLocation(c echo.Context) *dna.Location {
+func parseLocation(c echo.Context) (*dna.Location, error) {
 	chr := DEFAULT_CHR
 	start := DEFAULT_START
 	end := DEFAULT_END
@@ -60,7 +60,7 @@ func parseLocation(c echo.Context) *dna.Location {
 		start, err = strconv.Atoi(v)
 
 		if err != nil {
-			start = DEFAULT_START
+			return nil, fmt.Errorf("%s is an invalid start", v)
 		}
 	}
 
@@ -70,13 +70,13 @@ func parseLocation(c echo.Context) *dna.Location {
 		end, err = strconv.Atoi(v)
 
 		if err != nil {
-			end = DEFAULT_END
+			return nil, fmt.Errorf("%s is an invalid end", v)
 		}
 	}
 
 	loc := dna.Location{Chr: chr, Start: start, End: end}
 
-	return &loc
+	return &loc, nil
 }
 
 func parseAssembly(c echo.Context) string {
@@ -91,14 +91,35 @@ func parseAssembly(c echo.Context) string {
 	return assembly
 }
 
+func parseN(c echo.Context) int {
+	n := DEFAULT_CLOSEST_N
+
+	v := c.QueryParam("n")
+
+	if v != "" {
+		var err error
+		n, err = strconv.Atoi(v)
+
+		if err != nil {
+			return -1
+		}
+	}
+
+	return n
+}
+
 func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
-	loc := parseLocation(c)
+	loc, err := parseLocation(c)
+
+	if err != nil {
+		return nil, err
+	}
 
 	assembly := parseAssembly(c)
 
 	dir := filepath.Join(modulesDir, "dna", assembly)
 
-	_, err := os.Stat(dir)
+	_, err = os.Stat(dir)
 
 	if err != nil {
 		return nil, fmt.Errorf("%s is not a valid assembly", assembly)
@@ -119,7 +140,11 @@ func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
 }
 
 func parseGeneQuery(c echo.Context, modulesDir string) (*GeneQuery, error) {
-	loc := parseLocation(c)
+	loc, err := parseLocation(c)
+
+	if err != nil {
+		return nil, err
+	}
 
 	assembly := parseAssembly(c)
 
