@@ -34,6 +34,22 @@ type GeneQuery struct {
 	Assembly string
 }
 
+// Max returns the larger of x or y.
+func Max(x, y int) int {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+// Min returns the smaller of x or y.
+func Min(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
+}
+
 // parsedLocation takes an echo context and attempts to extract parameters
 // from the query string and return the location to check, the assembly
 // (e.g. grch38) to search, the level of detail (1=gene,2=transcript,3=exon).
@@ -74,7 +90,7 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 		}
 	}
 
-	loc := dna.Location{Chr: chr, Start: start, End: end}
+	loc := dna.Location{Chr: chr, Start: Min(start, end), End: Max(start, end)}
 
 	return &loc, nil
 }
