@@ -23,6 +23,9 @@ do
   esac
 done
 
+echo "${type}: ${msg}"
+echo ${branch}
+
 # commit
 git add -A .
 git commit -m "${type}: ${msg}"
