@@ -78,7 +78,7 @@ func main() {
 		genes, err := loctogene.GetGenesWithin(query.DB, query.Loc, query.Level)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: "there was an error with the database query"})
 		}
 
 		return c.JSON(http.StatusOK, genes)
@@ -107,7 +107,7 @@ func main() {
 		genes, err := loctogene.GetClosestGenes(query.DB, query.Loc, n, query.Level)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: "there was an error with the database query"})
 		}
 
 		return c.JSON(http.StatusOK, genes)
