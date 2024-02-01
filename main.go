@@ -13,6 +13,11 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
+type StatusMessage struct {
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
+
 func main() {
 	//zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
@@ -23,42 +28,86 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Logger.SetLevel(log.DEBUG)
 
+	modulesDir := os.Getenv("MODULESDIR")
+	if modulesDir == "" {
+		modulesDir = "data/"
+	}
+
 	e.GET("/", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, "Hello, Docker! <3")
+		return c.JSON(http.StatusOK, struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}{Name: "go-edb-api", Version: "1.0.0"})
+	})
+
+	e.GET("/about", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}{Name: "go-edb-api", Version: "1.0.0"})
 	})
 
 	e.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct{ Status string }{Status: "OK"})
+		return c.JSON(http.StatusOK, StatusMessage{Status: "OK"})
 	})
 
 	e.GET("/dna", func(c echo.Context) error {
 
-		loc, err := parseDNAQuery(c)
+		query, err := parseDNAQuery(c, modulesDir)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
 		}
 
-		dna, err := dna.GetDNA(loc.Dir, loc.Loc)
+		dna, err := dna.GetDNA(query.Dir, query.Loc, query.RevComp)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
 		}
 
 		return c.JSON(http.StatusOK, dna)
 	})
 
 	e.GET("/genes/within", func(c echo.Context) error {
-		loc, err := parseGeneQuery(c)
+		query, err := parseGeneQuery(c, modulesDir)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
 		}
 
-		genes, err := loctogene.GetGenesWithin(loc.DB, loc.Loc, loc.Level)
+		genes, err := loctogene.GetGenesWithin(query.DB, query.Loc, query.Level)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, genes)
+	})
+
+	e.GET("/genes/closest", func(c echo.Context) error {
+
+		query, err := parseGeneQuery(c, modulesDir)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
+		}
+
+		n := DEFAULT_CLOSEST_N
+
+		v := c.QueryParam("n")
+
+		if v != "" {
+			n, err = strconv.Atoi(v)
+
+			if err != nil {
+				n = DEFAULT_CLOSEST_N
+			}
+		}
+
+		genes, err := loctogene.GetClosestGenes(query.DB, query.Loc, n, query.Level)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: "Error", Message: err.Error()})
 		}
 
 		return c.JSON(http.StatusOK, genes)
@@ -143,38 +192,6 @@ func main() {
 
 	// 	return c.JSON(http.StatusOK, genes)
 	// })
-
-	e.GET("/genes/closest", func(c echo.Context) error {
-
-		loc, err := parseGeneQuery(c)
-
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
-		}
-
-		n := DEFAULT_CLOSEST_N
-
-		v := c.QueryParam("n")
-
-		if v != "" {
-			n, err = strconv.Atoi(v)
-
-			if err != nil {
-				c.Logger().Warn(fmt.Sprintf("%s is an invalid, using default n=%d...", v, DEFAULT_CLOSEST_N))
-				n = DEFAULT_CLOSEST_N
-			}
-		} else {
-			c.Logger().Warn(fmt.Sprintf("n was not set, using default %d...", DEFAULT_CLOSEST_N))
-		}
-
-		genes, err := loctogene.GetClosestGenes(loc.DB, loc.Loc, n, loc.Level)
-
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
-		}
-
-		return c.JSON(http.StatusOK, genes)
-	})
 
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {

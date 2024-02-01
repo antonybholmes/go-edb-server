@@ -23,6 +23,7 @@ type DNAQuery struct {
 	Loc      *dna.Location
 	Dir      string
 	Assembly string
+	RevComp  bool
 }
 
 // A GeneQuery contains info from query params.
@@ -39,7 +40,7 @@ type GeneQuery struct {
 // If parameters are not provided defaults are used, but if parameters are
 // considered invalid, it will throw an error.
 
-func parseLocation(c echo.Context) (*dna.Location, error) {
+func parseLocation(c echo.Context) *dna.Location {
 	chr := DEFAULT_CHR
 	start := DEFAULT_START
 	end := DEFAULT_END
@@ -51,8 +52,6 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 
 	if v != "" {
 		chr = v
-	} else {
-		c.Logger().Warn("chr was not, using default...")
 	}
 
 	v = c.QueryParam("start")
@@ -61,11 +60,8 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 		start, err = strconv.Atoi(v)
 
 		if err != nil {
-			c.Logger().Warn(fmt.Sprintf("%s is an invalid start, using default %d...", v, DEFAULT_START))
 			start = DEFAULT_START
 		}
-	} else {
-		c.Logger().Warn(fmt.Sprintf("start was not set, using default %d...", DEFAULT_START))
 	}
 
 	v = c.QueryParam("end")
@@ -74,16 +70,13 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 		end, err = strconv.Atoi(v)
 
 		if err != nil {
-			c.Logger().Warn(fmt.Sprintf("%s is an invalid end, using default %d...", v, DEFAULT_END))
 			end = DEFAULT_END
 		}
-	} else {
-		c.Logger().Warn(fmt.Sprintf("end was not set, using default %d...", DEFAULT_END))
 	}
 
 	loc := dna.Location{Chr: chr, Start: start, End: end}
 
-	return &loc, nil
+	return &loc
 }
 
 func parseAssembly(c echo.Context) string {
@@ -98,26 +91,35 @@ func parseAssembly(c echo.Context) string {
 	return assembly
 }
 
-func parseDNAQuery(c echo.Context) (*DNAQuery, error) {
-	loc, err := parseLocation(c)
-
-	if err != nil {
-		return nil, err
-	}
+func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
+	loc := parseLocation(c)
 
 	assembly := parseAssembly(c)
 
-	dir := filepath.Join(os.Getenv("MODULESDIR"), "dna", assembly)
+	dir := filepath.Join(modulesDir, "dna", assembly)
 
-	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir}, nil
-}
-
-func parseGeneQuery(c echo.Context) (*GeneQuery, error) {
-	loc, err := parseLocation(c)
+	_, err := os.Stat(dir)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s is not a valid assembly", assembly)
 	}
+
+	revcomp := false
+	v := c.QueryParam("revcomp")
+
+	if v != "" {
+		revcomp, err = strconv.ParseBool(v)
+
+		if err != nil {
+			revcomp = false
+		}
+	}
+
+	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir, RevComp: revcomp}, nil
+}
+
+func parseGeneQuery(c echo.Context, modulesDir string) (*GeneQuery, error) {
+	loc := parseLocation(c)
 
 	assembly := parseAssembly(c)
 
@@ -127,15 +129,13 @@ func parseGeneQuery(c echo.Context) (*GeneQuery, error) {
 
 	if v != "" {
 		level = loctogene.GetLevel(v)
-	} else {
-		c.Logger().Warn(fmt.Sprintf("level was not set, using default %d...", DEFAULT_LEVEL))
 	}
 
-	file := filepath.Join(os.Getenv("MODULESDIR"), "loctogene", fmt.Sprintf("%s.db", assembly))
+	file := filepath.Join(modulesDir, "loctogene", fmt.Sprintf("%s.db", assembly))
 	db, err := loctogene.GetDB(file)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to open database for assembly %s", assembly)
 	}
 
 	return &GeneQuery{Loc: loc, Assembly: assembly, DB: db, Level: level}, nil
