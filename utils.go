@@ -23,7 +23,8 @@ type DNAQuery struct {
 	Loc      *dna.Location
 	Dir      string
 	Assembly string
-	RevComp  bool
+	Rev      bool
+	Comp     bool
 }
 
 // A GeneQuery contains info from query params.
@@ -141,18 +142,29 @@ func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
 		return nil, fmt.Errorf("%s is not a valid assembly", assembly)
 	}
 
-	revcomp := false
-	v := c.QueryParam("revcomp")
+	rev := false
+	v := c.QueryParam("rev")
 
 	if v != "" {
-		revcomp, err = strconv.ParseBool(v)
+		rev, err = strconv.ParseBool(v)
 
 		if err != nil {
-			revcomp = false
+			rev = false
 		}
 	}
 
-	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir, RevComp: revcomp}, nil
+	comp := false
+	v = c.QueryParam("comp")
+
+	if v != "" {
+		comp, err = strconv.ParseBool(v)
+
+		if err != nil {
+			comp = false
+		}
+	}
+
+	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir, Rev: rev, Comp: comp}, nil
 }
 
 func parseGeneQuery(c echo.Context, modulesDir string) (*GeneQuery, error) {
