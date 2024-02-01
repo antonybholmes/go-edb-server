@@ -38,6 +38,7 @@ func main() {
 	e.Use(middleware.Logger())
 	//e.Use(loggerMiddleware)
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
 
 	modulesDir := os.Getenv("MODULESDIR")
@@ -54,10 +55,11 @@ func main() {
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
-			Name    string `json:"name"`
-			Version string `json:"version"`
-			Arch    string `json:"arch"`
-		}{Name: "go-edb-api", Version: "1.0.0", Arch: runtime.GOARCH})
+			Name      string `json:"name"`
+			Copyright string `json:"copyright"`
+			Version   string `json:"version"`
+			Arch      string `json:"arch"`
+		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
 	e.GET("/health", func(c echo.Context) error {
