@@ -15,6 +15,6 @@ git switch main
 git merge dev
 
 #git push -u origin main
-./commit_main.sh
+./commit.sh -b main
 
 git switch dev
