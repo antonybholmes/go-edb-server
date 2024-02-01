@@ -18,10 +18,18 @@ type StatusMessage struct {
 	Status  int    `json:"status"`
 }
 
+type DNA struct {
+	Assembly string `json:"assembly"`
+	Location string `json:"location"`
+	DNA      string `json:"dna"`
+}
+
+var ERROR_DNA = DNA{Assembly: "", Location: "", DNA: ""}
+
 type DNAResponse struct {
-	Message string   `json:"message"`
-	Status  int      `json:"status"`
-	Data    *dna.DNA `json:"data"`
+	Message string `json:"message"`
+	Status  int    `json:"status"`
+	Data    *DNA   `json:"data"`
 }
 
 type GenesResponse struct {
@@ -71,16 +79,20 @@ func main() {
 		query, err := parseDNAQuery(c, modulesDir)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &dna.ERROR_DNA})
+			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &ERROR_DNA})
 		}
+
+		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
 
 		dna, err := dna.GetDNA(query.Dir, query.Loc, query.RevComp)
 
+		//c.Logger().Debugf("%s", dna)
+
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr), Data: dna})
+			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr), Data: &ERROR_DNA})
 		}
 
-		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: dna})
+		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
 	})
 
 	e.GET("v1/genes/within", func(c echo.Context) error {
