@@ -48,6 +48,8 @@ type ReqLocs struct {
 	Locations []dna.Location `json:"locations"`
 }
 
+const MAX_ANNOTATIONS = 1000
+
 func main() {
 	//zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
@@ -78,7 +80,7 @@ func main() {
 		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
-	e.GET("/dna/:assembly", func(c echo.Context) error {
+	e.GET("/v1/dna/:assembly", func(c echo.Context) error {
 		assembly := c.Param("assembly")
 
 		query, err := parseDNAQuery(c)
@@ -106,7 +108,7 @@ func main() {
 		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: assembly, Location: query.Loc.String(), DNA: dna}})
 	})
 
-	e.GET("/genes/within/:assembly", func(c echo.Context) error {
+	e.GET("/v1/genes/within/:assembly", func(c echo.Context) error {
 		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 		if err != nil {
@@ -122,7 +124,7 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.GET("/genes/closest/:assembly", func(c echo.Context) error {
+	e.GET("/v1/genes/closest/:assembly", func(c echo.Context) error {
 
 		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
@@ -141,7 +143,7 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.POST("/annotation/:assembly", func(c echo.Context) error {
+	e.POST("/v1/annotation/:assembly", func(c echo.Context) error {
 		var err error
 		locs := new(ReqLocs)
 
@@ -155,7 +157,8 @@ func main() {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
-		locations := locs.Locations
+		// limit amount of data returned per request to 1000 entries at a time
+		locations := locs.Locations[0:MAX_ANNOTATIONS]
 
 		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
@@ -169,7 +172,7 @@ func main() {
 
 		output := parseOutput(c)
 
-		annotationDb := gene.NewAnnotate(query.Db, tssRegion, n)
+		annotationDb := gene.NewAnnotateDb(query.Db, tssRegion, n)
 
 		data := []*gene.GeneAnnotation{}
 
@@ -185,7 +188,11 @@ func main() {
 		}
 
 		if output == "text" {
-			tsv := makeGeneTable(data, tssRegion)
+			tsv, err := makeGeneTable(data, tssRegion)
+
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+			}
 
 			return c.String(http.StatusOK, tsv)
 		} else {
