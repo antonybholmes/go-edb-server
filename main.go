@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type StatusMessage struct {
@@ -24,8 +25,6 @@ type DNA struct {
 	Location string `json:"location"`
 	DNA      string `json:"dna"`
 }
-
-var ERROR_DNA = DNA{Assembly: "", Location: "", DNA: ""}
 
 type DNAResponse struct {
 	Message string `json:"message"`
@@ -43,6 +42,10 @@ type AnnotationResponse struct {
 	Message string                  `json:"message"`
 	Status  int                     `json:"status"`
 	Data    *geneann.GeneAnnotation `json:"data"`
+}
+
+type ReqLocs struct {
+	Locations []dna.Location `json:"locations"`
 }
 
 func main() {
@@ -81,7 +84,7 @@ func main() {
 		query, err := parseDNAQuery(c, modulesDir)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &ERROR_DNA})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
@@ -135,17 +138,24 @@ func main() {
 	})
 
 	type BodyLocations struct {
-		Locations []string `json:"locations"`
+		Locations []string `form:"locations" json:"locations"`
 	}
 
 	e.POST("v1/annotation/:assembly", func(c echo.Context) error {
-		locs := new(BodyLocations)
+		var err error
+		locs := new(ReqLocs)
 
-		err := c.Bind(locs)
+		err = c.Bind(locs)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		}
+
+		locations := locs.Locations
 
 		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
 
@@ -159,9 +169,10 @@ func main() {
 
 		annotationDB := geneann.NewAnnotate(query.DB, tssRegion, n)
 
-		annotations, err := annotationDB.Annotate(query.Loc)
+		annotations, err := annotationDB.Annotate(&locations[0])
 
 		if err != nil {
+			c.Logger().Debugf("%s", err)
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 		}
 
