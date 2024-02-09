@@ -143,7 +143,7 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.POST("/v1/annotation/:assembly", func(c echo.Context) error {
+	e.POST("/v1/genes/annotate/:assembly", func(c echo.Context) error {
 		var err error
 		locs := new(ReqLocs)
 
