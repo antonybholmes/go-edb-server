@@ -258,7 +258,7 @@ func makeGeneTable(
 	headers := []string{"Location", "ID", "Gene Symbol", fmt.Sprintf(
 		"Relative To Gene (prom=-%d/+%dkb)",
 		ts.Offset5P()/1000,
-		ts.Offset3P()/1000), "TSS Distance", "TSS"}
+		ts.Offset3P()/1000), "TSS Distance", "Gene Location"}
 
 	for i := 1; i <= closestN; i++ {
 		headers = append(headers, fmt.Sprintf("#%d Closest ID", i))
@@ -269,7 +269,7 @@ func makeGeneTable(
 			ts.Offset5P()/1000,
 			ts.Offset3P()/1000))
 		headers = append(headers, fmt.Sprintf("#%d TSS Closest Distance", i))
-		headers = append(headers, fmt.Sprintf("#%d TSS", i))
+		headers = append(headers, fmt.Sprintf("#%d Gene Location", i))
 	}
 
 	err := wtr.Write(headers)
@@ -288,7 +288,7 @@ func makeGeneTable(
 
 		for _, closestGene := range annotation.ClosestGenes {
 			row = append(row, closestGene.Feature.GeneId)
-			row = append(row, fmt.Sprintf("%s(%s)", closestGene.Feature.GeneSymbol, closestGene.Feature.Strand))
+			row = append(row, gene.LabelGene(closestGene.Feature.GeneSymbol, closestGene.Feature.Strand))
 			row = append(row, closestGene.PromLabel)
 			row = append(row, strconv.Itoa(closestGene.Dist))
 			row = append(row, closestGene.Feature.ToLocation().String())
