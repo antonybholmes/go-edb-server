@@ -186,11 +186,12 @@ func parseGeneQuery(c echo.Context, modulesDir string, assembly string) (*GeneQu
 		level = loctogene.ParseLevel(v)
 	}
 
-	file := filepath.Join(modulesDir, "loctogene", fmt.Sprintf("%s.db", assembly))
+	file := filepath.Join("data/loctogene", fmt.Sprintf("%s.db", assembly))
+	c.Logger().Debugf("%s", file)
 	db, err := loctogene.NewLoctogeneDB(file)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to open database for assembly %s", assembly)
+		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
 	}
 
 	return &GeneQuery{Loc: loc, Assembly: assembly, DB: db, Level: level}, nil
