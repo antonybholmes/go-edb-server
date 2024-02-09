@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,10 +13,10 @@ import (
 
 const DEFAULT_ASSEMBLY = "grch38"
 const DEFAULT_LEVEL = 1
-const DEFAULT_CHR = "chr1"   //"chr3"
-const DEFAULT_START = 100000 //187728170
-const DEFAULT_END = 100100   //187752257
-const DEFAULT_CLOSEST_N = 10
+const DEFAULT_CHR = "chr1"        //"chr3"
+const DEFAULT_START uint = 100000 //187728170
+const DEFAULT_END uint = 100100   //187752257
+const DEFAULT_CLOSEST_N uint16 = 10
 
 type DNAQuery struct {
 	Loc      *dna.Location
@@ -30,8 +29,8 @@ type DNAQuery struct {
 // A GeneQuery contains info from query params.
 type GeneQuery struct {
 	Loc      *dna.Location
-	Level    int
-	DB       *sql.DB
+	Level    loctogene.Level
+	DB       *loctogene.LoctogeneDB
 	Assembly string
 }
 
@@ -64,6 +63,7 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 
 	var v string
 	var err error
+	var n uint64
 
 	v = c.QueryParam("chr")
 
@@ -74,26 +74,30 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 	v = c.QueryParam("start")
 
 	if v != "" {
-		start, err = strconv.Atoi(v)
+		n, err = strconv.ParseUint(v, 10, 0)
 
 		if err != nil {
 			return nil, fmt.Errorf("%s is an invalid start", v)
 		}
+
+		start = uint(n)
 	}
 
 	v = c.QueryParam("end")
 
 	if v != "" {
-		end, err = strconv.Atoi(v)
+		n, err = strconv.ParseUint(v, 10, 0)
 
 		if err != nil {
 			return nil, fmt.Errorf("%s is an invalid end", v)
 		}
+
+		end = uint(n)
 	}
 
-	loc := dna.Location{Chr: chr, Start: Min(start, end), End: Max(start, end)}
+	loc := dna.NewLocation(chr, start, end)
 
-	return &loc, nil
+	return loc, nil
 }
 
 func parseAssembly(c echo.Context) string {
@@ -108,21 +112,21 @@ func parseAssembly(c echo.Context) string {
 	return assembly
 }
 
-func parseN(c echo.Context) int {
-	n := DEFAULT_CLOSEST_N
+func parseN(c echo.Context) uint16 {
 
 	v := c.QueryParam("n")
 
-	if v != "" {
-		var err error
-		n, err = strconv.Atoi(v)
-
-		if err != nil {
-			return -1
-		}
+	if v == "" {
+		return DEFAULT_CLOSEST_N
 	}
 
-	return n
+	n, err := strconv.ParseUint(v, 10, 0)
+
+	if err != nil {
+		return DEFAULT_CLOSEST_N
+	}
+
+	return uint16(n)
 }
 
 func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
@@ -167,25 +171,23 @@ func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
 	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir, Rev: rev, Comp: comp}, nil
 }
 
-func parseGeneQuery(c echo.Context, modulesDir string) (*GeneQuery, error) {
+func parseGeneQuery(c echo.Context, modulesDir string, assembly string) (*GeneQuery, error) {
 	loc, err := parseLocation(c)
 
 	if err != nil {
 		return nil, err
 	}
 
-	assembly := parseAssembly(c)
-
-	level := DEFAULT_LEVEL
+	level := loctogene.Gene
 
 	v := c.QueryParam("level")
 
 	if v != "" {
-		level = loctogene.GetLevel(v)
+		level = loctogene.ParseLevel(v)
 	}
 
 	file := filepath.Join(modulesDir, "loctogene", fmt.Sprintf("%s.db", assembly))
-	db, err := loctogene.GetDB(file)
+	db, err := loctogene.NewLoctogeneDB(file)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to open database for assembly %s", assembly)
