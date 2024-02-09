@@ -92,13 +92,13 @@ func main() {
 
 		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
 
-		dnadb, err := dnadbcache.Db(assembly)
+		dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
-		dna, err := dnadb.DNA(query.Loc, query.Rev, query.Comp, query.Format, query.RepeatMask)
+		dna, err := dnadb.DNA(query.Loc, query.Rev, query.Comp)
 
 		//c.Logger().Debugf("%s", dna)
 
