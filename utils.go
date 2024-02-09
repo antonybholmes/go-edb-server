@@ -129,7 +129,7 @@ func parseN(c echo.Context) uint16 {
 	return uint16(n)
 }
 
-func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
+func parseDNAQuery(c echo.Context) (*DNAQuery, error) {
 	loc, err := parseLocation(c)
 
 	if err != nil {
@@ -138,7 +138,7 @@ func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
 
 	assembly := parseAssembly(c)
 
-	dir := filepath.Join(modulesDir, "dna", assembly)
+	dir := filepath.Join("data/dna", assembly)
 
 	_, err = os.Stat(dir)
 
@@ -171,7 +171,7 @@ func parseDNAQuery(c echo.Context, modulesDir string) (*DNAQuery, error) {
 	return &DNAQuery{Loc: loc, Assembly: assembly, Dir: dir, Rev: rev, Comp: comp}, nil
 }
 
-func parseGeneQuery(c echo.Context, modulesDir string, assembly string) (*GeneQuery, error) {
+func parseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 	loc, err := parseLocation(c)
 
 	if err != nil {

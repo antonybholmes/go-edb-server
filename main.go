@@ -59,11 +59,6 @@ func main() {
 	//e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
 
-	modulesDir := os.Getenv("MODULESDIR")
-	if modulesDir == "" {
-		modulesDir = "data/"
-	}
-
 	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
 			Name    string `json:"name"`
@@ -80,8 +75,8 @@ func main() {
 		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
-	e.GET("v1/dna", func(c echo.Context) error {
-		query, err := parseDNAQuery(c, modulesDir)
+	e.GET("dna", func(c echo.Context) error {
+		query, err := parseDNAQuery(c)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -102,8 +97,8 @@ func main() {
 		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
 	})
 
-	e.GET("v1/genes/within/:assembly", func(c echo.Context) error {
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+	e.GET("genes/within/:assembly", func(c echo.Context) error {
+		query, err := parseGeneQuery(c, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -118,9 +113,9 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.GET("v1/genes/closest/:assembly", func(c echo.Context) error {
+	e.GET("genes/closest/:assembly", func(c echo.Context) error {
 
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+		query, err := parseGeneQuery(c, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -137,11 +132,7 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	type BodyLocations struct {
-		Locations []string `form:"locations" json:"locations"`
-	}
-
-	e.POST("v1/annotation/:assembly", func(c echo.Context) error {
+	e.POST("annotation/:assembly", func(c echo.Context) error {
 		var err error
 		locs := new(ReqLocs)
 
@@ -157,7 +148,7 @@ func main() {
 
 		locations := locs.Locations
 
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+		query, err := parseGeneQuery(c, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
