@@ -12,11 +12,11 @@ import (
 )
 
 const DEFAULT_ASSEMBLY = "grch38"
-const DEFAULT_LEVEL = 1
+const DEFAULT_LEVEL = loctogene.Gene
 const DEFAULT_CHR = "chr1"        //"chr3"
 const DEFAULT_START uint = 100000 //187728170
 const DEFAULT_END uint = 100100   //187752257
-const DEFAULT_CLOSEST_N uint16 = 10
+const DEFAULT_CLOSEST_N uint16 = 5
 
 type DNAQuery struct {
 	Loc      *dna.Location
