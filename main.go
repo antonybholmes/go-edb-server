@@ -39,9 +39,9 @@ type GenesResponse struct {
 }
 
 type AnnotationResponse struct {
-	Message string               `json:"message"`
-	Status  int                  `json:"status"`
-	Data    *gene.GeneAnnotation `json:"data"`
+	Message string                 `json:"message"`
+	Status  int                    `json:"status"`
+	Data    []*gene.GeneAnnotation `json:"data"`
 }
 
 type ReqLocs struct {
@@ -56,8 +56,11 @@ func main() {
 	e.Use(middleware.Logger())
 	//e.Use(loggerMiddleware)
 	e.Use(middleware.Recover())
-	//e.Use(middleware.CORS())
+	e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
+
+	dnadbcache := dna.NewDNADbCache("data/dna")
+	loctogenedbcache := loctogene.NewLoctogeneDbCache("data/loctogene")
 
 	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -75,7 +78,9 @@ func main() {
 		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
-	e.GET("dna", func(c echo.Context) error {
+	e.GET("/dna/:assembly", func(c echo.Context) error {
+		assembly := c.Param("assembly")
+
 		query, err := parseDNAQuery(c)
 
 		if err != nil {
@@ -84,9 +89,13 @@ func main() {
 
 		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
 
-		dnadb := dna.NewDNADB(query.Dir)
+		dnadb, err := dnadbcache.Db(assembly)
 
-		dna, err := dnadb.GetDNA(query.Loc, query.Rev, query.Comp)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		}
+
+		dna, err := dnadb.DNA(query.Loc, query.Rev, query.Comp, query.Format, query.RepeatMask)
 
 		//c.Logger().Debugf("%s", dna)
 
@@ -94,17 +103,17 @@ func main() {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
 		}
 
-		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
+		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: assembly, Location: query.Loc.String(), DNA: dna}})
 	})
 
-	e.GET("genes/within/:assembly", func(c echo.Context) error {
-		query, err := parseGeneQuery(c, c.Param("assembly"))
+	e.GET("/genes/within/:assembly", func(c echo.Context) error {
+		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
-		genes, err := query.DB.WithinGenes(query.Loc, query.Level)
+		genes, err := query.Db.WithinGenes(query.Loc, query.Level)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
@@ -113,9 +122,9 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.GET("genes/closest/:assembly", func(c echo.Context) error {
+	e.GET("/genes/closest/:assembly", func(c echo.Context) error {
 
-		query, err := parseGeneQuery(c, c.Param("assembly"))
+		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -123,7 +132,7 @@ func main() {
 
 		n := parseN(c)
 
-		genes, err := query.DB.ClosestGenes(query.Loc, n, query.Level)
+		genes, err := query.Db.ClosestGenes(query.Loc, n, query.Level)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
@@ -132,7 +141,7 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.POST("annotation/:assembly", func(c echo.Context) error {
+	e.POST("/annotation/:assembly", func(c echo.Context) error {
 		var err error
 		locs := new(ReqLocs)
 
@@ -148,7 +157,7 @@ func main() {
 
 		locations := locs.Locations
 
-		query, err := parseGeneQuery(c, c.Param("assembly"))
+		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -156,99 +165,34 @@ func main() {
 
 		n := parseN(c)
 
-		tssRegion := dna.NewTSSRegion(2000, 1000)
+		tssRegion := parseTSSRegion(c)
 
-		annotationDB := gene.NewAnnotate(query.DB, tssRegion, n)
+		output := parseOutput(c)
 
-		annotations, err := annotationDB.Annotate(&locations[0])
+		annotationDb := gene.NewAnnotate(query.Db, tssRegion, n)
 
-		if err != nil {
-			c.Logger().Debugf("%s", err)
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+		data := []*gene.GeneAnnotation{}
+
+		for _, location := range locations {
+
+			annotations, err := annotationDb.Annotate(&location)
+
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+			}
+
+			data = append(data, annotations)
 		}
 
-		return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Message: "", Data: annotations})
+		if output == "text" {
+			tsv := makeGeneTable(data, tssRegion)
+
+			return c.String(http.StatusOK, tsv)
+		} else {
+
+			return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Message: "", Data: data})
+		}
 	})
-
-	// e.POST("/genes/within", func(c echo.Context) error {
-	// 	jsonBody := make(map[string]interface{})
-
-	// 	json.NewDecoder(c.Request().Body).Decode(&jsonBody)
-
-	// 	chr := DEFAULT_CHR
-	// 	var ok bool
-
-	// 	_, ok = jsonBody["chr"]
-
-	// 	if ok {
-	// 		c.Logger().Info("chr set through body.")
-	// 		chr = jsonBody["chr"].(string)
-	// 	} else {
-	// 		c.Logger().Warn("chr not set through body, using default.")
-	// 	}
-
-	// 	start := DEFAULT_START
-
-	// 	_, ok = jsonBody["start"]
-
-	// 	if ok {
-	// 		c.Logger().Info("start set through body.")
-	// 		start = jsonBody["start"].(int)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("start not set, using default %d.", DEFAULT_START))
-	// 	}
-
-	// 	end := DEFAULT_END
-
-	// 	_, ok = jsonBody["end"]
-
-	// 	if ok {
-	// 		c.Logger().Info("end set through body.")
-	// 		end = jsonBody["end"].(int)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("end not set, using default %d.", DEFAULT_END))
-	// 	}
-
-	// 	assembly := DEFAULT_ASSEMBLY
-
-	// 	_, ok = jsonBody["assembly"]
-
-	// 	if ok {
-	// 		c.Logger().Info("assembly set through body.")
-	// 		assembly = jsonBody["assembly"].(string)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("assembly not set, using default %s.", DEFAULT_ASSEMBLY))
-	// 	}
-
-	// 	level := DEFAULT_LEVEL
-
-	// 	_, ok = jsonBody["level"]
-
-	// 	if ok {
-	// 		c.Logger().Info("level set through body.")
-	// 		level = jsonBody["level"].(int)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("level not set, using default %d.", DEFAULT_LEVEL))
-	// 	}
-
-	// 	c.Logger().Info(fmt.Sprintf("loc: %s:%d-%d on %s", chr, start, end, assembly))
-
-	// 	db, err := loctogene.GetDB(fmt.Sprintf("data/modules/loctogene/%s.db", assembly))
-
-	// 	if err != nil {
-	// 		return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "DB error"})
-	// 	}
-
-	// 	loc := loctogene.Location{Chr: chr, Start: start, End: end}
-
-	// 	genes, err := loctogene.GetGenesWithin(db, &loc, level)
-
-	// 	if err != nil {
-	// 		return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
-	// 	}
-
-	// 	return c.JSON(http.StatusOK, genes)
-	// })
 
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {
