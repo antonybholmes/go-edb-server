@@ -7,11 +7,12 @@ import (
 	"runtime"
 
 	"github.com/antonybholmes/go-dna"
-	geneann "github.com/antonybholmes/go-gene-annotation"
+	"github.com/antonybholmes/go-gene"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type StatusMessage struct {
@@ -24,8 +25,6 @@ type DNA struct {
 	Location string `json:"location"`
 	DNA      string `json:"dna"`
 }
-
-var ERROR_DNA = DNA{Assembly: "", Location: "", DNA: ""}
 
 type DNAResponse struct {
 	Message string `json:"message"`
@@ -40,9 +39,13 @@ type GenesResponse struct {
 }
 
 type AnnotationResponse struct {
-	Message string                  `json:"message"`
-	Status  int                     `json:"status"`
-	Data    *geneann.GeneAnnotation `json:"data"`
+	Message string               `json:"message"`
+	Status  int                  `json:"status"`
+	Data    *gene.GeneAnnotation `json:"data"`
+}
+
+type ReqLocs struct {
+	Locations []dna.Location `json:"locations"`
 }
 
 func main() {
@@ -55,11 +58,6 @@ func main() {
 	e.Use(middleware.Recover())
 	//e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
-
-	modulesDir := os.Getenv("MODULESDIR")
-	if modulesDir == "" {
-		modulesDir = "data/"
-	}
 
 	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -77,11 +75,11 @@ func main() {
 		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
-	e.GET("v1/dna", func(c echo.Context) error {
-		query, err := parseDNAQuery(c, modulesDir)
+	e.GET("dna", func(c echo.Context) error {
+		query, err := parseDNAQuery(c)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &ERROR_DNA})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
@@ -99,8 +97,8 @@ func main() {
 		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
 	})
 
-	e.GET("v1/genes/within/:assembly", func(c echo.Context) error {
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+	e.GET("genes/within/:assembly", func(c echo.Context) error {
+		query, err := parseGeneQuery(c, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -115,9 +113,9 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.GET("v1/genes/closest/:assembly", func(c echo.Context) error {
+	e.GET("genes/closest/:assembly", func(c echo.Context) error {
 
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+		query, err := parseGeneQuery(c, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -134,20 +132,23 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	type BodyLocations struct {
-		Locations []string `json:"locations"`
-	}
+	e.POST("annotation/:assembly", func(c echo.Context) error {
+		var err error
+		locs := new(ReqLocs)
 
-	e.POST("v1/annotation/:assembly", func(c echo.Context) error {
-		locs := new(BodyLocations)
-
-		err := c.Bind(locs)
+		err = c.Bind(locs)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		}
+
+		locations := locs.Locations
+
+		query, err := parseGeneQuery(c, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
@@ -157,11 +158,12 @@ func main() {
 
 		tssRegion := dna.NewTSSRegion(2000, 1000)
 
-		annotationDB := geneann.NewAnnotate(query.DB, tssRegion, n)
+		annotationDB := gene.NewAnnotate(query.DB, tssRegion, n)
 
-		annotations, err := annotationDB.Annotate(query.Loc)
+		annotations, err := annotationDB.Annotate(&locations[0])
 
 		if err != nil {
+			c.Logger().Debugf("%s", err)
 			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 		}
 
