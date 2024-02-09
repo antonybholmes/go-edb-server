@@ -248,7 +248,7 @@ func parseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene
 func makeGeneTable(
 	data []*gene.GeneAnnotation,
 	ts *dna.TSSRegion,
-) string {
+) (string, error) {
 	buffer := new(bytes.Buffer)
 	wtr := csv.NewWriter(buffer)
 	wtr.Comma = '\t'
@@ -271,7 +271,11 @@ func makeGeneTable(
 		headers = append(headers, fmt.Sprintf("#%d TSS Closest Distance", i))
 	}
 
-	wtr.Write(headers)
+	err := wtr.Write(headers)
+
+	if err != nil {
+		return "", err
+	}
 
 	for _, annotation := range data {
 		row := []string{annotation.Location.String(),
@@ -287,9 +291,14 @@ func makeGeneTable(
 			row = append(row, strconv.Itoa(closestGene.Dist))
 		}
 
-		wtr.Write(row)
+		err := wtr.Write(row)
+
+		if err != nil {
+			return "", err
+		}
 	}
 
 	wtr.Flush()
-	return buffer.String()
+
+	return buffer.String(), nil
 }
