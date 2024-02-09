@@ -7,7 +7,7 @@ import (
 	"runtime"
 
 	"github.com/antonybholmes/go-dna"
-	geneann "github.com/antonybholmes/go-gene-annotation"
+	"github.com/antonybholmes/go-gene"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -39,9 +39,9 @@ type GenesResponse struct {
 }
 
 type AnnotationResponse struct {
-	Message string                  `json:"message"`
-	Status  int                     `json:"status"`
-	Data    *geneann.GeneAnnotation `json:"data"`
+	Message string               `json:"message"`
+	Status  int                  `json:"status"`
+	Data    *gene.GeneAnnotation `json:"data"`
 }
 
 type ReqLocs struct {
@@ -167,7 +167,7 @@ func main() {
 
 		tssRegion := dna.NewTSSRegion(2000, 1000)
 
-		annotationDB := geneann.NewAnnotate(query.DB, tssRegion, n)
+		annotationDB := gene.NewAnnotate(query.DB, tssRegion, n)
 
 		annotations, err := annotationDB.Annotate(&locations[0])
 
