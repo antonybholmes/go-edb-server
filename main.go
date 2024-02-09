@@ -9,6 +9,7 @@ import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-gene"
 	"github.com/antonybholmes/go-loctogene"
+	"github.com/antonybholmes/go-utils"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -158,7 +159,7 @@ func main() {
 		}
 
 		// limit amount of data returned per request to 1000 entries at a time
-		locations := locs.Locations[0:MAX_ANNOTATIONS]
+		locations := locs.Locations[0:utils.IntMin(len(locs.Locations), MAX_ANNOTATIONS)]
 
 		query, err := parseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
