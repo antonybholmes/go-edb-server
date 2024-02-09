@@ -7,7 +7,7 @@ import (
 	"runtime"
 
 	"github.com/antonybholmes/go-dna"
-	annotation "github.com/antonybholmes/go-gene-annotation"
+	geneann "github.com/antonybholmes/go-gene-annotation"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -40,9 +40,9 @@ type GenesResponse struct {
 }
 
 type AnnotationResponse struct {
-	Message string                     `json:"message"`
-	Status  int                        `json:"status"`
-	Data    *annotation.GeneAnnotation `json:"data"`
+	Message string                  `json:"message"`
+	Status  int                     `json:"status"`
+	Data    *geneann.GeneAnnotation `json:"data"`
 }
 
 func main() {
@@ -77,12 +77,7 @@ func main() {
 		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
-	e.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, StatusMessage{Status: http.StatusOK, Message: ""})
-	})
-
 	e.GET("v1/dna", func(c echo.Context) error {
-
 		query, err := parseDNAQuery(c, modulesDir)
 
 		if err != nil {
@@ -98,7 +93,7 @@ func main() {
 		//c.Logger().Debugf("%s", dna)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, DNAResponse{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr), Data: &ERROR_DNA})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
 		}
 
 		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
@@ -108,13 +103,13 @@ func main() {
 		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		genes, err := query.DB.WithinGenes(query.Loc, query.Level)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "there was an error with the database query", Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 		}
 
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
@@ -125,7 +120,7 @@ func main() {
 		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		n := parseN(c)
@@ -133,7 +128,7 @@ func main() {
 		genes, err := query.DB.ClosestGenes(query.Loc, n, query.Level)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "there was an error with the database query", Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 		}
 
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
@@ -149,25 +144,25 @@ func main() {
 		err := c.Bind(locs)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		n := parseN(c)
 
 		tssRegion := dna.NewTSSRegion(2000, 1000)
 
-		annotationDB := annotation.NewAnnotate(query.DB, tssRegion, n)
+		annotationDB := geneann.NewAnnotate(query.DB, tssRegion, n)
 
 		annotations, err := annotationDB.Annotate(query.Loc)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "there was an error with the database query", Data: &loctogene.ERROR_FEATURES})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 		}
 
 		return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Message: "", Data: annotations})
