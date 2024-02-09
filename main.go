@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/antonybholmes/go-dna"
+	annotation "github.com/antonybholmes/go-gene-annotation"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -33,9 +34,15 @@ type DNAResponse struct {
 }
 
 type GenesResponse struct {
-	Message string              `json:"message"`
-	Status  int                 `json:"status"`
-	Data    *loctogene.Features `json:"data"`
+	Message string                     `json:"message"`
+	Status  int                        `json:"status"`
+	Data    *loctogene.GenomicFeatures `json:"data"`
+}
+
+type AnnotationResponse struct {
+	Message string                     `json:"message"`
+	Status  int                        `json:"status"`
+	Data    *annotation.GeneAnnotation `json:"data"`
 }
 
 func main() {
@@ -84,7 +91,9 @@ func main() {
 
 		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
 
-		dna, err := dna.GetDNA(query.Dir, query.Loc, query.Rev, query.Comp)
+		dnadb := dna.NewDNADB(query.Dir)
+
+		dna, err := dnadb.GetDNA(query.Loc, query.Rev, query.Comp)
 
 		//c.Logger().Debugf("%s", dna)
 
@@ -95,14 +104,14 @@ func main() {
 		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
 	})
 
-	e.GET("v1/genes/within", func(c echo.Context) error {
-		query, err := parseGeneQuery(c, modulesDir)
+	e.GET("v1/genes/within/:assembly", func(c echo.Context) error {
+		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
 		}
 
-		genes, err := loctogene.GetGenesWithin(query.DB, query.Loc, query.Level)
+		genes, err := query.DB.WithinGenes(query.Loc, query.Level)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "there was an error with the database query", Data: &loctogene.ERROR_FEATURES})
@@ -111,9 +120,9 @@ func main() {
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
 	})
 
-	e.GET("v1/genes/closest", func(c echo.Context) error {
+	e.GET("v1/genes/closest/:assembly", func(c echo.Context) error {
 
-		query, err := parseGeneQuery(c, modulesDir)
+		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
@@ -121,17 +130,47 @@ func main() {
 
 		n := parseN(c)
 
-		if n < 0 {
-			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "invalid n parameter", Data: &loctogene.ERROR_FEATURES})
-		}
-
-		genes, err := loctogene.GetClosestGenes(query.DB, query.Loc, n, query.Level)
+		genes, err := query.DB.ClosestGenes(query.Loc, n, query.Level)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "there was an error with the database query", Data: &loctogene.ERROR_FEATURES})
 		}
 
 		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
+	})
+
+	type BodyLocations struct {
+		Locations []string `json:"locations"`
+	}
+
+	e.POST("v1/annotation/:assembly", func(c echo.Context) error {
+		locs := new(BodyLocations)
+
+		err := c.Bind(locs)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
+		}
+
+		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: err.Error(), Data: &loctogene.ERROR_FEATURES})
+		}
+
+		n := parseN(c)
+
+		tssRegion := dna.NewTSSRegion(2000, 1000)
+
+		annotationDB := annotation.NewAnnotate(query.DB, tssRegion, n)
+
+		annotations, err := annotationDB.Annotate(query.Loc)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, GenesResponse{Status: http.StatusBadRequest, Message: "there was an error with the database query", Data: &loctogene.ERROR_FEATURES})
+		}
+
+		return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Message: "", Data: annotations})
 	})
 
 	// e.POST("/genes/within", func(c echo.Context) error {
