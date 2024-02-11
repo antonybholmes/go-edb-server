@@ -62,15 +62,15 @@ func main() {
 	r.Use(echojwt.WithConfig(config))
 	r.GET("", RestrictedRoute)
 
-	e.GET("/v1/dna/:assembly", func(c echo.Context) error {
+	e.POST("/v1/dna/:assembly", func(c echo.Context) error {
 		return routes.DNARoute(c, dnadbcache)
 	})
 
-	e.GET("/v1/genes/within/:assembly", func(c echo.Context) error {
+	e.POST("/v1/genes/within/:assembly", func(c echo.Context) error {
 		return routes.WithinGenesRoute(c, loctogenedbcache)
 	})
 
-	e.GET("/v1/genes/closest/:assembly", func(c echo.Context) error {
+	e.POST("/v1/genes/closest/:assembly", func(c echo.Context) error {
 		return routes.ClosestGeneRoute(c, loctogenedbcache)
 	})
 

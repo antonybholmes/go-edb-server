@@ -22,12 +22,8 @@ type StatusMessage struct {
 	Status  int    `json:"status"`
 }
 
-// A GeneQuery contains info from query params.
-type GeneQuery struct {
-	Loc      *dna.Location
-	Level    loctogene.Level
-	Db       *loctogene.LoctogeneDb
-	Assembly string
+type ReqLocs struct {
+	Locations []dna.Location `json:"locations"`
 }
 
 // Max returns the larger of x or y.
@@ -162,11 +158,7 @@ func ParseOutput(c echo.Context) string {
 }
 
 func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
-	loc, err := ParseLocation(c)
-
-	if err != nil {
-		return nil, err
-	}
+	var err error
 
 	rev := false
 	v := c.QueryParam("rev")
@@ -212,15 +204,10 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 		}
 	}
 
-	return &DNAQuery{Loc: loc, Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
+	return &DNAQuery{Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
 }
 
 func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
-	loc, err := ParseLocation(c)
-
-	if err != nil {
-		return nil, err
-	}
 
 	level := loctogene.Gene
 
@@ -236,5 +223,5 @@ func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene
 		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
 	}
 
-	return &GeneQuery{Loc: loc, Assembly: assembly, Db: db, Level: level}, nil
+	return &GeneQuery{Assembly: assembly, Db: db, Level: level}, nil
 }

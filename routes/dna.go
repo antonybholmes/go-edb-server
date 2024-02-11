@@ -9,25 +9,43 @@ import (
 )
 
 type DNA struct {
-	Assembly string `json:"assembly"`
-	Location string `json:"location"`
-	DNA      string `json:"dna"`
+	Assembly string        `json:"assembly"`
+	Location *dna.Location `json:"location"`
+	DNA      string        `json:"dna"`
 }
 
 type DNAResponse struct {
-	Status int  `json:"status"`
-	Data   *DNA `json:"data"`
+	Status int    `json:"status"`
+	Data   []*DNA `json:"data"`
 }
 
 type DNAQuery struct {
-	Loc        *dna.Location
 	Rev        bool
 	Comp       bool
 	Format     string
 	RepeatMask string
 }
 
+func ParseLocationsFromPost(c echo.Context) ([]dna.Location, error) {
+	var err error
+	locs := new(ReqLocs)
+
+	err = c.Bind(locs)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return locs.Locations, nil
+}
+
 func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
+	locations, err := ParseLocationsFromPost(c)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+	}
+
 	assembly := c.Param("assembly")
 
 	query, err := ParseDNAQuery(c)
@@ -44,13 +62,19 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	dna, err := dnadb.DNA(query.Loc, query.Rev, query.Comp)
+	data := []*DNA{}
+
+	for _, location := range locations {
+		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", location.Chr)})
+		}
+
+		data = append(data, &DNA{Assembly: assembly, Location: &location, DNA: dna})
+	}
 
 	//c.Logger().Debugf("%s", dna)
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
-	}
-
-	return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Data: &DNA{Assembly: assembly, Location: query.Loc.String(), DNA: dna}})
+	return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Data: data})
 }

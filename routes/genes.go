@@ -7,28 +7,52 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// A GeneQuery contains info from query params.
+type GeneQuery struct {
+	Level    loctogene.Level
+	Db       *loctogene.LoctogeneDb
+	Assembly string
+}
+
 type GenesResponse struct {
-	Status int                        `json:"status"`
-	Data   *loctogene.GenomicFeatures `json:"data"`
+	Status int                          `json:"status"`
+	Data   []*loctogene.GenomicFeatures `json:"data"`
 }
 
 func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
+	locations, err := ParseLocationsFromPost(c)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+	}
+
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	genes, err := query.Db.WithinGenes(query.Loc, query.Level)
+	data := []*loctogene.GenomicFeatures{}
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+	for _, location := range locations {
+		genes, err := query.Db.WithinGenes(&location, query.Level)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+		}
+
+		data = append(data, genes)
 	}
 
-	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Data: genes})
+	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Data: data})
 }
 
 func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
+	locations, err := ParseLocationsFromPost(c)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
@@ -38,11 +62,18 @@ func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 
 	n := ParseN(c)
 
-	genes, err := query.Db.ClosestGenes(query.Loc, n, query.Level)
+	data := []*loctogene.GenomicFeatures{}
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+	for _, location := range locations {
+
+		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+		}
+
+		data = append(data, genes)
 	}
 
-	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Data: genes})
+	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Data: data})
 }

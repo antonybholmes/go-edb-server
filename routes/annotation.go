@@ -16,31 +16,20 @@ import (
 
 const MAX_ANNOTATIONS = 1000
 
-type ReqLocs struct {
-	Locations []dna.Location `json:"locations"`
-}
-
 type AnnotationResponse struct {
 	Status int                    `json:"status"`
 	Data   []*gene.GeneAnnotation `json:"data"`
 }
 
 func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
-	var err error
-	locs := new(ReqLocs)
-
-	err = c.Bind(locs)
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-	}
+	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
-	locations := locs.Locations[0:utils.IntMin(len(locs.Locations), MAX_ANNOTATIONS)]
+	locations = locations[0:utils.IntMin(len(locations), MAX_ANNOTATIONS)]
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
