@@ -9,6 +9,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -17,6 +18,12 @@ import (
 )
 
 func main() {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	secret := os.Getenv("JWT_SECRET")
 
 	e := echo.New()
