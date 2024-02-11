@@ -46,7 +46,9 @@ func main() {
 		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
-	e.POST("/login", LoginRoute)
+	e.POST("/login", func(c echo.Context) error {
+		return LoginRoute(c, secret)
+	})
 
 	r := e.Group("/restricted")
 
@@ -69,7 +71,6 @@ func main() {
 	})
 
 	e.GET("/v1/genes/closest/:assembly", func(c echo.Context) error {
-
 		return routes.ClosestGeneRoute(c, loctogenedbcache)
 	})
 

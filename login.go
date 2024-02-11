@@ -8,18 +8,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// See https://echo.labstack.com/docs/cookbook/jwt#login
+
+const JWT_TOKEN_EXPIRES_HOURS time.Duration = 24
+
 type JwtCustomClaims struct {
 	Name  string `json:"name"`
 	Admin bool   `json:"admin"`
 	jwt.RegisteredClaims
 }
 
-// Valid implements jwt.Claims.
-func (*JwtCustomClaims) Valid() error {
-	panic("unimplemented")
-}
-
-func LoginRoute(c echo.Context) error {
+func LoginRoute(c echo.Context, secret string) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
@@ -33,7 +32,7 @@ func LoginRoute(c echo.Context) error {
 		"Jon Snow",
 		true,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * JWT_TOKEN_EXPIRES_HOURS)),
 		},
 	}
 
@@ -41,13 +40,13 @@ func LoginRoute(c echo.Context) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte("secret"))
+	t, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"token": t,
+		"jwt": t,
 	})
 }
 
