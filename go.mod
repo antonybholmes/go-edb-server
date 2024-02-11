@@ -11,15 +11,17 @@ replace github.com/antonybholmes/go-gene => ../go-gene
 replace github.com/antonybholmes/go-utils => ../go-utils
 
 require (
-	github.com/antonybholmes/go-dna v0.0.0-20240209031025-23ce8ad5167c
-	github.com/antonybholmes/go-loctogene v0.0.0-20240209032127-1d7475130083
-	github.com/antonybholmes/go-utils v0.0.0-20240209031024-64006dd9739a // indirect
+	github.com/antonybholmes/go-dna v0.0.0-20240209230921-59f53127adee
+	github.com/antonybholmes/go-loctogene v0.0.0-20240209221116-df18e91f9ee0
+	github.com/antonybholmes/go-utils v0.0.0-20240209031024-64006dd9739a
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/labstack/gommon v0.4.2
 )
 
 require (
-	github.com/antonybholmes/go-gene v0.0.0-20240209144152-bdc68239b544
+	github.com/antonybholmes/go-gene v0.0.0-20240209225234-c886d8046a20
+	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/mattn/go-sqlite3 v1.14.22
 )
 

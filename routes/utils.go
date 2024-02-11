@@ -1,14 +1,11 @@
-package main
+package routes
 
 import (
-	"bytes"
-	"encoding/csv"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
-	"github.com/antonybholmes/go-gene"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/labstack/echo/v4"
 )
@@ -20,12 +17,9 @@ const DEFAULT_START uint = 100000 //187728170
 const DEFAULT_END uint = 100100   //187752257
 const DEFAULT_CLOSEST_N uint16 = 5
 
-type DNAQuery struct {
-	Loc        *dna.Location
-	Rev        bool
-	Comp       bool
-	Format     string
-	RepeatMask string
+type StatusMessage struct {
+	Message string `json:"message"`
+	Status  int    `json:"status"`
 }
 
 // A GeneQuery contains info from query params.
@@ -58,7 +52,7 @@ func Min(x, y int) int {
 // If parameters are not provided defaults are used, but if parameters are
 // considered invalid, it will throw an error.
 
-func parseLocation(c echo.Context) (*dna.Location, error) {
+func ParseLocation(c echo.Context) (*dna.Location, error) {
 	chr := DEFAULT_CHR
 	start := DEFAULT_START
 	end := DEFAULT_END
@@ -114,7 +108,7 @@ func parseLocation(c echo.Context) (*dna.Location, error) {
 // 	return assembly
 // }
 
-func parseN(c echo.Context) uint16 {
+func ParseN(c echo.Context) uint16 {
 
 	v := c.QueryParam("n")
 
@@ -131,7 +125,7 @@ func parseN(c echo.Context) uint16 {
 	return uint16(n)
 }
 
-func parseTSSRegion(c echo.Context) *dna.TSSRegion {
+func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
 
 	v := c.QueryParam("tss")
 
@@ -156,7 +150,7 @@ func parseTSSRegion(c echo.Context) *dna.TSSRegion {
 	return dna.NewTSSRegion(uint(s), uint(e))
 }
 
-func parseOutput(c echo.Context) string {
+func ParseOutput(c echo.Context) string {
 
 	v := c.QueryParam("output")
 
@@ -167,8 +161,8 @@ func parseOutput(c echo.Context) string {
 	}
 }
 
-func parseDNAQuery(c echo.Context) (*DNAQuery, error) {
-	loc, err := parseLocation(c)
+func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
+	loc, err := ParseLocation(c)
 
 	if err != nil {
 		return nil, err
@@ -221,8 +215,8 @@ func parseDNAQuery(c echo.Context) (*DNAQuery, error) {
 	return &DNAQuery{Loc: loc, Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
 }
 
-func parseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
-	loc, err := parseLocation(c)
+func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
+	loc, err := ParseLocation(c)
 
 	if err != nil {
 		return nil, err
@@ -243,65 +237,4 @@ func parseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene
 	}
 
 	return &GeneQuery{Loc: loc, Assembly: assembly, Db: db, Level: level}, nil
-}
-
-func makeGeneTable(
-	data []*gene.GeneAnnotation,
-	ts *dna.TSSRegion,
-) (string, error) {
-	buffer := new(bytes.Buffer)
-	wtr := csv.NewWriter(buffer)
-	wtr.Comma = '\t'
-
-	closestN := len(data[0].ClosestGenes)
-
-	headers := []string{"Location", "ID", "Gene Symbol", fmt.Sprintf(
-		"Relative To Gene (prom=-%d/+%dkb)",
-		ts.Offset5P()/1000,
-		ts.Offset3P()/1000), "TSS Distance", "Gene Location"}
-
-	for i := 1; i <= closestN; i++ {
-		headers = append(headers, fmt.Sprintf("#%d Closest ID", i))
-		headers = append(headers, fmt.Sprintf("#%d Closest Gene Symbols", i))
-		headers = append(headers, fmt.Sprintf(
-			"#%d Relative To Closet Gene (prom=-%d/+%dkb)",
-			i,
-			ts.Offset5P()/1000,
-			ts.Offset3P()/1000))
-		headers = append(headers, fmt.Sprintf("#%d TSS Closest Distance", i))
-		headers = append(headers, fmt.Sprintf("#%d Gene Location", i))
-	}
-
-	err := wtr.Write(headers)
-
-	if err != nil {
-		return "", err
-	}
-
-	for _, annotation := range data {
-		row := []string{annotation.Location.String(),
-			annotation.GeneIds,
-			annotation.GeneSymbols,
-			annotation.PromLabels,
-			annotation.Dists,
-			annotation.Locations}
-
-		for _, closestGene := range annotation.ClosestGenes {
-			row = append(row, closestGene.Feature.GeneId)
-			row = append(row, gene.LabelGene(closestGene.Feature.GeneSymbol, closestGene.Feature.Strand))
-			row = append(row, closestGene.PromLabel)
-			row = append(row, strconv.Itoa(closestGene.Dist))
-			row = append(row, closestGene.Feature.ToLocation().String())
-		}
-
-		err := wtr.Write(row)
-
-		if err != nil {
-			return "", err
-		}
-	}
-
-	wtr.Flush()
-
-	return buffer.String(), nil
 }
