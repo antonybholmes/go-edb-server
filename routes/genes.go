@@ -8,9 +8,8 @@ import (
 )
 
 type GenesResponse struct {
-	Message string                     `json:"message"`
-	Status  int                        `json:"status"`
-	Data    *loctogene.GenomicFeatures `json:"data"`
+	Status int                        `json:"status"`
+	Data   *loctogene.GenomicFeatures `json:"data"`
 }
 
 func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
@@ -26,7 +25,7 @@ func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 	}
 
-	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
+	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Data: genes})
 }
 
 func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
@@ -45,5 +44,5 @@ func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
 	}
 
-	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
+	return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Data: genes})
 }

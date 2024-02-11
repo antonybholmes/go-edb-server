@@ -15,9 +15,8 @@ type DNA struct {
 }
 
 type DNAResponse struct {
-	Message string `json:"message"`
-	Status  int    `json:"status"`
-	Data    *DNA   `json:"data"`
+	Status int  `json:"status"`
+	Data   *DNA `json:"data"`
 }
 
 type DNAQuery struct {
@@ -53,5 +52,5 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
 	}
 
-	return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: assembly, Location: query.Loc.String(), DNA: dna}})
+	return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Data: &DNA{Assembly: assembly, Location: query.Loc.String(), DNA: dna}})
 }

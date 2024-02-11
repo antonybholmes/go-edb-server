@@ -21,9 +21,8 @@ type ReqLocs struct {
 }
 
 type AnnotationResponse struct {
-	Message string                 `json:"message"`
-	Status  int                    `json:"status"`
-	Data    []*gene.GeneAnnotation `json:"data"`
+	Status int                    `json:"status"`
+	Data   []*gene.GeneAnnotation `json:"data"`
 }
 
 func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
@@ -80,7 +79,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 		return c.String(http.StatusOK, tsv)
 	} else {
 
-		return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Message: "", Data: data})
+		return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Data: data})
 	}
 }
 
