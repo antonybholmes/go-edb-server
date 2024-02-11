@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/antonybholmes/go-dna"
@@ -40,6 +39,12 @@ func ParseLocationsFromPost(c echo.Context) ([]dna.Location, error) {
 }
 
 func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
+	jwtInfo := GetJwtInfoFromRoute(c)
+
+	if !IsValidJwtInfo(jwtInfo) {
+		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: INVALID_JWT_MESSAGE})
+	}
+
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
@@ -68,7 +73,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", location.Chr)})
+			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 		}
 
 		data = append(data, &DNA{Assembly: assembly, Location: &location, DNA: dna})

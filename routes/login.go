@@ -1,4 +1,4 @@
-package main
+package routes
 
 import (
 	"net/http"
@@ -12,9 +12,18 @@ import (
 
 const JWT_TOKEN_EXPIRES_HOURS time.Duration = 24
 
-type JwtCustomClaims struct {
+const INVALID_JWT_MESSAGE string = "Invalid JWT"
+
+type JWTInfo struct {
+	Id    string `json:"id"`
 	Name  string `json:"name"`
-	Admin bool   `json:"admin"`
+	Email string `json:"email"`
+}
+
+type JwtCustomClaims struct {
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -23,16 +32,17 @@ func LoginRoute(c echo.Context, secret string) error {
 	password := c.FormValue("password")
 
 	// Throws unauthorized error
-	if username != "jon" || password != "shhh!" {
+	if username != "edb" || password != "tod4EwVHEyCRK8encuLE" {
 		return echo.ErrUnauthorized
 	}
 
 	// Set custom claims
 	claims := &JwtCustomClaims{
-		"Jon Snow",
-		true,
+		"05c80ad1913248d4880dbc2f496cb151",
+		"edb",
+		"antony@antonyholmes.dev",
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * JWT_TOKEN_EXPIRES_HOURS)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 		},
 	}
 
@@ -50,9 +60,19 @@ func LoginRoute(c echo.Context, secret string) error {
 	})
 }
 
-func RestrictedRoute(c echo.Context) error {
+func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*JwtCustomClaims)
-	name := claims.Name
-	return c.String(http.StatusOK, "Welcome "+name+"!")
+
+	return &JWTInfo{Id: claims.Id, Name: claims.Name, Email: claims.Email}
+}
+
+func IsValidJwtInfo(jwtInfo *JWTInfo) bool {
+	return jwtInfo.Name == "edb"
+}
+
+func JWTInfoRoute(c echo.Context) error {
+	info := GetJwtInfoFromRoute(c)
+
+	return c.JSONPretty(http.StatusOK, info, "  ")
 }

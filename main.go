@@ -47,7 +47,7 @@ func main() {
 	})
 
 	e.POST("/login", func(c echo.Context) error {
-		return LoginRoute(c, secret)
+		return routes.LoginRoute(c, secret)
 	})
 
 	r := e.Group("/restricted")
@@ -55,14 +55,14 @@ func main() {
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(JwtCustomClaims)
+			return new(routes.JwtCustomClaims)
 		},
 		SigningKey: []byte(secret),
 	}
 	r.Use(echojwt.WithConfig(config))
-	r.GET("", RestrictedRoute)
+	r.GET("/info", routes.JWTInfoRoute)
 
-	e.POST("/v1/dna/:assembly", func(c echo.Context) error {
+	r.POST("/dna/:assembly", func(c echo.Context) error {
 		return routes.DNARoute(c, dnadbcache)
 	})
 
