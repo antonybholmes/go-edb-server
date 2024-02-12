@@ -24,3 +24,5 @@ curl localhost:8080/auth/info -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5
 
 
 curl localhost:8080/auth/dna/grch38 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA1YzgwYWQxOTEzMjQ4ZDQ4ODBkYmMyZjQ5NmNiMTUxIiwibmFtZSI6ImVkYiIsImVtYWlsIjoiYW50b255QGFudG9ueWhvbG1lcy5kZXYiLCJleHAiOjE3MDc3NTgxNzV9.AMElrbHi32CRXvqAxI2zLY25P3cbyWtTtYRT295JogI" -H 'Content-Type: application/json' -d  '{"locations":[{"chr":"chr1","start":100000,"end":100100}]}' 
+
+curl localhost:8080/auth/dna/grch38 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdjMjkzMWE2LTVjNTMtNDU3Ni04NDRlLWIxYTJmOTI5MmVkNCIsImVtYWlsIjoiYW50b255QGFudG9ueWhvbG1lcy5kZXYiLCJleHAiOjE3MDc4NDg0MDV9.xDHXRVpND1f2LH1Xvd-hhwid1Vz5g5r6roJe-snJLDs" -H 'Content-Type: application/json' -d  '{"locations":[{"chr":"chr1","start":100000,"end":100100}]}' 
