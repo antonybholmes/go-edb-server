@@ -26,7 +26,7 @@ type DNAResp struct {
 	Assembly     string `json:"assembly"`
 	Format       string `json:"format"`
 	IsRev        bool   `json:"isRev"`
-	IsComplement bool   `json:"isComplement"`
+	IsComplement bool   `json:"isComp"`
 	Seqs         []*DNA `json:"seqs"`
 }
 
