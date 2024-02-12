@@ -29,7 +29,7 @@ func main() {
 	err := godotenv.Load()
 
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Debug("Error loading .env file")
 	}
 
 	secret := os.Getenv("JWT_SECRET")
