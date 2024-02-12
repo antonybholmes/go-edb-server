@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -139,22 +138,22 @@ func (userdb *UserDb) FindUserByEmail(user *LoginUser) (*AuthUser, error) {
 
 	// check password hash matches hash in database
 
-	log.Printf("find %s\n", user.Email)
-	if !authUser.CheckPasswords(user.Password) {
-		return nil, fmt.Errorf("passwords do not match")
-	}
-	log.Printf("find2 %s\n", user.Email)
-
 	return authUser, nil
 }
 
 func (userdb *UserDb) CreateUser(user *LoginUser) (*AuthUser, error) {
 
-	// Check if user exists and if passwords match, return this user
-	authUser, err := userdb.FindUserByEmail(user)
+	// Check if user exists  and if they do, check passwords match.
+	// We don't care about errors because errors signify the user
+	// doesn't exist so we can continue and make the user
+	authUser, _ := userdb.FindUserByEmail(user)
 
-	if authUser != nil && err == nil {
-		return authUser, nil
+	if authUser != nil {
+		if authUser.CheckPasswords(user.Password) {
+			return authUser, nil
+		} else {
+			return nil, fmt.Errorf("passwords do not match")
+		}
 	}
 
 	// Create a uuid for the user id
@@ -193,7 +192,7 @@ func RegisterRoute(c echo.Context, userdb *UserDb, secret string) error {
 	authUser, err := userdb.CreateUser(user)
 
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 	}
 
 	// Throws unauthorized error
@@ -215,8 +214,9 @@ func RegisterRoute(c echo.Context, userdb *UserDb, secret string) error {
 
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte(secret))
+
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, JWTResp{t})
