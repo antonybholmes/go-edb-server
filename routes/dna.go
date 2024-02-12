@@ -18,13 +18,16 @@ type ReqLocs struct {
 }
 
 type DNA struct {
-	Assembly string        `json:"assembly"`
 	Location *dna.Location `json:"location"`
 	DNA      string        `json:"dna"`
 }
 
 type DNAResp struct {
-	DNA []*DNA `json:"dna"`
+	Assembly     string `json:"assembly"`
+	Format       string `json:"format"`
+	IsRev        bool   `json:"isRev"`
+	IsCompliment bool   `json:"isCompliment"`
+	Seqs         []*DNA `json:"seqs"`
 }
 
 type DNAQuery struct {
@@ -165,7 +168,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 		return MakeBadResp(c, err)
 	}
 
-	data := []*DNA{}
+	seqs := []*DNA{}
 
 	for _, location := range locations {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
@@ -174,10 +177,10 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 			return MakeBadResp(c, err)
 		}
 
-		data = append(data, &DNA{Assembly: assembly, Location: &location, DNA: dna})
+		seqs = append(seqs, &DNA{Location: &location, DNA: dna})
 	}
 
 	//c.Logger().Debugf("%s", dna)
 
-	return MakeDataResp(c, &data)
+	return MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsCompliment: query.Comp, Seqs: seqs})
 }
