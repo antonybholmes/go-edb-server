@@ -28,4 +28,4 @@ go-edb-api
 
 data/
 
-test_urls.sh
+tests.sh
