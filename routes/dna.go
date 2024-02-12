@@ -144,11 +144,6 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 }
 
 func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
-	jwtInfo := GetJwtInfoFromRoute(c)
-
-	if !IsValidJwtInfo(jwtInfo) {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: INVALID_JWT_MESSAGE})
-	}
 
 	locations, err := ParseLocationsFromPost(c)
 

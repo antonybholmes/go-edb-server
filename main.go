@@ -44,6 +44,12 @@ func main() {
 	e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
 
+	userdb, err := routes.NewUserDb("data/users.db")
+
+	if err != nil {
+		log.Fatalf("Error loading user db: %s", err)
+	}
+
 	dnadbcache := dna.NewDNADbCache("data/dna")
 	loctogenedbcache := loctogene.NewLoctogeneDbCache("data/loctogene")
 
@@ -51,8 +57,12 @@ func main() {
 		return c.JSON(http.StatusOK, AboutResp{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
+	e.POST("/register", func(c echo.Context) error {
+		return routes.RegisterRoute(c, userdb, secret)
+	})
+
 	e.POST("/login", func(c echo.Context) error {
-		return routes.LoginRoute(c, secret)
+		return routes.LoginRoute(c, userdb, secret)
 	})
 
 	// Keep some routes for testing purposes during dev
