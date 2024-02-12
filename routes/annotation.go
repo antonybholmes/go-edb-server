@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-gene"
@@ -19,6 +20,31 @@ const MAX_ANNOTATIONS = 1000
 type AnnotationResponse struct {
 	Status int                    `json:"status"`
 	Data   []*gene.GeneAnnotation `json:"data"`
+}
+
+func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
+
+	v := c.QueryParam("tss")
+
+	if v == "" {
+		return dna.NewTSSRegion(2000, 1000)
+	}
+
+	tokens := strings.Split(v, ",")
+
+	s, err := strconv.ParseUint(tokens[0], 10, 0)
+
+	if err != nil {
+		return dna.NewTSSRegion(2000, 1000)
+	}
+
+	e, err := strconv.ParseUint(tokens[1], 10, 0)
+
+	if err != nil {
+		return dna.NewTSSRegion(2000, 1000)
+	}
+
+	return dna.NewTSSRegion(uint(s), uint(e))
 }
 
 func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {

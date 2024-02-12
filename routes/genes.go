@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/antonybholmes/go-loctogene"
@@ -17,6 +18,25 @@ type GeneQuery struct {
 type GenesResponse struct {
 	Status int                          `json:"status"`
 	Data   []*loctogene.GenomicFeatures `json:"data"`
+}
+
+func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
+
+	level := loctogene.Gene
+
+	v := c.QueryParam("level")
+
+	if v != "" {
+		level = loctogene.ParseLevel(v)
+	}
+
+	db, err := loctogenedbcache.Db(assembly)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
+	}
+
+	return &GeneQuery{Assembly: assembly, Db: db, Level: level}, nil
 }
 
 func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {

@@ -14,7 +14,7 @@ curl -v -X POST -H 'Content-Type: application/json' -d  '{"locations":[{"chr":"c
 
 
 curl -X POST -d 'username=edb' -d 'password=tod4EwVHEyCRK8encuLE' localhost:8080/login
-curl localhost:8080/restricted/info -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA1YzgwYWQxOTEzMjQ4ZDQ4ODBkYmMyZjQ5NmNiMTUxIiwibmFtZSI6ImVkYiIsImVtYWlsIjoiYW50b255QGFudG9ueWhvbG1lcy5kZXYiLCJleHAiOjE3MDc3NTgxNzV9.AMElrbHi32CRXvqAxI2zLY25P3cbyWtTtYRT295JogI"
+curl localhost:8080/auth/info -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA1YzgwYWQxOTEzMjQ4ZDQ4ODBkYmMyZjQ5NmNiMTUxIiwibmFtZSI6ImVkYiIsImVtYWlsIjoiYW50b255QGFudG9ueWhvbG1lcy5kZXYiLCJleHAiOjE3MDc3NTgxNzV9.AMElrbHi32CRXvqAxI2zLY25P3cbyWtTtYRT295JogI"
 
 
-curl localhost:8080/restricted/dna/grch38 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA1YzgwYWQxOTEzMjQ4ZDQ4ODBkYmMyZjQ5NmNiMTUxIiwibmFtZSI6ImVkYiIsImVtYWlsIjoiYW50b255QGFudG9ueWhvbG1lcy5kZXYiLCJleHAiOjE3MDc3NTgxNzV9.AMElrbHi32CRXvqAxI2zLY25P3cbyWtTtYRT295JogI" -H 'Content-Type: application/json' -d  '{"locations":[{"chr":"chr1","start":100000,"end":100100}]}' 
+curl localhost:8080/auth/dna/grch38 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA1YzgwYWQxOTEzMjQ4ZDQ4ODBkYmMyZjQ5NmNiMTUxIiwibmFtZSI6ImVkYiIsImVtYWlsIjoiYW50b255QGFudG9ueWhvbG1lcy5kZXYiLCJleHAiOjE3MDc3NTgxNzV9.AMElrbHi32CRXvqAxI2zLY25P3cbyWtTtYRT295JogI" -H 'Content-Type: application/json' -d  '{"locations":[{"chr":"chr1","start":100000,"end":100100}]}' 

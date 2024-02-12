@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-api/routes"
@@ -17,6 +18,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type AboutResp struct {
+	Name      string `json:"name"`
+	Copyright string `json:"copyright"`
+	Version   string `json:"version"`
+	Arch      string `json:"arch"`
+}
+
 func main() {
 	err := godotenv.Load()
 
@@ -25,6 +33,8 @@ func main() {
 	}
 
 	secret := os.Getenv("JWT_SECRET")
+
+	buildMode := os.Getenv("BUILD")
 
 	e := echo.New()
 
@@ -38,19 +48,33 @@ func main() {
 	loctogenedbcache := loctogene.NewLoctogeneDbCache("data/loctogene")
 
 	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct {
-			Name      string `json:"name"`
-			Copyright string `json:"copyright"`
-			Version   string `json:"version"`
-			Arch      string `json:"arch"`
-		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
+		return c.JSON(http.StatusOK, AboutResp{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
 	e.POST("/login", func(c echo.Context) error {
 		return routes.LoginRoute(c, secret)
 	})
 
-	r := e.Group("/restricted")
+	// Keep some routes for testing purposes during dev
+	if strings.Contains(buildMode, "prod") {
+		e.POST("/dna/:assembly", func(c echo.Context) error {
+			return routes.DNARoute(c, dnadbcache)
+		})
+
+		e.POST("/genes/within/:assembly", func(c echo.Context) error {
+			return routes.WithinGenesRoute(c, loctogenedbcache)
+		})
+
+		e.POST("/genes/closest/:assembly", func(c echo.Context) error {
+			return routes.ClosestGeneRoute(c, loctogenedbcache)
+		})
+
+		e.POST("/annotate/:assembly", func(c echo.Context) error {
+			return routes.AnnotationRoute(c, loctogenedbcache)
+		})
+	}
+
+	r := e.Group("/auth")
 
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
@@ -66,15 +90,15 @@ func main() {
 		return routes.DNARoute(c, dnadbcache)
 	})
 
-	e.POST("/v1/genes/within/:assembly", func(c echo.Context) error {
+	r.POST("/genes/within/:assembly", func(c echo.Context) error {
 		return routes.WithinGenesRoute(c, loctogenedbcache)
 	})
 
-	e.POST("/v1/genes/closest/:assembly", func(c echo.Context) error {
+	r.POST("/genes/closest/:assembly", func(c echo.Context) error {
 		return routes.ClosestGeneRoute(c, loctogenedbcache)
 	})
 
-	e.POST("/v1/annotate/:assembly", func(c echo.Context) error {
+	r.POST("/annotate/:assembly", func(c echo.Context) error {
 		return routes.AnnotationRoute(c, loctogenedbcache)
 	})
 
