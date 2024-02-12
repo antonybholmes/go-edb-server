@@ -2,7 +2,6 @@ package routes
 
 import (
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -24,9 +23,8 @@ type DNA struct {
 	DNA      string        `json:"dna"`
 }
 
-type DNAResponse struct {
-	Status int    `json:"status"`
-	Data   []*DNA `json:"data"`
+type DNAResp struct {
+	DNA []*DNA `json:"dna"`
 }
 
 type DNAQuery struct {
@@ -148,7 +146,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
 	assembly := c.Param("assembly")
@@ -156,7 +154,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 	query, err := ParseDNAQuery(c)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
 	//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
@@ -164,7 +162,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
 	data := []*DNA{}
@@ -173,7 +171,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+			return MakeBadResp(c, err)
 		}
 
 		data = append(data, &DNA{Assembly: assembly, Location: &location, DNA: dna})
@@ -181,5 +179,5 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 
 	//c.Logger().Debugf("%s", dna)
 
-	return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Data: data})
+	return MakeDataResp(c, &data)
 }

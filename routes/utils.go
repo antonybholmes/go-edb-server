@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -13,9 +14,30 @@ const DEFAULT_LEVEL = loctogene.Gene
 
 const DEFAULT_CLOSEST_N uint16 = 5
 
-type StatusMessage struct {
+type StatusResp struct {
+	Status int `json:"status"`
+}
+
+type StatusMessageResp struct {
+	StatusResp
 	Message string `json:"message"`
-	Status  int    `json:"status"`
+}
+
+type DataResp struct {
+	StatusResp
+	Data interface{} `json:"data"`
+}
+
+func JsonRep[V interface{}](c echo.Context, status int, data V) error {
+	return c.JSONPretty(status, data, "  ")
+}
+
+func MakeBadResp(c echo.Context, err error) error {
+	return JsonRep(c, http.StatusBadRequest, StatusMessageResp{StatusResp: StatusResp{Status: http.StatusBadRequest}, Message: err.Error()})
+}
+
+func MakeDataResp[V interface{}](c echo.Context, data *V) error {
+	return JsonRep(c, http.StatusOK, DataResp{StatusResp: StatusResp{Status: http.StatusOK}, Data: data})
 }
 
 // Max returns the larger of x or y.
