@@ -26,7 +26,7 @@ type DNAResp struct {
 	Assembly     string `json:"assembly"`
 	Format       string `json:"format"`
 	IsRev        bool   `json:"isRev"`
-	IsCompliment bool   `json:"isCompliment"`
+	IsComplement bool   `json:"isComplement"`
 	Seqs         []*DNA `json:"seqs"`
 }
 
@@ -182,5 +182,5 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 
 	//c.Logger().Debugf("%s", dna)
 
-	return MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsCompliment: query.Comp, Seqs: seqs})
+	return MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
 }
