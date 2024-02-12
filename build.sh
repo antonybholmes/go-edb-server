@@ -1,1 +1,1 @@
-CGO_ENABLED=1 go build; ./go-edb-api
+CGO_ENABLED=1 BUILD=production go build; ./go-edb-api
