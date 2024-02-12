@@ -51,7 +51,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
@@ -60,7 +60,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
 	n := ParseN(c)
@@ -78,7 +78,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 		annotations, err := annotationDb.Annotate(&location)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
+			return MakeBadResp(c, err)
 		}
 
 		data = append(data, annotations)
@@ -88,7 +88,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 		tsv, err := MakeGeneTable(data, tssRegion)
 
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+			return MakeBadResp(c, err)
 		}
 
 		return c.String(http.StatusOK, tsv)
@@ -143,7 +143,7 @@ func MakeGeneTable(
 			row = append(row, closestGene.Feature.GeneId)
 			row = append(row, gene.LabelGene(closestGene.Feature.GeneSymbol, closestGene.Feature.Strand))
 			row = append(row, closestGene.PromLabel)
-			row = append(row, strconv.Itoa(closestGene.Dist))
+			row = append(row, strconv.Itoa(closestGene.TssDist))
 			row = append(row, closestGene.Feature.ToLocation().String())
 		}
 

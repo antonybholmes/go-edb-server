@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -149,11 +148,7 @@ func (userdb *UserDb) CreateUser(user *LoginUser) (*AuthUser, error) {
 	authUser, _ := userdb.FindUserByEmail(user)
 
 	if authUser != nil {
-		if authUser.CheckPasswords(user.Password) {
-			return authUser, nil
-		} else {
-			return nil, fmt.Errorf("passwords do not match")
-		}
+		return nil, fmt.Errorf("user already exists")
 	}
 
 	// Create a uuid for the user id
@@ -192,13 +187,8 @@ func RegisterRoute(c echo.Context, userdb *UserDb, secret string) error {
 	authUser, err := userdb.CreateUser(user)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
-
-	// Throws unauthorized error
-	//if username != "edb" || password != "tod4EwVHEyCRK8encuLE" {
-	//	return echo.ErrUnauthorized
-	//}
 
 	// Set custom claims
 	claims := &JwtCustomClaims{
@@ -216,10 +206,10 @@ func RegisterRoute(c echo.Context, userdb *UserDb, secret string) error {
 	t, err := token.SignedString([]byte(secret))
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
-	return c.JSON(http.StatusOK, JWTResp{t})
+	return MakeDataResp(c, &JWTResp{t}) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func LoginRoute(c echo.Context, userdb *UserDb, secret string) error {
@@ -231,7 +221,11 @@ func LoginRoute(c echo.Context, userdb *UserDb, secret string) error {
 	authUser, err := userdb.FindUserByEmail(user)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, fmt.Errorf("user does not exist"))
+	}
+
+	if !authUser.CheckPasswords(user.Password) {
+		return MakeBadResp(c, fmt.Errorf("incorrect password"))
 	}
 
 	// Throws unauthorized error
@@ -244,7 +238,7 @@ func LoginRoute(c echo.Context, userdb *UserDb, secret string) error {
 		authUser.UserId,
 		authUser.Email,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * JWT_TOKEN_EXPIRES_HOURS)),
 		},
 	}
 
@@ -255,10 +249,10 @@ func LoginRoute(c echo.Context, userdb *UserDb, secret string) error {
 	t, err := token.SignedString([]byte(secret))
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
+		return MakeBadResp(c, err)
 	}
 
-	return c.JSON(http.StatusOK, JWTResp{t})
+	return MakeDataResp(c, &JWTResp{t})
 }
 
 func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
@@ -274,5 +268,5 @@ func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
 func JWTInfoRoute(c echo.Context) error {
 	info := GetJwtInfoFromRoute(c)
 
-	return c.JSONPretty(http.StatusOK, info, "  ")
+	return MakeDataResp(c, info)
 }
