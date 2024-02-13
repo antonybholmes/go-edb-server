@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+	"github.com/antonybholmes/go-edb-api/auth"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/golang-jwt/jwt/v5"
@@ -44,7 +45,7 @@ func main() {
 	e.Use(middleware.CORS())
 	e.Logger.SetLevel(log.DEBUG)
 
-	userdb, err := routes.NewUserDb("data/users.db")
+	userdb, err := auth.NewUserDb("data/users.db")
 
 	if err != nil {
 		log.Fatalf("Error loading user db: %s", err)

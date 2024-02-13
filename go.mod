@@ -12,14 +12,14 @@ replace github.com/antonybholmes/go-utils => ../go-utils
 
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240209230921-59f53127adee
-	github.com/antonybholmes/go-loctogene v0.0.0-20240209221116-df18e91f9ee0
+	github.com/antonybholmes/go-loctogene v0.0.0-20240212213851-df7f19437d05
 	github.com/antonybholmes/go-utils v0.0.0-20240209031024-64006dd9739a
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/labstack/gommon v0.4.2
 )
 
 require (
-	github.com/antonybholmes/go-gene v0.0.0-20240209225234-c886d8046a20
+	github.com/antonybholmes/go-gene v0.0.0-20240212213851-916259a63e56
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/joho/godotenv v1.5.1

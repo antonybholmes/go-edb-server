@@ -19,7 +19,6 @@ type GenesResponse struct {
 }
 
 func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
-
 	level := loctogene.Gene
 
 	v := c.QueryParam("level")
@@ -83,7 +82,6 @@ func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 	data := []*loctogene.GenomicFeatures{}
 
 	for _, location := range locations {
-
 		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
 
 		if err != nil {

@@ -1,4 +1,4 @@
-package routes
+package auth
 
 import (
 	"database/sql"
@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,8 +14,9 @@ import (
 // partially based on https://betterprogramming.pub/hands-on-with-jwt-in-golang-8c986d1bb4c0
 
 const JWT_TOKEN_EXPIRES_HOURS time.Duration = 24
-
 const INVALID_JWT_MESSAGE string = "Invalid JWT"
+const FIND_USER_BY_EMAIL_SQL string = `SELECT id, user_id, password FROM users WHERE users.email = ?`
+const CREATE_USER_SQL = `INSERT INTO users (user_id, email, password) VALUES(?, ?, ?)`
 
 type User struct {
 	Name     string `json:"name"`
@@ -65,28 +64,6 @@ func (user *AuthUser) CheckPasswords(plainPwd []byte) bool {
 
 	return err == nil
 }
-
-type JWTResp struct {
-	JWT string `json:"jwt"`
-}
-
-type JWTInfo struct {
-	Id string `json:"id"`
-	//Name  string `json:"name"`
-	Email   string `json:"email"`
-	Expires string `json:"expires"`
-	Expired bool   `json:"expired"`
-}
-
-type JwtCustomClaims struct {
-	Id string `json:"id"`
-	//Name  string `json:"name"`
-	Email string `json:"email"`
-	jwt.RegisteredClaims
-}
-
-const FIND_USER_BY_EMAIL_SQL string = `SELECT id, user_id, password FROM users WHERE users.email = ?`
-const CREATE_USER_SQL = `INSERT INTO users (user_id, email, password) VALUES(?, ?, ?)`
 
 type UserDb struct {
 	db                  *sql.DB
@@ -142,7 +119,7 @@ func (userdb *UserDb) FindUserByEmail(user *LoginUser) (*AuthUser, error) {
 
 func (userdb *UserDb) CreateUser(user *LoginUser) (*AuthUser, error) {
 
-	// Check if user exists  and if they do, check passwords match.
+	// Check if user exists and if they do, check passwords match.
 	// We don't care about errors because errors signify the user
 	// doesn't exist so we can continue and make the user
 	authUser, _ := userdb.FindUserByEmail(user)
@@ -153,11 +130,13 @@ func (userdb *UserDb) CreateUser(user *LoginUser) (*AuthUser, error) {
 
 	// Create a uuid for the user id
 	u1, err := uuid.NewV4()
+
 	if err != nil {
 		return nil, err
 	}
 
 	hash, err := user.HashPassword()
+
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +147,7 @@ func (userdb *UserDb) CreateUser(user *LoginUser) (*AuthUser, error) {
 		return nil, err
 	}
 
-	// Call function agail to get the user details
+	// Call function again to get the user details
 	authUser, err = userdb.FindUserByEmail(user)
 
 	if err != nil {
@@ -176,97 +155,4 @@ func (userdb *UserDb) CreateUser(user *LoginUser) (*AuthUser, error) {
 	}
 
 	return authUser, nil
-}
-
-func RegisterRoute(c echo.Context, userdb *UserDb, secret string) error {
-	email := c.FormValue("email")
-	password := c.FormValue("password")
-
-	user := NewLoginUser(email, password)
-
-	authUser, err := userdb.CreateUser(user)
-
-	if err != nil {
-		return MakeBadResp(c, err)
-	}
-
-	// Set custom claims
-	claims := &JwtCustomClaims{
-		authUser.UserId,
-		authUser.Email,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(secret))
-
-	if err != nil {
-		return MakeBadResp(c, err)
-	}
-
-	return MakeDataResp(c, &JWTResp{t}) //c.JSON(http.StatusOK, JWTResp{t})
-}
-
-func LoginRoute(c echo.Context, userdb *UserDb, secret string) error {
-	email := c.FormValue("email")
-	password := c.FormValue("password")
-
-	user := NewLoginUser(email, password)
-
-	authUser, err := userdb.FindUserByEmail(user)
-
-	if err != nil {
-		return MakeBadResp(c, fmt.Errorf("user does not exist"))
-	}
-
-	if !authUser.CheckPasswords(user.Password) {
-		return MakeBadResp(c, fmt.Errorf("incorrect password"))
-	}
-
-	// Throws unauthorized error
-	//if username != "edb" || password != "tod4EwVHEyCRK8encuLE" {
-	//	return echo.ErrUnauthorized
-	//}
-
-	// Set custom claims
-	claims := &JwtCustomClaims{
-		authUser.UserId,
-		authUser.Email,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * JWT_TOKEN_EXPIRES_HOURS)),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(secret))
-
-	if err != nil {
-		return MakeBadResp(c, err)
-	}
-
-	return MakeDataResp(c, &JWTResp{t})
-}
-
-func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*JwtCustomClaims)
-
-	t := claims.ExpiresAt.Unix()
-	expired := t != 0 && t < time.Now().Unix()
-
-	return &JWTInfo{Id: claims.Id, Email: claims.Email, Expires: time.Unix(t, 0).String(), Expired: expired}
-}
-
-func JWTInfoRoute(c echo.Context) error {
-	info := GetJwtInfoFromRoute(c)
-
-	return MakeDataResp(c, info)
 }
