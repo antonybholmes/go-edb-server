@@ -6,9 +6,11 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+	"github.com/antonybholmes/go-utils"
 	"github.com/labstack/echo/v4"
 )
 
+const DEFAULT_ASSEMBLY = "grch38"
 const DEFAULT_CHR = "chr1"        //"chr3"
 const DEFAULT_START uint = 100000 //187728170
 const DEFAULT_END uint = 100100   //187752257
@@ -149,7 +151,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	assembly := c.Param("assembly")
@@ -157,7 +159,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 	query, err := ParseDNAQuery(c)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
@@ -165,7 +167,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	seqs := []*DNA{}
@@ -174,7 +176,7 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
 
 		if err != nil {
-			return MakeBadResp(c, err)
+			return utils.MakeBadResp(c, err)
 		}
 
 		seqs = append(seqs, &DNA{Location: &location, DNA: dna})
@@ -182,5 +184,5 @@ func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
 
 	//c.Logger().Debugf("%s", dna)
 
-	return MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
+	return utils.MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/antonybholmes/go-edb-api/auth"
+	"github.com/antonybholmes/go-utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -37,7 +38,7 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	authUser, err := userdb.CreateUser(user)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	// Set custom claims
@@ -56,10 +57,10 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	t, err := token.SignedString([]byte(secret))
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
-	return MakeDataResp(c, &JWTResp{t}) //c.JSON(http.StatusOK, JWTResp{t})
+	return utils.MakeDataResp(c, &JWTResp{t}) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func LoginRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
@@ -71,11 +72,11 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	authUser, err := userdb.FindUserByEmail(user)
 
 	if err != nil {
-		return MakeBadResp(c, fmt.Errorf("user does not exist"))
+		return utils.MakeBadResp(c, fmt.Errorf("user does not exist"))
 	}
 
 	if !authUser.CheckPasswords(user.Password) {
-		return MakeBadResp(c, fmt.Errorf("incorrect password"))
+		return utils.MakeBadResp(c, fmt.Errorf("incorrect password"))
 	}
 
 	// Throws unauthorized error
@@ -99,10 +100,10 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	t, err := token.SignedString([]byte(secret))
 
 	if err != nil {
-		return MakeBadResp(c, fmt.Errorf("error signing token"))
+		return utils.MakeBadResp(c, fmt.Errorf("error signing token"))
 	}
 
-	return MakeDataResp(c, &JWTResp{t})
+	return utils.MakeDataResp(c, &JWTResp{t})
 }
 
 func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
@@ -118,5 +119,5 @@ func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
 func JWTInfoRoute(c echo.Context) error {
 	info := GetJwtInfoFromRoute(c)
 
-	return MakeDataResp(c, info)
+	return utils.MakeDataResp(c, info)
 }

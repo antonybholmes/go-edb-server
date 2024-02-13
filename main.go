@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+
 	"github.com/antonybholmes/go-edb-api/auth"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-loctogene"
