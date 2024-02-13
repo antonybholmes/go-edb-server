@@ -4,8 +4,13 @@ import (
 	"fmt"
 
 	"github.com/antonybholmes/go-loctogene"
+	"github.com/antonybholmes/go-utils"
 	"github.com/labstack/echo/v4"
 )
+
+const DEFAULT_LEVEL = loctogene.Gene
+
+const DEFAULT_CLOSEST_N uint16 = 5
 
 // A GeneQuery contains info from query params.
 type GeneQuery struct {
@@ -19,7 +24,6 @@ type GenesResponse struct {
 }
 
 func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
-
 	level := loctogene.Gene
 
 	v := c.QueryParam("level")
@@ -41,13 +45,13 @@ func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	data := []*loctogene.GenomicFeatures{}
@@ -56,42 +60,41 @@ func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 		genes, err := query.Db.WithinGenes(&location, query.Level)
 
 		if err != nil {
-			return MakeBadResp(c, err)
+			return utils.MakeBadResp(c, err)
 		}
 
 		data = append(data, genes)
 	}
 
-	return MakeDataResp(c, &data)
+	return utils.MakeDataResp(c, &data)
 }
 
 func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
-	n := ParseN(c)
+	n := utils.ParseN(c, DEFAULT_CLOSEST_N)
 
 	data := []*loctogene.GenomicFeatures{}
 
 	for _, location := range locations {
-
 		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
 
 		if err != nil {
-			return MakeBadResp(c, err)
+			return utils.MakeBadResp(c, err)
 		}
 
 		data = append(data, genes)
 	}
 
-	return MakeDataResp(c, &data)
+	return utils.MakeDataResp(c, &data)
 }

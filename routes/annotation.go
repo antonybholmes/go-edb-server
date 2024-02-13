@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+
 	"github.com/antonybholmes/go-gene"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/antonybholmes/go-utils"
@@ -51,7 +52,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
@@ -60,14 +61,14 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
 
 	if err != nil {
-		return MakeBadResp(c, err)
+		return utils.MakeBadResp(c, err)
 	}
 
-	n := ParseN(c)
+	n := utils.ParseN(c, DEFAULT_CLOSEST_N)
 
 	tssRegion := ParseTSSRegion(c)
 
-	output := ParseOutput(c)
+	output := utils.ParseOutput(c)
 
 	annotationDb := gene.NewAnnotateDb(query.Db, tssRegion, n)
 
@@ -78,7 +79,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 		annotations, err := annotationDb.Annotate(&location)
 
 		if err != nil {
-			return MakeBadResp(c, err)
+			return utils.MakeBadResp(c, err)
 		}
 
 		data = append(data, annotations)
@@ -88,7 +89,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 		tsv, err := MakeGeneTable(data, tssRegion)
 
 		if err != nil {
-			return MakeBadResp(c, err)
+			return utils.MakeBadResp(c, err)
 		}
 
 		return c.String(http.StatusOK, tsv)
