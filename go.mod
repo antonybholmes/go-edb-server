@@ -13,7 +13,7 @@ replace github.com/antonybholmes/go-utils => ../go-utils
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240209230921-59f53127adee
 	github.com/antonybholmes/go-loctogene v0.0.0-20240212213851-df7f19437d05
-	github.com/antonybholmes/go-utils v0.0.0-20240209031024-64006dd9739a
+	github.com/antonybholmes/go-utils v0.0.0-20240213145036-a7139ef7ca84
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/labstack/gommon v0.4.2
 )

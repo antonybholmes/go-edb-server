@@ -19,9 +19,8 @@ const FIND_USER_BY_EMAIL_SQL string = `SELECT id, user_id, password FROM users W
 const CREATE_USER_SQL = `INSERT INTO users (user_id, email, password) VALUES(?, ?, ?)`
 
 type User struct {
-	Name     string `json:"name"`
-	Email    string `json:"email" gorm:"unique"`
-	Password string `json:"password"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type LoginUser struct {

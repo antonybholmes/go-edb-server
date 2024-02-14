@@ -29,11 +29,24 @@ type JwtCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
-	email := c.FormValue("email")
-	password := c.FormValue("password")
+type ReqLogin struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
-	user := auth.NewLoginUser(email, password)
+func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
+	login := new(ReqLogin)
+
+	err := c.Bind(login)
+
+	if err != nil {
+		return err
+	}
+
+	//email := c.FormValue("email")
+	//password := c.FormValue("password")
+
+	user := auth.NewLoginUser(login.Email, login.Password)
 
 	authUser, err := userdb.CreateUser(user)
 
@@ -64,10 +77,18 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 }
 
 func LoginRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
-	email := c.FormValue("email")
-	password := c.FormValue("password")
+	login := new(ReqLogin)
 
-	user := auth.NewLoginUser(email, password)
+	err := c.Bind(login)
+
+	if err != nil {
+		return err
+	}
+
+	//email := c.FormValue("email")
+	//password := c.FormValue("password")
+
+	user := auth.NewLoginUser(login.Email, login.Password)
 
 	authUser, err := userdb.FindUserByEmail(user)
 
