@@ -12,6 +12,8 @@ replace github.com/antonybholmes/go-math => ../go-math
 
 replace github.com/antonybholmes/go-auth => ../go-auth
 
+replace github.com/antonybholmes/go-env => ../go-env
+
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240209230921-59f53127adee
 	github.com/antonybholmes/go-loctogene v0.0.0-20240212213851-df7f19437d05
@@ -22,12 +24,14 @@ require (
 
 require (
 	github.com/antonybholmes/go-auth v0.0.0-00010101000000-000000000000
+	github.com/antonybholmes/go-env v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-gene v0.0.0-20240212213851-916259a63e56
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/rs/zerolog v1.32.0
+	github.com/xyproto/randomstring v1.0.5
 )
 
 require (

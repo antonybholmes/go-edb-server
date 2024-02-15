@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -9,10 +10,14 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/xyproto/randomstring"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/email"
 	"github.com/antonybholmes/go-dna/dnadbcache"
+	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-env"
 	"github.com/antonybholmes/go-loctogene/loctogenedbcache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
@@ -54,10 +59,7 @@ func main() {
 	//e.Use(middleware.Logger())
 
 	// write to both stdout and log file
-	f := os.Getenv("LOG_FILE")
-	if f == "" {
-		f = "logs/app.log"
-	}
+	f := env.GetStr("LOG_FILE", "logs/app.log")
 
 	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 
@@ -97,7 +99,7 @@ func main() {
 	loctogenedbcache.Dir("data/loctogene")
 
 	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, AboutResp{Name: "edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
+		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT, Arch: runtime.GOARCH})
 	})
 
 	e.POST("/register", func(c echo.Context) error {
@@ -158,6 +160,21 @@ func main() {
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {
 		httpPort = "8080"
+	}
+
+	randomstring.Seed()
+
+	email.SetName(os.Getenv("NAME")).SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).SetFrom(env.GetStr("SMTP_FROM", ""))
+
+	log.Debug().Msgf("dd %s", email.From())
+	log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
+
+	code := randomstring.CookieFriendlyString(32)
+
+	err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
+
+	if err != nil {
+		log.Error().Msgf("%s", err)
 	}
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
