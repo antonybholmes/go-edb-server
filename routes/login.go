@@ -85,6 +85,8 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 		return err
 	}
 
+	c.RealIP()
+
 	//email := c.FormValue("email")
 	//password := c.FormValue("password")
 
