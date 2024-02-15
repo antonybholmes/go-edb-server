@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/antonybholmes/go-edb-api/auth"
-	"github.com/antonybholmes/go-utils"
+	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )

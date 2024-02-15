@@ -1,14 +1,17 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
-	"github.com/antonybholmes/go-edb-api/auth"
+	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/golang-jwt/jwt/v5"
@@ -16,7 +19,6 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -31,25 +33,64 @@ func main() {
 	err := godotenv.Load()
 
 	if err != nil {
-		log.Debug("Error loading .env file")
+		log.Fatal().Msgf("Error loading .env file")
 	}
 
 	secret := os.Getenv("JWT_SECRET")
-
 	buildMode := os.Getenv("BUILD")
+
+	//
+	// Set logging to file
+	//
+
+	//log.SetOutput(logFile)
+
+	//
+	// end logging setup
+	//
 
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	//e.Use(middleware.Logger())
+
+	// write to both stdout and log file
+	f := os.Getenv("LOG_FILE")
+	if f == "" {
+		f = "logs/app.log"
+	}
+
+	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
+	defer logFile.Close()
+
+	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
+
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:    true,
+		LogStatus: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			logger.Info().
+				Str("URI", v.URI).
+				Int("status", v.Status).
+				Msg("request")
+
+			return nil
+		},
+	}))
+
 	//e.Use(loggerMiddleware)
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
-	e.Logger.SetLevel(log.DEBUG)
+	//e.Logger.SetLevel(log.DEBUG)
 
 	userdb, err := auth.NewUserDb("data/users.db")
 
 	if err != nil {
-		log.Fatalf("Error loading user db: %s", err)
+		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
 	dnadbcache := dna.NewDNADbCache("data/dna")

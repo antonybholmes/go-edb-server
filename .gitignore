@@ -28,4 +28,6 @@ go-edb-api
 
 data/
 
+logs/
+
 tests.sh

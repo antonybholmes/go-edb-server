@@ -3,8 +3,8 @@ package routes
 import (
 	"fmt"
 
+	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/antonybholmes/go-loctogene"
-	"github.com/antonybholmes/go-utils"
 	"github.com/labstack/echo/v4"
 )
 

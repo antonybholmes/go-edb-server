@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
-	"github.com/antonybholmes/go-utils"
+	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/labstack/echo/v4"
 )
 
