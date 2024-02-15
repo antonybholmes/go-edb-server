@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -42,7 +41,7 @@ func main() {
 	}
 
 	secret := os.Getenv("JWT_SECRET")
-	buildMode := os.Getenv("BUILD")
+	buildMode := env.GetStr("BUILD", "dev")
 
 	//
 	// Set logging to file
@@ -111,7 +110,7 @@ func main() {
 	})
 
 	// Keep some routes for testing purposes during dev
-	if strings.Contains(buildMode, "prod") {
+	if buildMode == "dev" {
 		e.POST("/dna/:assembly", func(c echo.Context) error {
 			return routes.DNARoute(c)
 		})
@@ -162,19 +161,21 @@ func main() {
 		httpPort = "8080"
 	}
 
-	randomstring.Seed()
+	if buildMode == "dev" {
+		randomstring.Seed()
 
-	email.SetName(os.Getenv("NAME")).SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).SetFrom(env.GetStr("SMTP_FROM", ""))
+		email.SetName(os.Getenv("NAME")).SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).SetFrom(env.GetStr("SMTP_FROM", ""))
 
-	log.Debug().Msgf("dd %s", email.From())
-	log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
+		log.Debug().Msgf("dd %s", email.From())
+		log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
 
-	code := randomstring.CookieFriendlyString(32)
+		code := randomstring.CookieFriendlyString(32)
 
-	err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
+		err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
 
-	if err != nil {
-		log.Error().Msgf("%s", err)
+		if err != nil {
+			log.Error().Msgf("%s", err)
+		}
 	}
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
