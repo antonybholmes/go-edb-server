@@ -33,7 +33,6 @@ type AboutResp struct {
 }
 
 type InfoResp struct {
-	ip   string `json:"ip"`
 	Arch string `json:"arch"`
 }
 
@@ -106,7 +105,7 @@ func main() {
 	})
 
 	e.GET("/info", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT, Arch: runtime.GOARCH})
+		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH})
 	})
 
 	e.POST("/register", func(c echo.Context) error {
