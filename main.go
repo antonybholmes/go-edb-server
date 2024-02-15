@@ -30,7 +30,11 @@ type AboutResp struct {
 	Name      string `json:"name"`
 	Copyright string `json:"copyright"`
 	Version   string `json:"version"`
-	Arch      string `json:"arch"`
+}
+
+type InfoResp struct {
+	ip   string `json:"ip"`
+	Arch string `json:"arch"`
 }
 
 func main() {
@@ -98,6 +102,10 @@ func main() {
 	loctogenedbcache.Dir("data/loctogene")
 
 	e.GET("/about", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
+	})
+
+	e.GET("/info", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT, Arch: runtime.GOARCH})
 	})
 
@@ -164,7 +172,10 @@ func main() {
 	if buildMode == "dev" {
 		randomstring.Seed()
 
-		email.SetName(os.Getenv("NAME")).SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).SetFrom(env.GetStr("SMTP_FROM", ""))
+		email.SetName(os.Getenv("NAME")).
+			SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).
+			SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).
+			SetFrom(env.GetStr("SMTP_FROM", ""))
 
 		log.Debug().Msgf("dd %s", email.From())
 		log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
