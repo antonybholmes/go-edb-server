@@ -7,13 +7,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/antonybholmes/go-dna"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/antonybholmes/go-loctogene"
+	"github.com/antonybholmes/go-loctogene/loctogenedbcache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -93,11 +93,11 @@ func main() {
 		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
-	dnadbcache := dna.NewDNADbCache("data/dna")
-	loctogenedbcache := loctogene.NewLoctogeneDbCache("data/loctogene")
+	dnadbcache.Dir("data/dna")
+	loctogenedbcache.Dir("data/loctogene")
 
 	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, AboutResp{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
+		return c.JSON(http.StatusOK, AboutResp{Name: "edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
 	})
 
 	e.POST("/register", func(c echo.Context) error {
@@ -111,19 +111,19 @@ func main() {
 	// Keep some routes for testing purposes during dev
 	if strings.Contains(buildMode, "prod") {
 		e.POST("/dna/:assembly", func(c echo.Context) error {
-			return routes.DNARoute(c, dnadbcache)
+			return routes.DNARoute(c)
 		})
 
 		e.POST("/genes/within/:assembly", func(c echo.Context) error {
-			return routes.WithinGenesRoute(c, loctogenedbcache)
+			return routes.WithinGenesRoute(c)
 		})
 
 		e.POST("/genes/closest/:assembly", func(c echo.Context) error {
-			return routes.ClosestGeneRoute(c, loctogenedbcache)
+			return routes.ClosestGeneRoute(c)
 		})
 
 		e.POST("/annotate/:assembly", func(c echo.Context) error {
-			return routes.AnnotationRoute(c, loctogenedbcache)
+			return routes.AnnotationRoute(c)
 		})
 	}
 
@@ -140,19 +140,19 @@ func main() {
 	r.GET("/info", routes.JWTInfoRoute)
 
 	r.POST("/dna/:assembly", func(c echo.Context) error {
-		return routes.DNARoute(c, dnadbcache)
+		return routes.DNARoute(c)
 	})
 
 	r.POST("/genes/within/:assembly", func(c echo.Context) error {
-		return routes.WithinGenesRoute(c, loctogenedbcache)
+		return routes.WithinGenesRoute(c)
 	})
 
 	r.POST("/genes/closest/:assembly", func(c echo.Context) error {
-		return routes.ClosestGeneRoute(c, loctogenedbcache)
+		return routes.ClosestGeneRoute(c)
 	})
 
 	r.POST("/annotate/:assembly", func(c echo.Context) error {
-		return routes.AnnotationRoute(c, loctogenedbcache)
+		return routes.AnnotationRoute(c)
 	})
 
 	httpPort := os.Getenv("PORT")

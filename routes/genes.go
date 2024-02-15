@@ -5,6 +5,7 @@ import (
 
 	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/antonybholmes/go-loctogene"
+	"github.com/antonybholmes/go-loctogene/loctogenedbcache"
 	"github.com/labstack/echo/v4"
 )
 
@@ -23,7 +24,7 @@ type GenesResponse struct {
 	Genes []*loctogene.GenomicFeatures `json:"genes"`
 }
 
-func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene.LoctogeneDbCache) (*GeneQuery, error) {
+func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 	level := loctogene.Gene
 
 	v := c.QueryParam("level")
@@ -41,14 +42,14 @@ func ParseGeneQuery(c echo.Context, assembly string, loctogenedbcache *loctogene
 	return &GeneQuery{Assembly: assembly, Db: db, Level: level}, nil
 }
 
-func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
+func WithinGenesRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
 		return utils.MakeBadResp(c, err)
 	}
 
-	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
 		return utils.MakeBadResp(c, err)
@@ -69,14 +70,14 @@ func WithinGenesRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCac
 	return utils.MakeDataResp(c, &data)
 }
 
-func ClosestGeneRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
+func ClosestGeneRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
 		return utils.MakeBadResp(c, err)
 	}
 
-	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
 		return utils.MakeBadResp(c, err)

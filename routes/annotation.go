@@ -11,7 +11,6 @@ import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/antonybholmes/go-gene"
-	"github.com/antonybholmes/go-loctogene"
 	"github.com/antonybholmes/go-math"
 	"github.com/labstack/echo/v4"
 )
@@ -48,7 +47,7 @@ func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
 	return dna.NewTSSRegion(uint(s), uint(e))
 }
 
-func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCache) error {
+func AnnotationRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
@@ -58,7 +57,7 @@ func AnnotationRoute(c echo.Context, loctogenedbcache *loctogene.LoctogeneDbCach
 	// limit amount of data returned per request to 1000 entries at a time
 	locations = locations[0:math.IntMin(len(locations), MAX_ANNOTATIONS)]
 
-	query, err := ParseGeneQuery(c, c.Param("assembly"), loctogenedbcache)
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
 		return utils.MakeBadResp(c, err)

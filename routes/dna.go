@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -146,7 +147,7 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 	return &DNAQuery{Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
 }
 
-func DNARoute(c echo.Context, dnadbcache *dna.DNADbCache) error {
+func DNARoute(c echo.Context) error {
 
 	locations, err := ParseLocationsFromPost(c)
 
