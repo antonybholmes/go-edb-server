@@ -1,4 +1,4 @@
-package utils
+package main
 
 import (
 	"net/http"
@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type StatusResp struct {
@@ -24,13 +23,15 @@ type DataResp struct {
 }
 
 func JsonRep[V interface{}](c echo.Context, status int, data V) error {
-	log.Debug().Msgf("aha")
-
 	return c.JSONPretty(status, data, " ")
 }
 
 func MakeBadResp(c echo.Context, err error) error {
 	return JsonRep(c, http.StatusBadRequest, StatusMessageResp{StatusResp: StatusResp{Status: http.StatusBadRequest}, Message: err.Error()})
+}
+
+func BadReq(message ...interface{}) *echo.HTTPError {
+	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
 func MakeDataResp[V interface{}](c echo.Context, data *V) error {

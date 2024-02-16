@@ -1,9 +1,8 @@
-package routes
+package main
 
 import (
 	"fmt"
 
-	"github.com/antonybholmes/go-edb-api/utils"
 	"github.com/antonybholmes/go-loctogene"
 	"github.com/antonybholmes/go-loctogene/loctogenedbcache"
 	"github.com/labstack/echo/v4"
@@ -46,13 +45,13 @@ func WithinGenesRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	data := []*loctogene.GenomicFeatures{}
@@ -61,29 +60,29 @@ func WithinGenesRoute(c echo.Context) error {
 		genes, err := query.Db.WithinGenes(&location, query.Level)
 
 		if err != nil {
-			return utils.MakeBadResp(c, err)
+			return BadReq(err)
 		}
 
 		data = append(data, genes)
 	}
 
-	return utils.MakeDataResp(c, &data)
+	return MakeDataResp(c, &data)
 }
 
 func ClosestGeneRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
-	n := utils.ParseN(c, DEFAULT_CLOSEST_N)
+	n := ParseN(c, DEFAULT_CLOSEST_N)
 
 	data := []*loctogene.GenomicFeatures{}
 
@@ -91,11 +90,11 @@ func ClosestGeneRoute(c echo.Context) error {
 		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
 
 		if err != nil {
-			return utils.MakeBadResp(c, err)
+			return BadReq(err)
 		}
 
 		data = append(data, genes)
 	}
 
-	return utils.MakeDataResp(c, &data)
+	return MakeDataResp(c, &data)
 }

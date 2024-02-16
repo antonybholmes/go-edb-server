@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -9,13 +8,12 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/xyproto/randomstring"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/email"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+
 	"github.com/antonybholmes/go-env"
 	"github.com/antonybholmes/go-loctogene/loctogenedbcache"
 	"github.com/golang-jwt/jwt/v5"
@@ -33,7 +31,8 @@ type AboutResp struct {
 }
 
 type InfoResp struct {
-	Arch string `json:"arch"`
+	IpAddr string `json:"ipAddr"`
+	Arch   string `json:"arch"`
 }
 
 func main() {
@@ -105,62 +104,90 @@ func main() {
 	})
 
 	e.GET("/info", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH})
+		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
-	e.POST("/register", func(c echo.Context) error {
-		return routes.RegisterRoute(c, userdb, secret)
+	group := e.Group("/auth")
+
+	group.POST("/register", func(c echo.Context) error {
+		return RegisterRoute(c, userdb, secret)
 	})
 
-	e.POST("/login", func(c echo.Context) error {
-		return routes.LoginRoute(c, userdb, secret)
+	group.POST("/login", func(c echo.Context) error {
+		return LoginRoute(c, userdb)
 	})
 
 	// Keep some routes for testing purposes during dev
 	if buildMode == "dev" {
 		e.POST("/dna/:assembly", func(c echo.Context) error {
-			return routes.DNARoute(c)
+			return DNARoute(c)
 		})
 
 		e.POST("/genes/within/:assembly", func(c echo.Context) error {
-			return routes.WithinGenesRoute(c)
+			return WithinGenesRoute(c)
 		})
 
 		e.POST("/genes/closest/:assembly", func(c echo.Context) error {
-			return routes.ClosestGeneRoute(c)
+			return ClosestGeneRoute(c)
 		})
 
 		e.POST("/annotate/:assembly", func(c echo.Context) error {
-			return routes.AnnotationRoute(c)
+			return AnnotationRoute(c)
 		})
 	}
 
-	r := e.Group("/auth")
+	group = e.Group("/tokens")
 
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(routes.JwtCustomClaims)
+			return new(JwtCustomClaims)
 		},
 		SigningKey: []byte(secret),
 	}
-	r.Use(echojwt.WithConfig(config))
-	r.GET("/info", routes.JWTInfoRoute)
+	group.Use(echojwt.WithConfig(config))
+	group.Use(JWTCheckMiddleware)
 
-	r.POST("/dna/:assembly", func(c echo.Context) error {
-		return routes.DNARoute(c)
+	group.GET("/info", JWTInfoRoute)
+
+	group.POST("/validate", func(c echo.Context) error {
+		return ValidateTokenRoute(c)
 	})
 
-	r.POST("/genes/within/:assembly", func(c echo.Context) error {
-		return routes.WithinGenesRoute(c)
+	group.POST("/refresh", func(c echo.Context) error {
+		return RefreshTokenRoute(c)
 	})
 
-	r.POST("/genes/closest/:assembly", func(c echo.Context) error {
-		return routes.ClosestGeneRoute(c)
+	group = e.Group("/restricted")
+
+	// Configure middleware with the custom claims type
+	// config := echojwt.Config{
+	// 	NewClaimsFunc: func(c echo.Context) jwt.Claims {
+	// 		return new(JwtCustomClaims)
+	// 	},
+	// 	SigningKey: []byte(secret),
+	// }
+	group.Use(echojwt.WithConfig(config))
+	group.Use(JWTCheckMiddleware)
+
+	group2 := group.Group("/dna")
+
+	group2.POST("/:assembly", func(c echo.Context) error {
+		return DNARoute(c)
 	})
 
-	r.POST("/annotate/:assembly", func(c echo.Context) error {
-		return routes.AnnotationRoute(c)
+	group2 = group.Group("/genes")
+
+	group2.POST("/within/:assembly", func(c echo.Context) error {
+		return WithinGenesRoute(c)
+	})
+
+	group2.POST("/closest/:assembly", func(c echo.Context) error {
+		return ClosestGeneRoute(c)
+	})
+
+	group2.POST("/annotation/:assembly", func(c echo.Context) error {
+		return AnnotationRoute(c)
 	})
 
 	httpPort := os.Getenv("PORT")
@@ -169,23 +196,22 @@ func main() {
 	}
 
 	if buildMode == "dev" {
-		randomstring.Seed()
 
-		email.SetName(os.Getenv("NAME")).
-			SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).
-			SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).
-			SetFrom(env.GetStr("SMTP_FROM", ""))
+		// email.SetName(os.Getenv("NAME")).
+		// 	SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).
+		// 	SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).
+		// 	SetFrom(env.GetStr("SMTP_FROM", ""))
 
 		log.Debug().Msgf("dd %s", email.From())
 		log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
 
-		code := randomstring.CookieFriendlyString(32)
+		//code := auth.AuthCode()
 
-		err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
+		// err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
 
-		if err != nil {
-			log.Error().Msgf("%s", err)
-		}
+		// if err != nil {
+		// 	log.Error().Msgf("%s", err)
+		// }
 	}
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
