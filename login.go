@@ -12,7 +12,11 @@ import (
 )
 
 type JWTResp struct {
-	JWT string `json:"jwt"`
+	Jwt string `json:"jwt"`
+}
+
+type JWTValidResp struct {
+	JwtIsValid bool `json:"jwtIsValid"`
 }
 
 type JWTInfo struct {
@@ -35,6 +39,10 @@ type JwtCustomClaims struct {
 type ReqLogin struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type ReqJwt struct {
+	Jwt string `json:"jwt"`
 }
 
 func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
@@ -130,6 +138,43 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
 	}
 
 	return MakeDataResp(c, &JWTResp{t})
+}
+
+func ValidateTokenRoute(c echo.Context) error {
+	// jwtReq := new(ReqJwt)
+
+	// err := c.Bind(jwtReq)
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	// token, err := jwt.ParseWithClaims(jwtReq.Jwt, &JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// 	return []byte(consts.JWT_SECRET), nil
+	// })
+
+	// if err != nil {
+	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
+	// }
+
+	// claims := token.Claims.(*JwtCustomClaims)
+
+	// user := c.Get("user").(*jwt.Token)
+	// claims := user.Claims.(*JwtCustomClaims)
+
+	// IpAddr := c.RealIP()
+
+	// log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+
+	// //t := claims.ExpiresAt.Unix()
+	// //expired := t != 0 && t < time.Now().Unix()
+
+	// if IpAddr != claims.IpAddr {
+	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
+	// }
+
+	return MakeDataResp(c, &JWTValidResp{JwtIsValid: true})
+
 }
 
 func RefreshTokenRoute(c echo.Context) error {

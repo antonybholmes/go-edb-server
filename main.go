@@ -136,7 +136,7 @@ func main() {
 		})
 	}
 
-	group = e.Group("/restricted")
+	group = e.Group("/tokens")
 
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
@@ -150,9 +150,25 @@ func main() {
 
 	group.GET("/info", JWTInfoRoute)
 
+	group.POST("/validate", func(c echo.Context) error {
+		return ValidateTokenRoute(c)
+	})
+
 	group.POST("/refresh", func(c echo.Context) error {
 		return RefreshTokenRoute(c)
 	})
+
+	group = e.Group("/restricted")
+
+	// Configure middleware with the custom claims type
+	// config := echojwt.Config{
+	// 	NewClaimsFunc: func(c echo.Context) jwt.Claims {
+	// 		return new(JwtCustomClaims)
+	// 	},
+	// 	SigningKey: []byte(secret),
+	// }
+	group.Use(echojwt.WithConfig(config))
+	group.Use(JWTCheckMiddleware)
 
 	group2 := group.Group("/dna")
 
