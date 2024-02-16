@@ -15,17 +15,17 @@ replace github.com/antonybholmes/go-auth => ../go-auth
 replace github.com/antonybholmes/go-env => ../go-env
 
 require (
-	github.com/antonybholmes/go-dna v0.0.0-20240209230921-59f53127adee
-	github.com/antonybholmes/go-loctogene v0.0.0-20240212213851-df7f19437d05
-	github.com/antonybholmes/go-math v0.0.0-20240213145036-a7139ef7ca84
+	github.com/antonybholmes/go-dna v0.0.0-20240215223821-4bcce26db858
+	github.com/antonybholmes/go-loctogene v0.0.0-20240215223819-7403c05c0d59
+	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-00010101000000-000000000000
-	github.com/antonybholmes/go-env v0.0.0-00010101000000-000000000000
-	github.com/antonybholmes/go-gene v0.0.0-20240212213851-916259a63e56
+	github.com/antonybholmes/go-auth v0.0.0-20240215223821-7bcbfa074410
+	github.com/antonybholmes/go-env v0.0.0-20240215224307-9d539df5e1e3
+	github.com/antonybholmes/go-gene v0.0.0-20240215173251-9939183c3474
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
