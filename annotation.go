@@ -1,4 +1,4 @@
-package routes
+package main
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
-	"github.com/antonybholmes/go-edb-api/utils"
+
 	"github.com/antonybholmes/go-gene"
 	"github.com/antonybholmes/go-math"
 	"github.com/labstack/echo/v4"
@@ -51,7 +51,7 @@ func AnnotationRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
@@ -60,14 +60,14 @@ func AnnotationRoute(c echo.Context) error {
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
-	n := utils.ParseN(c, DEFAULT_CLOSEST_N)
+	n := ParseN(c, DEFAULT_CLOSEST_N)
 
 	tssRegion := ParseTSSRegion(c)
 
-	output := utils.ParseOutput(c)
+	output := ParseOutput(c)
 
 	annotationDb := gene.NewAnnotateDb(query.Db, tssRegion, n)
 
@@ -78,7 +78,7 @@ func AnnotationRoute(c echo.Context) error {
 		annotations, err := annotationDb.Annotate(&location)
 
 		if err != nil {
-			return utils.MakeBadResp(c, err)
+			return BadReq(err)
 		}
 
 		data = append(data, annotations)
@@ -88,7 +88,7 @@ func AnnotationRoute(c echo.Context) error {
 		tsv, err := MakeGeneTable(data, tssRegion)
 
 		if err != nil {
-			return utils.MakeBadResp(c, err)
+			return BadReq(err)
 		}
 
 		return c.String(http.StatusOK, tsv)

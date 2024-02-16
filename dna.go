@@ -1,4 +1,4 @@
-package routes
+package main
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-dna/dnadbcache"
-	"github.com/antonybholmes/go-edb-api/utils"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -152,7 +152,7 @@ func DNARoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	assembly := c.Param("assembly")
@@ -160,7 +160,7 @@ func DNARoute(c echo.Context) error {
 	query, err := ParseDNAQuery(c)
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
@@ -168,7 +168,7 @@ func DNARoute(c echo.Context) error {
 	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
 
 	if err != nil {
-		return utils.MakeBadResp(c, err)
+		return BadReq(err)
 	}
 
 	seqs := []*DNA{}
@@ -177,7 +177,7 @@ func DNARoute(c echo.Context) error {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
 
 		if err != nil {
-			return utils.MakeBadResp(c, err)
+			return BadReq(err)
 		}
 
 		seqs = append(seqs, &DNA{Location: &location, DNA: dna})
@@ -185,5 +185,5 @@ func DNARoute(c echo.Context) error {
 
 	//c.Logger().Debugf("%s", dna)
 
-	return utils.MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
+	return MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
 }
