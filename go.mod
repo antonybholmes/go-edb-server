@@ -23,8 +23,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240215223821-7bcbfa074410
-	github.com/antonybholmes/go-env v0.0.0-20240215224307-9d539df5e1e3
+	github.com/antonybholmes/go-auth v0.0.0-20240216174519-e2b91aa3c33d
+	github.com/antonybholmes/go-env v0.0.0-20240216174519-d83d9222e5a7
 	github.com/antonybholmes/go-gene v0.0.0-20240215173251-9939183c3474
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/joho/godotenv v1.5.1

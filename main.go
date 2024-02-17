@@ -107,7 +107,7 @@ func main() {
 		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
-	group := e.Group("/auth")
+	group := e.Group("/users")
 
 	group.POST("/register", func(c echo.Context) error {
 		return RegisterRoute(c, userdb, secret)

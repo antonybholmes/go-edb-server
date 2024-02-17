@@ -66,7 +66,7 @@ func WithinGenesRoute(c echo.Context) error {
 		data = append(data, genes)
 	}
 
-	return MakeDataResp(c, &data)
+	return MakeDataResp(c, "", &data)
 }
 
 func ClosestGeneRoute(c echo.Context) error {
@@ -96,5 +96,5 @@ func ClosestGeneRoute(c echo.Context) error {
 		data = append(data, genes)
 	}
 
-	return MakeDataResp(c, &data)
+	return MakeDataResp(c, "", &data)
 }

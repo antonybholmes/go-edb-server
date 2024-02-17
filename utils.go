@@ -13,12 +13,12 @@ type StatusResp struct {
 }
 
 type StatusMessageResp struct {
-	StatusResp
+	Status  int    `json:"status"`
 	Message string `json:"message"`
 }
 
 type DataResp struct {
-	StatusResp
+	StatusMessageResp
 	Data interface{} `json:"data"`
 }
 
@@ -26,16 +26,16 @@ func JsonRep[V interface{}](c echo.Context, status int, data V) error {
 	return c.JSONPretty(status, data, " ")
 }
 
-func MakeBadResp(c echo.Context, err error) error {
-	return JsonRep(c, http.StatusBadRequest, StatusMessageResp{StatusResp: StatusResp{Status: http.StatusBadRequest}, Message: err.Error()})
-}
+// func MakeBadResp(c echo.Context, err error) error {
+// 	return JsonRep(c, http.StatusBadRequest, StatusResp{StatusResp: StatusResp{Status: http.StatusBadRequest}, Message: err.Error()})
+// }
 
 func BadReq(message ...interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
-func MakeDataResp[V interface{}](c echo.Context, data *V) error {
-	return JsonRep(c, http.StatusOK, DataResp{StatusResp: StatusResp{Status: http.StatusOK}, Data: data})
+func MakeDataResp(c echo.Context, message string, data interface{}) error {
+	return JsonRep(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
 }
 
 // parsedLocation takes an echo context and attempts to extract parameters

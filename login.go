@@ -1,10 +1,13 @@
 package main
 
 import (
-	"net/http"
+	"bytes"
+	"fmt"
+	"html/template"
 	"time"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/email"
 	"github.com/antonybholmes/go-edb-api/consts"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -36,19 +39,14 @@ type JwtCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-type ReqLogin struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 type ReqJwt struct {
 	Jwt string `json:"jwt"`
 }
 
 func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
-	login := new(ReqLogin)
+	req := new(auth.LoginWebReq)
 
-	err := c.Bind(login)
+	err := c.Bind(req)
 
 	if err != nil {
 		return err
@@ -57,41 +55,85 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	//email := c.FormValue("email")
 	//password := c.FormValue("password")
 
-	user := auth.NewLoginUser(login.Email, login.Password)
+	user := auth.NewLoginUser(req.Name, req.Email, req.Password)
 
-	authUser, err := userdb.CreateUser(user)
+	otp := auth.AuthCode()
 
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	// Set custom claims
-	claims := &JwtCustomClaims{
-		UserId: authUser.UserId,
-		//Email: authUser.Email,
-		IpAddr: c.RealIP(),
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * auth.JWT_TOKEN_EXPIRES_HOURS)),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(secret))
+	_, err = userdb.CreateUser(user, otp)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return BadReq(err)
 	}
 
-	return MakeDataResp(c, &JWTResp{t}) //c.JSON(http.StatusOK, JWTResp{t})
+	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	var body bytes.Buffer
+	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%s\n\n", mimeHeaders)))
+
+	var f string
+
+	if req.Url != "" {
+		f = "templates/verification/web.html"
+	} else {
+		f = "templates/verification/api.html"
+	}
+
+	t, err := template.ParseFiles(f)
+
+	if err != nil {
+		return BadReq(err)
+	}
+
+	if req.Url != "" {
+		t.Execute(&body, struct {
+			Name string
+			Link string
+		}{
+			Name: user.Name,
+			Link: fmt.Sprintf("%sotp=%s", req.Url, otp),
+		})
+	} else {
+		t.Execute(&body, struct {
+			Name string
+			Code string
+		}{
+			Name: user.Name,
+			Code: otp,
+		})
+	}
+
+	err = email.SendEmail(user.Email, body.Bytes())
+
+	// if err != nil {
+	// 	log.Error().Msgf("%s", err)
+	// }
+
+	// // Set custom claims
+	// claims := &JwtCustomClaims{
+	// 	UserId: authUser.UserId,
+	// 	//Email: authUser.Email,
+	// 	IpAddr: c.RealIP(),
+	// 	RegisteredClaims: jwt.RegisteredClaims{
+	// 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * auth.JWT_TOKEN_EXPIRES_HOURS)),
+	// 	},
+	// }
+
+	// // Create token with claims
+	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// // Generate encoded token and send it as response.
+	// t, err := token.SignedString([]byte(secret))
+
+	// if err != nil {
+	// 	return echo.NewHTTPError(http.StatusBadRequest, err)
+	// }
+
+	return MakeDataResp(c, "verification email sent", []string{}) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
-	login := new(ReqLogin)
+	req := new(auth.LoginReq)
 
-	err := c.Bind(login)
+	err := c.Bind(req)
 
 	if err != nil {
 		return err
@@ -100,7 +142,7 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
 	//email := c.FormValue("email")
 	//password := c.FormValue("password")
 
-	user := auth.NewLoginUser(login.Email, login.Password)
+	user := auth.LoginUserFromReq(req)
 
 	authUser, err := userdb.FindUserByEmail(user)
 
@@ -137,7 +179,7 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
 		return BadReq("error signing token")
 	}
 
-	return MakeDataResp(c, &JWTResp{t})
+	return MakeDataResp(c, "", &JWTResp{t})
 }
 
 func ValidateTokenRoute(c echo.Context) error {
@@ -173,7 +215,7 @@ func ValidateTokenRoute(c echo.Context) error {
 	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
 	// }
 
-	return MakeDataResp(c, &JWTValidResp{JwtIsValid: true})
+	return MakeDataResp(c, "", &JWTValidResp{JwtIsValid: true})
 
 }
 
@@ -206,7 +248,7 @@ func RefreshTokenRoute(c echo.Context) error {
 		return BadReq("error signing token")
 	}
 
-	return MakeDataResp(c, &JWTResp{t})
+	return MakeDataResp(c, "", &JWTResp{t})
 }
 
 func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
@@ -222,5 +264,5 @@ func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
 func JWTInfoRoute(c echo.Context) error {
 	info := GetJwtInfoFromRoute(c)
 
-	return MakeDataResp(c, info)
+	return MakeDataResp(c, "", info)
 }
