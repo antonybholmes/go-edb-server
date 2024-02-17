@@ -44,7 +44,7 @@ type ReqJwt struct {
 }
 
 func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
-	req := new(auth.LoginWebReq)
+	req := new(auth.LoginReq)
 
 	err := c.Bind(req)
 
@@ -69,39 +69,51 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	var body bytes.Buffer
 	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%s\n\n", mimeHeaders)))
 
-	var f string
+	var file string
 
 	if req.Url != "" {
-		f = "templates/verification/web.html"
+		file = "templates/verification/web.html"
 	} else {
-		f = "templates/verification/api.html"
+		file = "templates/verification/api.html"
 	}
 
-	t, err := template.ParseFiles(f)
+	t, err := template.ParseFiles(file)
 
 	if err != nil {
 		return BadReq(err)
 	}
 
 	if req.Url != "" {
-		t.Execute(&body, struct {
+		err = t.Execute(&body, struct {
 			Name string
 			Link string
 		}{
 			Name: user.Name,
 			Link: fmt.Sprintf("%sotp=%s", req.Url, otp),
 		})
+
+		if err != nil {
+			return BadReq(err)
+		}
 	} else {
-		t.Execute(&body, struct {
+		err = t.Execute(&body, struct {
 			Name string
 			Code string
 		}{
 			Name: user.Name,
 			Code: otp,
 		})
+
+		if err != nil {
+			return BadReq(err)
+		}
 	}
 
 	err = email.SendEmail(user.Email, body.Bytes())
+
+	if err != nil {
+		return BadReq(err)
+	}
 
 	// if err != nil {
 	// 	log.Error().Msgf("%s", err)
@@ -127,7 +139,7 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	// 	return echo.NewHTTPError(http.StatusBadRequest, err)
 	// }
 
-	return MakeDataResp(c, "verification email sent", []string{}) //c.JSON(http.StatusOK, JWTResp{t})
+	return MakeDataResp(c, "verification email sent", &[]string{}) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func LoginRoute(c echo.Context, userdb *auth.UserDb) error {

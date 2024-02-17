@@ -34,7 +34,7 @@ func BadReq(message ...interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
-func MakeDataResp(c echo.Context, message string, data interface{}) error {
+func MakeDataResp[V interface{}](c echo.Context, message string, data *V) error {
 	return JsonRep(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
 }
 

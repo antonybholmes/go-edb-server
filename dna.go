@@ -185,5 +185,5 @@ func DNARoute(c echo.Context) error {
 
 	//c.Logger().Debugf("%s", dna)
 
-	return MakeDataResp(c, &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
+	return MakeDataResp(c, "", &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
 }
