@@ -113,7 +113,9 @@ func main() {
 		return routes.Signup(c, userdb, consts.JWT_SECRET)
 	})
 
-	authGroup := group.Group("/auth")
+	group.POST("/login", func(c echo.Context) error {
+		return routes.LoginRoute(c)
+	})
 
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
@@ -122,15 +124,14 @@ func main() {
 		},
 		SigningKey: []byte(consts.JWT_SECRET),
 	}
+
+	// we need to verify some user info using jwts
+	authGroup := group.Group("/")
 	authGroup.Use(echojwt.WithConfig(config))
 	//authGroup.Use(JwtOtpCheckMiddleware)
 
 	authGroup.POST("/verify", func(c echo.Context) error {
 		return routes.Verification(c)
-	})
-
-	group.POST("/login", func(c echo.Context) error {
-		return routes.LoginRoute(c)
 	})
 
 	// Keep some routes for testing purposes during dev

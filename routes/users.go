@@ -43,7 +43,7 @@ type ReqJwt struct {
 }
 
 func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
-	req := new(auth.LoginReq)
+	req := new(auth.SignupReq)
 
 	err := c.Bind(req)
 
@@ -54,7 +54,7 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 	//email := c.FormValue("email")
 	//password := c.FormValue("password")
 
-	loginUser := auth.NewLoginUser(req.Name, req.Email, req.Password)
+	loginUser := auth.NewSignupUser(req.Name, req.Email, req.Password)
 
 	log.Debug().Msgf("%s", loginUser)
 
@@ -227,7 +227,7 @@ func LoginRoute(c echo.Context) error {
 
 	user := auth.LoginUserFromReq(req)
 
-	authUser, err := users.FindUserByEmail(user)
+	authUser, err := users.FindUserByEmail(user.Email)
 
 	if err != nil {
 		return BadReq("user does not exist")
@@ -262,7 +262,9 @@ func LoginRoute(c echo.Context) error {
 		return BadReq("error signing token")
 	}
 
-	return MakeDataResp(c, "", &JwtResp{t})
+	return MakeDataResp(c, "", &LoginResp{JwtResp: JwtResp{Jwt: t},
+		PublicUser: auth.PublicUser{UserId: authUser.UserId,
+			User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
 }
 
 func ValidateTokenRoute(c echo.Context) error {

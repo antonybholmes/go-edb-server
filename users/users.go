@@ -18,12 +18,12 @@ func init() {
 	}
 }
 
-func CreateUser(user *auth.LoginUser, otp string) (*auth.AuthUser, error) {
+func CreateUser(user *auth.SignupUser, otp string) (*auth.AuthUser, error) {
 	return USERS.CreateUser(user, otp)
 }
 
-func FindUserByEmail(user *auth.LoginUser) (*auth.AuthUser, error) {
-	return USERS.FindUserByEmail(user)
+func FindUserByEmail(email string) (*auth.AuthUser, error) {
+	return USERS.FindUserByEmail(email)
 }
 
 func FindUserById(user string) (*auth.AuthUser, error) {
