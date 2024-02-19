@@ -1,267 +1,218 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
 
-	"github.com/antonybholmes/go-dna"
-	geneann "github.com/antonybholmes/go-gene-annotation"
-	"github.com/antonybholmes/go-loctogene"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
+	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/email"
+	"github.com/antonybholmes/go-dna/dnadbcache"
+	"github.com/antonybholmes/go-edb-api/consts"
+	"github.com/antonybholmes/go-edb-api/routes"
+
+	"github.com/antonybholmes/go-env"
+	"github.com/antonybholmes/go-gene/genedbcache"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type StatusMessage struct {
-	Message string `json:"message"`
-	Status  int    `json:"status"`
+type AboutResp struct {
+	Name      string `json:"name"`
+	Copyright string `json:"copyright"`
+	Version   string `json:"version"`
 }
 
-type DNA struct {
-	Assembly string `json:"assembly"`
-	Location string `json:"location"`
-	DNA      string `json:"dna"`
-}
-
-type DNAResponse struct {
-	Message string `json:"message"`
-	Status  int    `json:"status"`
-	Data    *DNA   `json:"data"`
-}
-
-type GenesResponse struct {
-	Message string                     `json:"message"`
-	Status  int                        `json:"status"`
-	Data    *loctogene.GenomicFeatures `json:"data"`
-}
-
-type AnnotationResponse struct {
-	Message string                  `json:"message"`
-	Status  int                     `json:"status"`
-	Data    *geneann.GeneAnnotation `json:"data"`
-}
-
-type ReqLocs struct {
-	Locations []dna.Location `json:"locations"`
+type InfoResp struct {
+	IpAddr string `json:"ipAddr"`
+	Arch   string `json:"arch"`
 }
 
 func main() {
-	//zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Error().Msgf("Error loading .env file")
+	}
+
+	secret := os.Getenv("JWT_SECRET")
+	buildMode := env.GetStr("BUILD", "dev")
+
+	//
+	// Set logging to file
+	//
+
+	//log.SetOutput(logFile)
+
+	//
+	// end logging setup
+	//
 
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	//e.Use(middleware.Logger())
+
+	// write to both stdout and log file
+	f := env.GetStr("LOG_FILE", "logs/app.log")
+
+	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
+	defer logFile.Close()
+
+	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
+
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:    true,
+		LogStatus: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			logger.Info().
+				Str("URI", v.URI).
+				Int("status", v.Status).
+				Msg("request")
+
+			return nil
+		},
+	}))
+
 	//e.Use(loggerMiddleware)
 	e.Use(middleware.Recover())
-	//e.Use(middleware.CORS())
-	e.Logger.SetLevel(log.DEBUG)
+	e.Use(middleware.CORS())
+	//e.Logger.SetLevel(log.DEBUG)
 
-	modulesDir := os.Getenv("MODULESDIR")
-	if modulesDir == "" {
-		modulesDir = "data/"
+	userdb, err := auth.NewUserDb("data/users.db")
+
+	if err != nil {
+		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
-	e.GET("/", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct {
-			Name    string `json:"name"`
-			Version string `json:"version"`
-		}{Name: "go-edb-api", Version: "1.0.0"})
-	})
+	dnadbcache.Dir("data/dna")
+	genedbcache.Dir("data/gene")
 
 	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct {
-			Name      string `json:"name"`
-			Copyright string `json:"copyright"`
-			Version   string `json:"version"`
-			Arch      string `json:"arch"`
-		}{Name: "go-edb-api", Version: "1.0.0", Copyright: "Copyright (C) 2024 Antony Holmes", Arch: runtime.GOARCH})
+		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
 	})
 
-	e.GET("v1/dna", func(c echo.Context) error {
-		query, err := parseDNAQuery(c, modulesDir)
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-		}
-
-		//c.Logger().Debugf("%s %s", query.Loc, query.Dir)
-
-		dnadb := dna.NewDNADB(query.Dir)
-
-		dna, err := dnadb.GetDNA(query.Loc, query.Rev, query.Comp)
-
-		//c.Logger().Debugf("%s", dna)
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: fmt.Sprintf("%s is not a valid chromosome", query.Loc.Chr)})
-		}
-
-		return c.JSON(http.StatusOK, DNAResponse{Status: http.StatusOK, Message: "", Data: &DNA{Assembly: query.Assembly, Location: query.Loc.String(), DNA: dna}})
+	e.GET("/info", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
-	e.GET("v1/genes/within/:assembly", func(c echo.Context) error {
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
+	group := e.Group("/users")
 
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-		}
-
-		genes, err := query.DB.WithinGenes(query.Loc, query.Level)
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
-		}
-
-		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
+	group.POST("/register", func(c echo.Context) error {
+		return routes.RegisterRoute(c, userdb, secret)
 	})
 
-	e.GET("v1/genes/closest/:assembly", func(c echo.Context) error {
-
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-		}
-
-		n := parseN(c)
-
-		genes, err := query.DB.ClosestGenes(query.Loc, n, query.Level)
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
-		}
-
-		return c.JSON(http.StatusOK, GenesResponse{Status: http.StatusOK, Message: "", Data: genes})
+	group.POST("/login", func(c echo.Context) error {
+		return routes.LoginRoute(c, userdb)
 	})
 
-	type BodyLocations struct {
-		Locations []string `form:"locations" json:"locations"`
+	// Keep some routes for testing purposes during dev
+	if buildMode == "dev" {
+		e.POST("/dna/:assembly", func(c echo.Context) error {
+			return routes.DNARoute(c)
+		})
+
+		e.POST("/genes/within/:assembly", func(c echo.Context) error {
+			return routes.WithinGenesRoute(c)
+		})
+
+		e.POST("/genes/closest/:assembly", func(c echo.Context) error {
+			return routes.ClosestGeneRoute(c)
+		})
+
+		e.POST("/annotate/:assembly", func(c echo.Context) error {
+			return routes.AnnotationRoute(c)
+		})
 	}
 
-	e.POST("v1/annotation/:assembly", func(c echo.Context) error {
-		var err error
-		locs := new(ReqLocs)
+	group = e.Group("/tokens")
 
-		err = c.Bind(locs)
+	// Configure middleware with the custom claims type
+	config := echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(routes.JwtCustomClaims)
+		},
+		SigningKey: []byte(secret),
+	}
+	group.Use(echojwt.WithConfig(config))
+	group.Use(JWTCheckMiddleware)
 
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-		}
+	group.GET("/info", routes.JWTInfoRoute)
 
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-		}
-
-		locations := locs.Locations
-
-		query, err := parseGeneQuery(c, modulesDir, c.Param("assembly"))
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: err.Error()})
-		}
-
-		n := parseN(c)
-
-		tssRegion := dna.NewTSSRegion(2000, 1000)
-
-		annotationDB := geneann.NewAnnotate(query.DB, tssRegion, n)
-
-		annotations, err := annotationDB.Annotate(&locations[0])
-
-		if err != nil {
-			c.Logger().Debugf("%s", err)
-			return c.JSON(http.StatusBadRequest, StatusMessage{Status: http.StatusBadRequest, Message: "there was an error with the database query"})
-		}
-
-		return c.JSON(http.StatusOK, AnnotationResponse{Status: http.StatusOK, Message: "", Data: annotations})
+	group.POST("/validate", func(c echo.Context) error {
+		return routes.ValidateTokenRoute(c)
 	})
 
-	// e.POST("/genes/within", func(c echo.Context) error {
-	// 	jsonBody := make(map[string]interface{})
+	group.POST("/refresh", func(c echo.Context) error {
+		return routes.RefreshTokenRoute(c)
+	})
 
-	// 	json.NewDecoder(c.Request().Body).Decode(&jsonBody)
+	group = e.Group("/restricted")
 
-	// 	chr := DEFAULT_CHR
-	// 	var ok bool
+	// Configure middleware with the custom claims type
+	// config := echojwt.Config{
+	// 	NewClaimsFunc: func(c echo.Context) jwt.Claims {
+	// 		return new(JwtCustomClaims)
+	// 	},
+	// 	SigningKey: []byte(secret),
+	// }
+	group.Use(echojwt.WithConfig(config))
+	group.Use(JWTCheckMiddleware)
 
-	// 	_, ok = jsonBody["chr"]
+	group2 := group.Group("/dna")
 
-	// 	if ok {
-	// 		c.Logger().Info("chr set through body.")
-	// 		chr = jsonBody["chr"].(string)
-	// 	} else {
-	// 		c.Logger().Warn("chr not set through body, using default.")
-	// 	}
+	group2.POST("/:assembly", func(c echo.Context) error {
+		return routes.DNARoute(c)
+	})
 
-	// 	start := DEFAULT_START
+	group2 = group.Group("/genes")
 
-	// 	_, ok = jsonBody["start"]
+	group2.POST("/within/:assembly", func(c echo.Context) error {
+		return routes.WithinGenesRoute(c)
+	})
 
-	// 	if ok {
-	// 		c.Logger().Info("start set through body.")
-	// 		start = jsonBody["start"].(int)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("start not set, using default %d.", DEFAULT_START))
-	// 	}
+	group2.POST("/closest/:assembly", func(c echo.Context) error {
+		return routes.ClosestGeneRoute(c)
+	})
 
-	// 	end := DEFAULT_END
-
-	// 	_, ok = jsonBody["end"]
-
-	// 	if ok {
-	// 		c.Logger().Info("end set through body.")
-	// 		end = jsonBody["end"].(int)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("end not set, using default %d.", DEFAULT_END))
-	// 	}
-
-	// 	assembly := DEFAULT_ASSEMBLY
-
-	// 	_, ok = jsonBody["assembly"]
-
-	// 	if ok {
-	// 		c.Logger().Info("assembly set through body.")
-	// 		assembly = jsonBody["assembly"].(string)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("assembly not set, using default %s.", DEFAULT_ASSEMBLY))
-	// 	}
-
-	// 	level := DEFAULT_LEVEL
-
-	// 	_, ok = jsonBody["level"]
-
-	// 	if ok {
-	// 		c.Logger().Info("level set through body.")
-	// 		level = jsonBody["level"].(int)
-	// 	} else {
-	// 		c.Logger().Warn(fmt.Sprintf("level not set, using default %d.", DEFAULT_LEVEL))
-	// 	}
-
-	// 	c.Logger().Info(fmt.Sprintf("loc: %s:%d-%d on %s", chr, start, end, assembly))
-
-	// 	db, err := loctogene.GetDB(fmt.Sprintf("data/modules/loctogene/%s.db", assembly))
-
-	// 	if err != nil {
-	// 		return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "DB error"})
-	// 	}
-
-	// 	loc := loctogene.Location{Chr: chr, Start: start, End: end}
-
-	// 	genes, err := loctogene.GetGenesWithin(db, &loc, level)
-
-	// 	if err != nil {
-	// 		return c.JSON(http.StatusInternalServerError, struct{ Status string }{Status: "Error"})
-	// 	}
-
-	// 	return c.JSON(http.StatusOK, genes)
-	// })
+	group2.POST("/annotation/:assembly", func(c echo.Context) error {
+		return routes.AnnotationRoute(c)
+	})
 
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {
 		httpPort = "8080"
+	}
+
+	if buildMode == "dev" {
+
+		// email.SetName(os.Getenv("NAME")).
+		// 	SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).
+		// 	SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).
+		// 	SetFrom(env.GetStr("SMTP_FROM", ""))
+
+		log.Debug().Msgf("dd %s", email.From())
+		log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
+
+		//code := auth.AuthCode()
+
+		// err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
+
+		// if err != nil {
+		// 	log.Error().Msgf("%s", err)
+		// }
 	}
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
