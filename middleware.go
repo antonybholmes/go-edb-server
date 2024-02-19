@@ -16,7 +16,7 @@ func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		IpAddr := c.RealIP()
 
-		log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+		//log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
 
 		//t := claims.ExpiresAt.Unix()
 		//expired := t != 0 && t < time.Now().Unix()

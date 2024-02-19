@@ -30,6 +30,6 @@ func FindUserById(user string) (*auth.AuthUser, error) {
 	return USERS.FindUserById(user)
 }
 
-func SetIsVerified(user string) bool {
+func SetIsVerified(user string) error {
 	return USERS.SetIsVerified(user)
 }

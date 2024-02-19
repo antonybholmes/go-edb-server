@@ -2,8 +2,8 @@ package routes
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,15 +16,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type JWTResp struct {
+type JwtResp struct {
 	Jwt string `json:"jwt"`
 }
 
-type JWTValidResp struct {
+type LoginResp struct {
+	auth.PublicUser
+	JwtResp
+}
+
+type JwtValidResp struct {
 	JwtIsValid bool `json:"jwtIsValid"`
 }
 
-type JWTInfo struct {
+type JwtInfo struct {
 	UserId string `json:"userId"`
 	//Name  string `json:"name"`
 	//Email   string `json:"email"`
@@ -61,6 +66,10 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 		return BadReq(err)
 	}
 
+	if authUser.IsVerified {
+		return BadReq("user is already verified")
+	}
+
 	otpJwt, err := auth.CreateOtpJwt(authUser, otp, c.RealIP(), consts.JWT_SECRET)
 
 	log.Debug().Msgf("%s", otpJwt)
@@ -87,14 +96,36 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 
 	firstName := strings.Split(authUser.Name, " ")[0]
 
-	if req.Url != "" {
+	if req.CallbackUrl != "" {
+		callbackUrl, err := url.Parse(req.CallbackUrl)
+
+		if err != nil {
+			return BadReq(err)
+		}
+
+		params, err := url.ParseQuery(callbackUrl.RawQuery)
+
+		if err != nil {
+			return BadReq(err)
+		}
+
+		if req.Url != "" {
+			params.Set("url", req.Url)
+		}
+
+		params.Set("otp", otpJwt)
+
+		callbackUrl.RawQuery = params.Encode()
+
+		link := callbackUrl.String()
+
 		err = t.Execute(&body, struct {
 			Name string
 			Link string
 			From string
 		}{
 			Name: firstName,
-			Link: fmt.Sprintf("%sotp=%s&url=%s", req.CallbackUrl, otpJwt, req.Url),
+			Link: link,
 			From: consts.NAME,
 		})
 
@@ -161,18 +192,25 @@ func Verification(c echo.Context) error {
 	authUser, err := users.FindUserById(claims.UserId)
 
 	if err != nil {
-		return BadReq(err)
+		return MakeSuccessResp(c, "user not found", false)
+	}
+
+	// if verified, stop and just return true
+	if authUser.IsVerified {
+		return MakeSuccessResp(c, "", true)
 	}
 
 	if authUser.OTP != claims.OTP {
-		return BadReq("error: wrong otp code")
+		return MakeSuccessResp(c, "error: wrong otp code", false)
 	}
 
-	if !users.SetIsVerified(authUser.UserId) {
-		return BadReq("unable to verify user")
+	err = users.SetIsVerified(authUser.UserId)
+
+	if err != nil {
+		return MakeSuccessResp(c, "unable to verify user", false)
 	}
 
-	return MakeDataResp(c, "user was verified", &[]string{}) //c.JSON(http.StatusOK, JWTResp{t})
+	return MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func LoginRoute(c echo.Context) error {
@@ -224,7 +262,7 @@ func LoginRoute(c echo.Context) error {
 		return BadReq("error signing token")
 	}
 
-	return MakeDataResp(c, "", &JWTResp{t})
+	return MakeDataResp(c, "", &JwtResp{t})
 }
 
 func ValidateTokenRoute(c echo.Context) error {
@@ -260,7 +298,7 @@ func ValidateTokenRoute(c echo.Context) error {
 	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
 	// }
 
-	return MakeDataResp(c, "", &JWTValidResp{JwtIsValid: true})
+	return MakeDataResp(c, "", &JwtValidResp{JwtIsValid: true})
 
 }
 
@@ -293,17 +331,17 @@ func RefreshTokenRoute(c echo.Context) error {
 		return BadReq("error signing token")
 	}
 
-	return MakeDataResp(c, "", &JWTResp{t})
+	return MakeDataResp(c, "", &JwtResp{t})
 }
 
-func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
+func GetJwtInfoFromRoute(c echo.Context) *JwtInfo {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtCustomClaims)
 
 	t := claims.ExpiresAt.Unix()
 	expired := t != 0 && t < time.Now().Unix()
 
-	return &JWTInfo{UserId: claims.UserId, IpAddr: claims.IpAddr, Expires: time.Unix(t, 0).String(), Expired: expired}
+	return &JwtInfo{UserId: claims.UserId, IpAddr: claims.IpAddr, Expires: time.Unix(t, 0).String(), Expired: expired}
 }
 
 func JWTInfoRoute(c echo.Context) error {

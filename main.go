@@ -17,7 +17,6 @@ import (
 	"github.com/antonybholmes/go-env"
 	"github.com/antonybholmes/go-gene/genedbcache"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -36,11 +35,13 @@ type InfoResp struct {
 }
 
 func main() {
-	err := godotenv.Load()
+	err := env.Load()
 
 	if err != nil {
 		log.Error().Msgf("Error loading .env file")
 	}
+
+	env.Ls()
 
 	buildMode := env.GetStr("BUILD", "dev")
 
@@ -122,7 +123,7 @@ func main() {
 		SigningKey: []byte(consts.JWT_SECRET),
 	}
 	authGroup.Use(echojwt.WithConfig(config))
-	authGroup.Use(JwtOtpCheckMiddleware)
+	//authGroup.Use(JwtOtpCheckMiddleware)
 
 	authGroup.POST("/verify", func(c echo.Context) error {
 		return routes.Verification(c)
@@ -161,7 +162,7 @@ func main() {
 		SigningKey: []byte(consts.JWT_SECRET),
 	}
 	group.Use(echojwt.WithConfig(config))
-	group.Use(JwtCheckMiddleware)
+	//group.Use(JwtCheckMiddleware)
 
 	group.GET("/info", routes.JWTInfoRoute)
 
@@ -179,7 +180,7 @@ func main() {
 	//authGroup.Use(JwtCheckMiddleware)
 
 	group.Use(echojwt.WithConfig(config))
-	group.Use(JwtCheckMiddleware)
+	//group.Use(JwtCheckMiddleware)
 
 	//authGroup = group.Group("/dna")
 

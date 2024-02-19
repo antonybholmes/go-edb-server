@@ -22,6 +22,10 @@ type DataResp struct {
 	Data interface{} `json:"data"`
 }
 
+type SuccessResp struct {
+	Success bool `json:"success"`
+}
+
 func JsonRep[V interface{}](c echo.Context, status int, data V) error {
 	return c.JSONPretty(status, data, " ")
 }
@@ -36,6 +40,10 @@ func BadReq(message interface{}) *echo.HTTPError {
 
 func MakeDataResp[V interface{}](c echo.Context, message string, data *V) error {
 	return JsonRep(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
+}
+
+func MakeSuccessResp(c echo.Context, message string, success bool) error {
+	return MakeDataResp(c, message, &SuccessResp{Success: success})
 }
 
 // parsedLocation takes an echo context and attempts to extract parameters
