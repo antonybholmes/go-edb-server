@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"strings"
 	"time"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-email/email"
-
+	"github.com/antonybholmes/go-edb-api/users"
+	"github.com/antonybholmes/go-mailer/email"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type JWTResp struct {
@@ -31,19 +33,11 @@ type JWTInfo struct {
 	Expired bool   `json:"expired"`
 }
 
-type JwtCustomClaims struct {
-	UserId string `json:"userId"`
-	//Name  string `json:"name"`
-	//Email string `json:"email"`
-	IpAddr string `json:"ipAddr"`
-	jwt.RegisteredClaims
-}
-
 type ReqJwt struct {
 	Jwt string `json:"jwt"`
 }
 
-func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
+func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 	req := new(auth.LoginReq)
 
 	err := c.Bind(req)
@@ -55,19 +49,27 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	//email := c.FormValue("email")
 	//password := c.FormValue("password")
 
-	user := auth.NewLoginUser(req.Name, req.Email, req.Password)
+	loginUser := auth.NewLoginUser(req.Name, req.Email, req.Password)
 
-	otp := auth.AuthCode()
+	log.Debug().Msgf("%s", loginUser)
 
-	_, err = userdb.CreateUser(user, otp)
+	otp := auth.OTP()
+
+	authUser, err := userdb.CreateUser(loginUser, otp)
 
 	if err != nil {
 		return BadReq(err)
 	}
 
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	otpJwt, err := auth.CreateOtpJwt(authUser, otp, c.RealIP(), consts.JWT_SECRET)
+
+	log.Debug().Msgf("%s", otpJwt)
+
+	if err != nil {
+		return BadReq(err)
+	}
+
 	var body bytes.Buffer
-	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%s\n\n", mimeHeaders)))
 
 	var file string
 
@@ -83,13 +85,17 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 		return BadReq(err)
 	}
 
+	firstName := strings.Split(authUser.Name, " ")[0]
+
 	if req.Url != "" {
 		err = t.Execute(&body, struct {
 			Name string
 			Link string
+			From string
 		}{
-			Name: user.Name,
-			Link: fmt.Sprintf("%sotp=%s", req.Url, otp),
+			Name: firstName,
+			Link: fmt.Sprintf("%sotp=%s&url=%s", req.CallbackUrl, otpJwt, req.Url),
+			From: consts.NAME,
 		})
 
 		if err != nil {
@@ -99,9 +105,11 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 		err = t.Execute(&body, struct {
 			Name string
 			Code string
+			From string
 		}{
-			Name: user.Name,
-			Code: otp,
+			Name: firstName,
+			Code: otpJwt,
+			From: consts.NAME,
 		})
 
 		if err != nil {
@@ -109,7 +117,9 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 		}
 	}
 
-	err = email.SendEmail(user.Email, body.Bytes())
+	log.Debug().Msgf("%s", body.String())
+
+	err = email.SendHtmlEmail(loginUser.Mailbox(), "Email verification", body.String())
 
 	if err != nil {
 		return BadReq(err)
@@ -142,7 +152,30 @@ func RegisterRoute(c echo.Context, userdb *auth.UserDb, secret string) error {
 	return MakeDataResp(c, "verification email sent", &[]string{}) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
-func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
+func Verification(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*auth.JwtOtpCustomClaims)
+
+	log.Debug().Msgf("%s", claims.UserId)
+
+	authUser, err := users.FindUserById(claims.UserId)
+
+	if err != nil {
+		return BadReq(err)
+	}
+
+	if authUser.OTP != claims.OTP {
+		return BadReq("error: wrong otp code")
+	}
+
+	if !users.SetIsVerified(authUser.UserId) {
+		return BadReq("unable to verify user")
+	}
+
+	return MakeDataResp(c, "user was verified", &[]string{}) //c.JSON(http.StatusOK, JWTResp{t})
+}
+
+func LoginRoute(c echo.Context) error {
 	req := new(auth.LoginReq)
 
 	err := c.Bind(req)
@@ -156,7 +189,7 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
 
 	user := auth.LoginUserFromReq(req)
 
-	authUser, err := userdb.FindUserByEmail(user)
+	authUser, err := users.FindUserByEmail(user)
 
 	if err != nil {
 		return BadReq("user does not exist")
@@ -172,7 +205,7 @@ func LoginRoute(c echo.Context, userdb *auth.UserDb) error {
 	//}
 
 	// Set custom claims
-	claims := &JwtCustomClaims{
+	claims := &auth.JwtCustomClaims{
 		UserId: authUser.UserId,
 		//Email: authUser.Email,
 		IpAddr: c.RealIP(),
@@ -233,7 +266,7 @@ func ValidateTokenRoute(c echo.Context) error {
 
 func RefreshTokenRoute(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*JwtCustomClaims)
+	claims := user.Claims.(*auth.JwtCustomClaims)
 
 	// Throws unauthorized error
 	//if username != "edb" || password != "tod4EwVHEyCRK8encuLE" {
@@ -241,7 +274,7 @@ func RefreshTokenRoute(c echo.Context) error {
 	//}
 
 	// Set custom claims
-	refreshedClaims := &JwtCustomClaims{
+	refreshedClaims := auth.JwtCustomClaims{
 		UserId: claims.UserId,
 		//Email: authUser.Email,
 		IpAddr: claims.IpAddr,
@@ -265,7 +298,7 @@ func RefreshTokenRoute(c echo.Context) error {
 
 func GetJwtInfoFromRoute(c echo.Context) *JWTInfo {
 	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*JwtCustomClaims)
+	claims := user.Claims.(*auth.JwtCustomClaims)
 
 	t := claims.ExpiresAt.Unix()
 	expired := t != 0 && t < time.Now().Unix()

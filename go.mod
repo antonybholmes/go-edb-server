@@ -4,7 +4,7 @@ go 1.22.0
 
 replace github.com/antonybholmes/go-dna => ../go-dna
 
-replace github.com/antonybholmes/go-gene => ../go-gene
+replace github.com/antonybholmes/go-genes => ../go-genes
 
 replace github.com/antonybholmes/go-math => ../go-math
 
@@ -12,7 +12,7 @@ replace github.com/antonybholmes/go-auth => ../go-auth
 
 replace github.com/antonybholmes/go-env => ../go-env
 
-replace github.com/antonybholmes/go-email => ../go-email
+replace github.com/antonybholmes/go-mailer => ../go-mailer
 
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240215223821-4bcce26db858
@@ -22,16 +22,18 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240216174519-e2b91aa3c33d
-	github.com/antonybholmes/go-email v0.0.0-00010101000000-000000000000
+	github.com/antonybholmes/go-auth v0.0.0-20240219043615-26013b3f5c61
 	github.com/antonybholmes/go-env v0.0.0-20240216174519-d83d9222e5a7
-	github.com/antonybholmes/go-gene v0.0.0-20240215173251-9939183c3474
+	github.com/antonybholmes/go-gene v0.0.0-20240219040039-0e816bfeef5b
+	github.com/antonybholmes/go-genes v0.0.0-20240219040039-0e816bfeef5b
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/rs/zerolog v1.32.0
 )
+
+require github.com/antonybholmes/go-mailer v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/gofrs/uuid/v5 v5.0.0 // indirect

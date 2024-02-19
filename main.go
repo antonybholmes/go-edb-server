@@ -13,7 +13,6 @@ import (
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/antonybholmes/go-email/email"
 
 	"github.com/antonybholmes/go-env"
 	"github.com/antonybholmes/go-gene/genedbcache"
@@ -43,7 +42,6 @@ func main() {
 		log.Error().Msgf("Error loading .env file")
 	}
 
-	secret := os.Getenv("JWT_SECRET")
 	buildMode := env.GetStr("BUILD", "dev")
 
 	//
@@ -98,7 +96,7 @@ func main() {
 	}
 
 	dnadbcache.Dir("data/dna")
-	genedbcache.Dir("data/gene")
+	genedbcache.Dir("data/genes")
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
@@ -110,12 +108,28 @@ func main() {
 
 	group := e.Group("/users")
 
-	group.POST("/register", func(c echo.Context) error {
-		return routes.RegisterRoute(c, userdb, secret)
+	group.POST("/signup", func(c echo.Context) error {
+		return routes.Signup(c, userdb, consts.JWT_SECRET)
+	})
+
+	authGroup := group.Group("/auth")
+
+	// Configure middleware with the custom claims type
+	config := echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(auth.JwtOtpCustomClaims)
+		},
+		SigningKey: []byte(consts.JWT_SECRET),
+	}
+	authGroup.Use(echojwt.WithConfig(config))
+	authGroup.Use(JwtOtpCheckMiddleware)
+
+	authGroup.POST("/verify", func(c echo.Context) error {
+		return routes.Verification(c)
 	})
 
 	group.POST("/login", func(c echo.Context) error {
-		return routes.LoginRoute(c, userdb)
+		return routes.LoginRoute(c)
 	})
 
 	// Keep some routes for testing purposes during dev
@@ -140,14 +154,14 @@ func main() {
 	group = e.Group("/tokens")
 
 	// Configure middleware with the custom claims type
-	config := echojwt.Config{
+	config = echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(routes.JwtCustomClaims)
+			return new(auth.JwtCustomClaims)
 		},
-		SigningKey: []byte(secret),
+		SigningKey: []byte(consts.JWT_SECRET),
 	}
 	group.Use(echojwt.WithConfig(config))
-	group.Use(JWTCheckMiddleware)
+	group.Use(JwtCheckMiddleware)
 
 	group.GET("/info", routes.JWTInfoRoute)
 
@@ -159,60 +173,37 @@ func main() {
 		return routes.RefreshTokenRoute(c)
 	})
 
-	group = e.Group("/restricted")
+	group = e.Group("/modules")
 
-	// Configure middleware with the custom claims type
-	// config := echojwt.Config{
-	// 	NewClaimsFunc: func(c echo.Context) jwt.Claims {
-	// 		return new(JwtCustomClaims)
-	// 	},
-	// 	SigningKey: []byte(secret),
-	// }
+	//authGroup.Use(echojwt.WithConfig(config))
+	//authGroup.Use(JwtCheckMiddleware)
+
 	group.Use(echojwt.WithConfig(config))
-	group.Use(JWTCheckMiddleware)
+	group.Use(JwtCheckMiddleware)
 
-	group2 := group.Group("/dna")
+	//authGroup = group.Group("/dna")
 
-	group2.POST("/:assembly", func(c echo.Context) error {
+	authGroup.POST("/:assembly", func(c echo.Context) error {
 		return routes.DNARoute(c)
 	})
 
-	group2 = group.Group("/genes")
+	authGroup = group.Group("/genes")
 
-	group2.POST("/within/:assembly", func(c echo.Context) error {
+	authGroup.POST("/within/:assembly", func(c echo.Context) error {
 		return routes.WithinGenesRoute(c)
 	})
 
-	group2.POST("/closest/:assembly", func(c echo.Context) error {
+	authGroup.POST("/closest/:assembly", func(c echo.Context) error {
 		return routes.ClosestGeneRoute(c)
 	})
 
-	group2.POST("/annotation/:assembly", func(c echo.Context) error {
+	authGroup.POST("/annotation/:assembly", func(c echo.Context) error {
 		return routes.AnnotationRoute(c)
 	})
 
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {
 		httpPort = "8080"
-	}
-
-	if buildMode == "dev" {
-
-		// email.SetName(os.Getenv("NAME")).
-		// 	SetUser(env.GetStr("SMTP_USER", ""), env.GetStr("SMTP_PASSWORD", "")).
-		// 	SetHost(env.GetStr("SMTP_HOST", ""), env.GetUint32("SMTP_PORT", 587)).
-		// 	SetFrom(env.GetStr("SMTP_FROM", ""))
-
-		log.Debug().Msgf("dd %s", email.From())
-		log.Debug().Msgf("dd %s", env.GetStr("SMTP_FROM", ""))
-
-		//code := auth.AuthCode()
-
-		// err = email.Compose("antony@antonyholmes.dev", "OTP code", fmt.Sprintf("Your one time code is: %s", code))
-
-		// if err != nil {
-		// 	log.Error().Msgf("%s", err)
-		// }
 	}
 
 	e.Logger.Fatal(e.Start(":" + httpPort))

@@ -30,7 +30,7 @@ func JsonRep[V interface{}](c echo.Context, status int, data V) error {
 // 	return JsonRep(c, http.StatusBadRequest, StatusResp{StatusResp: StatusResp{Status: http.StatusBadRequest}, Message: err.Error()})
 // }
 
-func BadReq(message ...interface{}) *echo.HTTPError {
+func BadReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
