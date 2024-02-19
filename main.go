@@ -13,9 +13,10 @@ import (
 	"github.com/antonybholmes/go-auth/email"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
+	"github.com/antonybholmes/go-edb-api/routes"
 
 	"github.com/antonybholmes/go-env"
-	"github.com/antonybholmes/go-loctogene/loctogenedbcache"
+	"github.com/antonybholmes/go-gene/genedbcache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -97,7 +98,7 @@ func main() {
 	}
 
 	dnadbcache.Dir("data/dna")
-	loctogenedbcache.Dir("data/loctogene")
+	genedbcache.Dir("data/gene")
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
@@ -110,29 +111,29 @@ func main() {
 	group := e.Group("/users")
 
 	group.POST("/register", func(c echo.Context) error {
-		return RegisterRoute(c, userdb, secret)
+		return routes.RegisterRoute(c, userdb, secret)
 	})
 
 	group.POST("/login", func(c echo.Context) error {
-		return LoginRoute(c, userdb)
+		return routes.LoginRoute(c, userdb)
 	})
 
 	// Keep some routes for testing purposes during dev
 	if buildMode == "dev" {
 		e.POST("/dna/:assembly", func(c echo.Context) error {
-			return DNARoute(c)
+			return routes.DNARoute(c)
 		})
 
 		e.POST("/genes/within/:assembly", func(c echo.Context) error {
-			return WithinGenesRoute(c)
+			return routes.WithinGenesRoute(c)
 		})
 
 		e.POST("/genes/closest/:assembly", func(c echo.Context) error {
-			return ClosestGeneRoute(c)
+			return routes.ClosestGeneRoute(c)
 		})
 
 		e.POST("/annotate/:assembly", func(c echo.Context) error {
-			return AnnotationRoute(c)
+			return routes.AnnotationRoute(c)
 		})
 	}
 
@@ -141,21 +142,21 @@ func main() {
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(JwtCustomClaims)
+			return new(routes.JwtCustomClaims)
 		},
 		SigningKey: []byte(secret),
 	}
 	group.Use(echojwt.WithConfig(config))
 	group.Use(JWTCheckMiddleware)
 
-	group.GET("/info", JWTInfoRoute)
+	group.GET("/info", routes.JWTInfoRoute)
 
 	group.POST("/validate", func(c echo.Context) error {
-		return ValidateTokenRoute(c)
+		return routes.ValidateTokenRoute(c)
 	})
 
 	group.POST("/refresh", func(c echo.Context) error {
-		return RefreshTokenRoute(c)
+		return routes.RefreshTokenRoute(c)
 	})
 
 	group = e.Group("/restricted")
@@ -173,21 +174,21 @@ func main() {
 	group2 := group.Group("/dna")
 
 	group2.POST("/:assembly", func(c echo.Context) error {
-		return DNARoute(c)
+		return routes.DNARoute(c)
 	})
 
 	group2 = group.Group("/genes")
 
 	group2.POST("/within/:assembly", func(c echo.Context) error {
-		return WithinGenesRoute(c)
+		return routes.WithinGenesRoute(c)
 	})
 
 	group2.POST("/closest/:assembly", func(c echo.Context) error {
-		return ClosestGeneRoute(c)
+		return routes.ClosestGeneRoute(c)
 	})
 
 	group2.POST("/annotation/:assembly", func(c echo.Context) error {
-		return AnnotationRoute(c)
+		return routes.AnnotationRoute(c)
 	})
 
 	httpPort := os.Getenv("PORT")

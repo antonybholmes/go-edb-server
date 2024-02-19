@@ -2,8 +2,6 @@ module github.com/antonybholmes/go-edb-api
 
 go 1.22.0
 
-replace github.com/antonybholmes/go-loctogene => ../go-loctogene
-
 replace github.com/antonybholmes/go-dna => ../go-dna
 
 replace github.com/antonybholmes/go-gene => ../go-gene
@@ -16,7 +14,6 @@ replace github.com/antonybholmes/go-env => ../go-env
 
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240215223821-4bcce26db858
-	github.com/antonybholmes/go-loctogene v0.0.0-20240215223819-7403c05c0d59
 	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/labstack/gommon v0.4.2 // indirect
