@@ -12,6 +12,8 @@ replace github.com/antonybholmes/go-auth => ../go-auth
 
 replace github.com/antonybholmes/go-env => ../go-env
 
+replace github.com/antonybholmes/go-email => ../go-email
+
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240215223821-4bcce26db858
 	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
@@ -21,6 +23,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-auth v0.0.0-20240216174519-e2b91aa3c33d
+	github.com/antonybholmes/go-email v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-env v0.0.0-20240216174519-d83d9222e5a7
 	github.com/antonybholmes/go-gene v0.0.0-20240215173251-9939183c3474
 	github.com/golang-jwt/jwt/v5 v5.2.0
