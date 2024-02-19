@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/email"
 	"github.com/antonybholmes/go-edb-api/consts"
+	"github.com/antonybholmes/go-email/email"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"

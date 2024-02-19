@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/email"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-email/email"
 
 	"github.com/antonybholmes/go-env"
 	"github.com/antonybholmes/go-gene/genedbcache"
