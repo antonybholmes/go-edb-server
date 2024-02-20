@@ -58,9 +58,9 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 
 	log.Debug().Msgf("%s", loginUser)
 
-	otp := auth.OTP()
+	randCode := auth.RandCode()
 
-	authUser, err := userdb.CreateUser(loginUser, otp)
+	authUser, err := userdb.CreateUser(loginUser, randCode)
 
 	if err != nil {
 		return BadReq(err)
@@ -70,7 +70,7 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 		return BadReq("user is already verified")
 	}
 
-	otpJwt, err := auth.CreateOtpJwt(authUser, otp, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.CreateOtpJwt(authUser, randCode, c.RealIP(), consts.JWT_SECRET)
 
 	log.Debug().Msgf("%s", otpJwt)
 
@@ -267,7 +267,7 @@ func LoginRoute(c echo.Context) error {
 			User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
 }
 
-func ValidateTokenRoute(c echo.Context) error {
+func ValidateToken(c echo.Context) error {
 	// jwtReq := new(ReqJwt)
 
 	// err := c.Bind(jwtReq)
@@ -304,7 +304,7 @@ func ValidateTokenRoute(c echo.Context) error {
 
 }
 
-func RefreshTokenRoute(c echo.Context) error {
+func RenewToken(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtCustomClaims)
 
@@ -314,7 +314,7 @@ func RefreshTokenRoute(c echo.Context) error {
 	//}
 
 	// Set custom claims
-	refreshedClaims := auth.JwtCustomClaims{
+	renewClaims := auth.JwtCustomClaims{
 		UserId: claims.UserId,
 		//Email: authUser.Email,
 		IpAddr: claims.IpAddr,
@@ -324,7 +324,7 @@ func RefreshTokenRoute(c echo.Context) error {
 	}
 
 	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshedClaims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, renewClaims)
 
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte(consts.JWT_SECRET))

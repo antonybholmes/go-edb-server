@@ -24,16 +24,15 @@ require (
 require (
 	github.com/antonybholmes/go-auth v0.0.0-20240219043615-26013b3f5c61
 	github.com/antonybholmes/go-env v0.0.0-20240216174519-d83d9222e5a7
-	github.com/antonybholmes/go-gene v0.0.0-20240219040039-0e816bfeef5b
 	github.com/antonybholmes/go-genes v0.0.0-20240219040039-0e816bfeef5b
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/joho/godotenv v1.5.1
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/rs/zerolog v1.32.0
 )
 
-require github.com/antonybholmes/go-mailer v0.0.0-00010101000000-000000000000
+require github.com/antonybholmes/go-mailer v0.0.0-20240219043213-79ac8a9bfd80
 
 require (
 	github.com/gofrs/uuid/v5 v5.0.0 // indirect

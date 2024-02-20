@@ -9,6 +9,7 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     otp TEXT,
     is_verified BOOLEAN NOT NULL DEFAULT 0,
+    can_auth BOOLEAN NOT NULL DEFAULT 1,
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_user_id ON users (user_id);

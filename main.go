@@ -15,7 +15,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes"
 
 	"github.com/antonybholmes/go-env"
-	"github.com/antonybholmes/go-gene/genedbcache"
+	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -168,11 +168,11 @@ func main() {
 	group.GET("/info", routes.JWTInfoRoute)
 
 	group.POST("/validate", func(c echo.Context) error {
-		return routes.ValidateTokenRoute(c)
+		return routes.ValidateToken(c)
 	})
 
-	group.POST("/refresh", func(c echo.Context) error {
-		return routes.RefreshTokenRoute(c)
+	group.POST("/renew", func(c echo.Context) error {
+		return routes.RenewToken(c)
 	})
 
 	group = e.Group("/modules")
