@@ -14,43 +14,6 @@ type AuthReq struct {
 	Authorization string `header:"authorization"`
 }
 
-func TokenValidRoute(c echo.Context) error {
-	// jwtReq := new(ReqJwt)
-
-	// err := c.Bind(jwtReq)
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// token, err := jwt.ParseWithClaims(jwtReq.Jwt, &JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-	// 	return []byte(consts.JWT_SECRET), nil
-	// })
-
-	// if err != nil {
-	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
-	// }
-
-	// claims := token.Claims.(*JwtCustomClaims)
-
-	// user := c.Get("user").(*jwt.Token)
-	// claims := user.Claims.(*JwtCustomClaims)
-
-	// IpAddr := c.RealIP()
-
-	// log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
-
-	// //t := claims.ExpiresAt.Unix()
-	// //expired := t != 0 && t < time.Now().Unix()
-
-	// if IpAddr != claims.IpAddr {
-	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
-	// }
-
-	return MakeValidResp(c, "", true)
-
-}
-
 // func RenewTokenRoute(c echo.Context) error {
 // 	user := c.Get("user").(*jwt.Token)
 // 	claims := user.Claims.(*auth.JwtCustomClaims)
@@ -82,20 +45,6 @@ func TokenValidRoute(c echo.Context) error {
 
 // 	return MakeDataResp(c, "", &JwtResp{t})
 // }
-
-func NewAccessTokenRoute(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
-
-	// Generate encoded token and send it as response.
-	t, err := auth.CreateAccessToken(claims.UserId, c.RealIP(), consts.JWT_SECRET)
-
-	if err != nil {
-		return MakeDataResp(c, "error signing token", &JwtResp{""})
-	}
-
-	return MakeDataResp(c, "", &JwtResp{t})
-}
 
 func TokenInfoRoute(c echo.Context) error {
 
@@ -131,8 +80,26 @@ func TokenInfoRoute(c echo.Context) error {
 
 	return MakeDataResp(c, "", &JwtInfo{
 		UserId:  claims.UserId,
-		Type:    claims.Type,
+		Type:    auth.TokenTypeString(claims.Type),
 		IpAddr:  claims.IpAddr,
 		Expires: claims.ExpiresAt.UTC().String()})
 
+}
+
+func NewAccessTokenRoute(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*auth.JwtCustomClaims)
+
+	if claims.Type != auth.TOKEN_TYPE_REFRESH {
+		return BadReq("wrong token type")
+	}
+
+	// Generate encoded token and send it as response.
+	t, err := auth.AccessToken(claims.UserId, c.RealIP(), consts.JWT_SECRET)
+
+	if err != nil {
+		return MakeDataResp(c, "error signing token", &JwtResp{""})
+	}
+
+	return MakeDataResp(c, "", &JwtResp{t})
 }

@@ -1,4 +1,4 @@
-package routes
+package modules
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
+	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-genes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-math"
@@ -59,13 +60,13 @@ func WithinGenesRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
 	data := []*genes.GenomicFeatures{}
@@ -74,29 +75,29 @@ func WithinGenesRoute(c echo.Context) error {
 		genes, err := query.Db.WithinGenes(&location, query.Level)
 
 		if err != nil {
-			return BadReq(err)
+			return routes.BadReq(err)
 		}
 
 		data = append(data, genes)
 	}
 
-	return MakeDataResp(c, "", &data)
+	return routes.MakeDataResp(c, "", &data)
 }
 
 func ClosestGeneRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
-	n := ParseN(c, DEFAULT_CLOSEST_N)
+	n := routes.ParseN(c, DEFAULT_CLOSEST_N)
 
 	data := []*genes.GenomicFeatures{}
 
@@ -104,13 +105,13 @@ func ClosestGeneRoute(c echo.Context) error {
 		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
 
 		if err != nil {
-			return BadReq(err)
+			return routes.BadReq(err)
 		}
 
 		data = append(data, genes)
 	}
 
-	return MakeDataResp(c, "", &data)
+	return routes.MakeDataResp(c, "", &data)
 }
 
 func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
@@ -142,7 +143,7 @@ func AnnotationRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
@@ -151,14 +152,14 @@ func AnnotationRoute(c echo.Context) error {
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
-	n := ParseN(c, DEFAULT_CLOSEST_N)
+	n := routes.ParseN(c, DEFAULT_CLOSEST_N)
 
 	tssRegion := ParseTSSRegion(c)
 
-	output := ParseOutput(c)
+	output := routes.ParseOutput(c)
 
 	annotationDb := genes.NewAnnotateDb(query.Db, tssRegion, n)
 
@@ -169,7 +170,7 @@ func AnnotationRoute(c echo.Context) error {
 		annotations, err := annotationDb.Annotate(&location)
 
 		if err != nil {
-			return BadReq(err)
+			return routes.BadReq(err)
 		}
 
 		data = append(data, annotations)
@@ -179,7 +180,7 @@ func AnnotationRoute(c echo.Context) error {
 		tsv, err := MakeGeneTable(data, tssRegion)
 
 		if err != nil {
-			return BadReq(err)
+			return routes.BadReq(err)
 		}
 
 		return c.String(http.StatusOK, tsv)

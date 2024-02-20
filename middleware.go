@@ -8,26 +8,26 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+// func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
 
-		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtOtpCustomClaims)
+// 		user := c.Get("user").(*jwt.Token)
+// 		claims := user.Claims.(*auth.JwtOtpCustomClaims)
 
-		IpAddr := c.RealIP()
+// 		IpAddr := c.RealIP()
 
-		//log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+// 		//log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
 
-		//t := claims.ExpiresAt.Unix()
-		//expired := t != 0 && t < time.Now().Unix()
+// 		//t := claims.ExpiresAt.Unix()
+// 		//expired := t != 0 && t < time.Now().Unix()
 
-		if IpAddr != claims.IpAddr {
-			return routes.BadReq("ip address invalid")
-		}
+// 		if IpAddr != claims.IpAddr {
+// 			return routes.BadReq("ip address invalid")
+// 		}
 
-		return next(c)
-	}
-}
+// 		return next(c)
+// 	}
+// }
 
 func JwtCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -44,6 +44,25 @@ func JwtCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if IpAddr != claims.IpAddr {
 			return routes.BadReq("ip address invalid")
+		}
+
+		return next(c)
+	}
+}
+
+func JwtIsAccessMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		log.Debug().Msgf("type: %s, %s", claims.Type, auth.TOKEN_TYPE_ACCESS)
+
+		//t := claims.ExpiresAt.Unix()
+		//expired := t != 0 && t < time.Now().Unix()
+
+		if claims.Type != auth.TOKEN_TYPE_ACCESS {
+			return routes.BadReq("wrong token type")
 		}
 
 		return next(c)

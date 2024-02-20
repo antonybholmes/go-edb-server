@@ -12,8 +12,9 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
+	"github.com/antonybholmes/go-edb-api/modules"
 	"github.com/antonybholmes/go-edb-api/routes"
-
+	"github.com/antonybholmes/go-edb-api/users"
 	"github.com/antonybholmes/go-env"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/golang-jwt/jwt/v5"
@@ -41,9 +42,10 @@ func main() {
 		log.Error().Msgf("Error loading .env file")
 	}
 
+	// list env to see what is loaded
 	env.Ls()
 
-	buildMode := env.GetStr("BUILD", "dev")
+	//buildMode := env.GetStr("BUILD", "dev")
 
 	//
 	// Set logging to file
@@ -96,8 +98,8 @@ func main() {
 		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
-	dnadbcache.Dir("data/dna")
-	genedbcache.Dir("data/genes")
+	dnadbcache.SetDir("data/dna")
+	genedbcache.SetDir("data/genes")
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
@@ -107,101 +109,99 @@ func main() {
 		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
-	group := e.Group("/users")
-
-	group.POST("/signup", func(c echo.Context) error {
-		return routes.Signup(c, userdb, consts.JWT_SECRET)
-	})
-
-	group.POST("/login", func(c echo.Context) error {
-		return routes.LoginRoute(c)
-	})
-
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(auth.JwtOtpCustomClaims)
+			return new(auth.JwtCustomClaims)
 		},
 		SigningKey: []byte(consts.JWT_SECRET),
 	}
+	jwtMiddleWare := echojwt.WithConfig(config)
 
-	// we need to verify some user info using jwts
-	authGroup := group.Group("")
-	authGroup.Use(echojwt.WithConfig(config))
-	//authGroup.Use(JwtOtpCheckMiddleware)
+	//
+	// user groups: start
+	//
 
-	authGroup.POST("/verify", func(c echo.Context) error {
-		return routes.EmailVerificationRoute(c)
+	userGroup := e.Group("/users")
+
+	userGroup.POST("/signup", func(c echo.Context) error {
+		return users.SignupRoute(c, userdb, consts.JWT_SECRET)
 	})
 
-	// Keep some routes for testing purposes during dev
-	if buildMode == "dev" {
-		e.POST("/dna/:assembly", func(c echo.Context) error {
-			return routes.DNARoute(c)
-		})
-
-		e.POST("/genes/within/:assembly", func(c echo.Context) error {
-			return routes.WithinGenesRoute(c)
-		})
-
-		e.POST("/genes/closest/:assembly", func(c echo.Context) error {
-			return routes.ClosestGeneRoute(c)
-		})
-
-		e.POST("/annotate/:assembly", func(c echo.Context) error {
-			return routes.AnnotationRoute(c)
-		})
-	}
-
-	group = e.Group("/tokens")
-
-	// Configure middleware with the custom claims type
-	// config = echojwt.Config{
-	// 	NewClaimsFunc: func(c echo.Context) jwt.Claims {
-	// 		return new(auth.JwtCustomClaims)
-	// 	},
-	// 	SigningKey: []byte(consts.JWT_SECRET),
-	// }
-	// group.Use(echojwt.WithConfig(config))
-	// //group.Use(JwtCheckMiddleware)
-
-	group.POST("/info", routes.TokenInfoRoute)
-
-	group.POST("/valid", func(c echo.Context) error {
-		return routes.TokenValidRoute(c)
+	userGroup.POST("/login", func(c echo.Context) error {
+		return users.LoginRoute(c)
 	})
 
-	group.POST("/access", func(c echo.Context) error {
+	userGroup.POST("/verify", func(c echo.Context) error {
+		return users.EmailVerificationRoute(c)
+	}, jwtMiddleWare)
+
+	userGroup.POST("/info", func(c echo.Context) error {
+		return users.UserInfoRoute(c)
+	}, jwtMiddleWare)
+
+	passwordlessGroup := userGroup.Group("/passwordless")
+
+	passwordlessGroup.POST("/email", func(c echo.Context) error {
+		return users.PasswordlessEmailRoute(c)
+	})
+
+	passwordlessGroup.POST("/login", func(c echo.Context) error {
+		return users.PasswordlessLoginRoute(c)
+	}, jwtMiddleWare)
+
+	//
+	// passwordless groups: end
+	//
+
+	//
+	// token groups: start
+	//
+
+	tokenGroup := e.Group("/tokens")
+	tokenGroup.POST("/info", routes.TokenInfoRoute)
+
+	tokenAuthGroup := tokenGroup.Group("")
+	tokenAuthGroup.Use(jwtMiddleWare)
+	tokenAuthGroup.POST("/access", func(c echo.Context) error {
 		return routes.NewAccessTokenRoute(c)
 	})
 
-	group = e.Group("/modules")
+	//
+	// token groups: end
+	//
 
-	//authGroup.Use(echojwt.WithConfig(config))
-	//authGroup.Use(JwtCheckMiddleware)
+	//
+	// module groups: start
+	//
 
-	group.Use(echojwt.WithConfig(config))
-	//group.Use(JwtCheckMiddleware)
+	moduleGroup := e.Group("/modules")
+	moduleGroup.Use(jwtMiddleWare)
+	moduleGroup.Use(JwtIsAccessMiddleware)
 
-	//authGroup = group.Group("/dna")
+	dnaGroup := moduleGroup.Group("/dna")
 
-	authGroup.POST("/:assembly", func(c echo.Context) error {
-		return routes.DNARoute(c)
+	dnaGroup.POST("/:assembly", func(c echo.Context) error {
+		return modules.DNARoute(c)
 	})
 
-	authGroup = group.Group("/genes")
+	genesGroup := moduleGroup.Group("/genes")
 
-	authGroup.POST("/within/:assembly", func(c echo.Context) error {
-		return routes.WithinGenesRoute(c)
+	genesGroup.POST("/within/:assembly", func(c echo.Context) error {
+		return modules.WithinGenesRoute(c)
 	})
 
-	authGroup.POST("/closest/:assembly", func(c echo.Context) error {
-		return routes.ClosestGeneRoute(c)
+	genesGroup.POST("/closest/:assembly", func(c echo.Context) error {
+		return modules.ClosestGeneRoute(c)
 	})
 
-	authGroup.POST("/annotation/:assembly", func(c echo.Context) error {
-		return routes.AnnotationRoute(c)
+	genesGroup.POST("/annotation/:assembly", func(c echo.Context) error {
+		return modules.AnnotationRoute(c)
 	})
+
+	//
+	// module groups: end
+	//
 
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {

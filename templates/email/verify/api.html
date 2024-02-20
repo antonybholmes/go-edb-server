@@ -3,8 +3,10 @@
 <html>
 <body>
     <p>Hi {{.Name}},</p>
-    <p>Please verify your email address using this one time code: {{.Code}}</p>
+    <p>Please verify your email address using this one time code: {{.Link}}</p>
     <p></p>
-    <p>This email was sent from an email address that is not monitored. Please do not reply to this email.</p>
+    <p>The code is valid for {{.Time}}.</p>
+    <p></p>
+    <p>This email was sent from a notification-only email address that is not monitored. Please do not reply to this email.</p>
 </body>
 </html>

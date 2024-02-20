@@ -6,8 +6,7 @@ CREATE TABLE users (
     user_id TEXT NOT NULL UNIQUE, 
     name TEXT NOT NULL, 
     email TEXT NOT NULL UNIQUE, 
-    password TEXT NOT NULL,
-    otp TEXT,
+    password TEXT NOT NULL DEFAULT '',
     is_verified BOOLEAN NOT NULL DEFAULT 0,
     can_auth BOOLEAN NOT NULL DEFAULT 1,
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -15,7 +14,6 @@ CREATE TABLE users (
 CREATE INDEX users_user_id ON users (user_id);
 CREATE INDEX users_name ON users (name);
 CREATE INDEX users_email ON users (email);
-CREATE INDEX users_otp ON users (otp);
 
 CREATE TRIGGER users_updated_trigger AFTER UPDATE ON users
 BEGIN

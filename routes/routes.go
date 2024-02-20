@@ -8,6 +8,22 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type JwtResp struct {
+	Jwt string `json:"jwt"`
+}
+
+type JwtInfo struct {
+	UserId string `json:"userId"`
+	//Name  string `json:"name"`
+	Type    string `json:"type"`
+	IpAddr  string `json:"ipAddr"`
+	Expires string `json:"expires"`
+}
+
+type ReqJwt struct {
+	Jwt string `json:"jwt"`
+}
+
 type StatusResp struct {
 	Status int `json:"status"`
 }
