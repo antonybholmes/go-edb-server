@@ -30,7 +30,6 @@ type JwtInfo struct {
 	Type    string `json:"type"`
 	IpAddr  string `json:"ipAddr"`
 	Expires string `json:"expires"`
-	Expired bool   `json:"expired"`
 }
 
 type ReqJwt struct {
@@ -46,16 +45,9 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 		return err
 	}
 
-	//email := c.FormValue("email")
-	//password := c.FormValue("password")
-
-	loginUser := auth.NewSignupUser(req.Name, req.Email, req.Password)
-
-	log.Debug().Msgf("%s", loginUser)
-
 	randCode := auth.RandCode()
 
-	authUser, err := userdb.CreateUser(loginUser, randCode)
+	authUser, err := userdb.CreateUser(req, randCode)
 
 	if err != nil {
 		return BadReq(err)
@@ -78,9 +70,9 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 	var file string
 
 	if req.Url != "" {
-		file = "templates/verification/web.html"
+		file = "templates/email/verify/web.html"
 	} else {
-		file = "templates/verification/api.html"
+		file = "templates/email/verify/api.html"
 	}
 
 	t, err := template.ParseFiles(file)
@@ -145,7 +137,7 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 
 	//log.Debug().Msgf("%s", body.String())
 
-	err = email.SendHtmlEmail(loginUser.Mailbox(), "Email verification", body.String())
+	err = email.SendHtmlEmail(req.Mailbox(), "Email verification", body.String())
 
 	if err != nil {
 		return BadReq(err)
@@ -181,8 +173,6 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 func EmailVerificationRoute(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtOtpCustomClaims)
-
-	log.Debug().Msgf("%s", claims.UserId)
 
 	authUser, err := users.FindUserById(claims.UserId)
 
@@ -220,9 +210,9 @@ func LoginRoute(c echo.Context) error {
 	//email := c.FormValue("email")
 	//password := c.FormValue("password")
 
-	user := auth.LoginUserFromReq(req)
+	//user := auth.LoginUserFromReq(req)
 
-	authUser, err := users.FindUserByEmail(user.Email)
+	authUser, err := users.FindUserByEmail(req.Email)
 
 	if err != nil {
 		return BadReq("user does not exist")
@@ -236,8 +226,156 @@ func LoginRoute(c echo.Context) error {
 		return BadReq("user not allowed tokens")
 	}
 
-	if !authUser.CheckPasswords(user.Password) {
+	if req.Password == "" {
+		return BadReq("empty password: use passwordless")
+	}
+
+	if !authUser.CheckPasswords(req.Password) {
 		return BadReq("incorrect password")
+	}
+
+	t, err := auth.CreateRefreshToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
+
+	if err != nil {
+		return BadReq("error signing token")
+	}
+
+	return MakeDataResp(c, "", &LoginResp{
+		JwtResp:    JwtResp{Jwt: t},
+		PublicUser: auth.PublicUser{UserId: authUser.UserId, User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
+}
+
+// Start passwordless login by sending an email
+func SendPasswordlessEmail(c echo.Context) error {
+	req := new(auth.PasswordlessLoginReq)
+
+	err := c.Bind(req)
+
+	if err != nil {
+		return err
+	}
+
+	authUser, err := users.FindUserByEmail(req.Email)
+
+	if err != nil {
+		return BadReq("user does not exist")
+	}
+
+	if !authUser.IsVerified {
+		return BadReq("email address not verified")
+	}
+
+	randCode := auth.RandCode()
+
+	otpJwt, err := auth.CreateOtpJwt(authUser.UserId, randCode, c.RealIP(), consts.JWT_SECRET)
+
+	if err != nil {
+		return BadReq(err)
+	}
+
+	var body bytes.Buffer
+
+	var file string
+
+	if req.Url != "" {
+		file = "templates/email/passwordless/web.html"
+	} else {
+		file = "templates/email/passwordless/api.html"
+	}
+
+	t, err := template.ParseFiles(file)
+
+	if err != nil {
+		return BadReq(err)
+	}
+
+	firstName := strings.Split(authUser.Name, " ")[0]
+
+	if req.CallbackUrl != "" {
+		callbackUrl, err := url.Parse(req.CallbackUrl)
+
+		if err != nil {
+			return BadReq(err)
+		}
+
+		params, err := url.ParseQuery(callbackUrl.RawQuery)
+
+		if err != nil {
+			return BadReq(err)
+		}
+
+		if req.Url != "" {
+			params.Set("url", req.Url)
+		}
+
+		params.Set("otp", otpJwt)
+
+		callbackUrl.RawQuery = params.Encode()
+
+		link := callbackUrl.String()
+
+		err = t.Execute(&body, struct {
+			Name string
+			Link string
+			From string
+		}{
+			Name: firstName,
+			Link: link,
+			From: consts.NAME,
+		})
+
+		if err != nil {
+			return BadReq(err)
+		}
+	} else {
+		err = t.Execute(&body, struct {
+			Name string
+			Code string
+			From string
+		}{
+			Name: firstName,
+			Code: otpJwt,
+			From: consts.NAME,
+		})
+
+		if err != nil {
+			return BadReq(err)
+		}
+	}
+
+	//log.Debug().Msgf("%s", body.String())
+
+	users.SetOtp(authUser.UserId, randCode)
+
+	if err != nil {
+		return BadReq(err)
+	}
+
+	err = email.SendHtmlEmail(req.Mailbox(), "Passwordless Login", body.String())
+
+	if err != nil {
+		return BadReq(err)
+	}
+
+	return MakeSuccessResp(c, "passwordless email sent", true)
+}
+
+func PasswordlessLoginRoute(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(*auth.JwtOtpCustomClaims)
+
+	authUser, err := users.FindUserById(claims.UserId)
+
+	if err != nil {
+		return BadReq("user does not exist")
+	}
+
+	if !authUser.IsVerified {
+		return BadReq("email address not verified")
+	}
+
+	if !authUser.CanAuth {
+		return BadReq("user not allowed tokens")
 	}
 
 	t, err := auth.CreateRefreshToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)

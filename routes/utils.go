@@ -30,7 +30,7 @@ type ValidResp struct {
 	Valid bool `json:"valid"`
 }
 
-func JsonRep[V interface{}](c echo.Context, status int, data V) error {
+func JsonRep[V any](c echo.Context, status int, data V) error {
 	return c.JSONPretty(status, data, " ")
 }
 
@@ -42,7 +42,7 @@ func BadReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
-func MakeDataResp[V interface{}](c echo.Context, message string, data *V) error {
+func MakeDataResp[V any](c echo.Context, message string, data V) error {
 	return JsonRep(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
 }
 

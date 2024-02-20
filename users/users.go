@@ -18,7 +18,7 @@ func init() {
 	}
 }
 
-func CreateUser(user *auth.SignupUser, otp string) (*auth.AuthUser, error) {
+func CreateUser(user *auth.SignupReq, otp string) (*auth.AuthUser, error) {
 	return USERS.CreateUser(user, otp)
 }
 
@@ -32,4 +32,8 @@ func FindUserById(user string) (*auth.AuthUser, error) {
 
 func SetIsVerified(user string) error {
 	return USERS.SetIsVerified(user)
+}
+
+func SetOtp(user string, code string) error {
+	return USERS.SetOtp(user, code)
 }

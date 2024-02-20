@@ -2,7 +2,6 @@ package routes
 
 import (
 	"strings"
-	"time"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
@@ -130,18 +129,10 @@ func TokenInfoRoute(c echo.Context) error {
 		return BadReq(err)
 	}
 
-	log.Debug().Msgf("%s %s", claims.ExpiresAt.UTC(), time.Now().UTC())
-
-	// user := c.Get("user").(*jwt.Token)
-	// claims := user.Claims.(*auth.JwtCustomClaims)
-
-	expired := claims.ExpiresAt.UTC().Before(time.Now().UTC())
-
 	return MakeDataResp(c, "", &JwtInfo{
 		UserId:  claims.UserId,
 		Type:    claims.Type,
 		IpAddr:  claims.IpAddr,
-		Expires: claims.ExpiresAt.UTC().String(),
-		Expired: expired})
+		Expires: claims.ExpiresAt.UTC().String()})
 
 }
