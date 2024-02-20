@@ -26,6 +26,10 @@ type SuccessResp struct {
 	Success bool `json:"success"`
 }
 
+type ValidResp struct {
+	Valid bool `json:"valid"`
+}
+
 func JsonRep[V interface{}](c echo.Context, status int, data V) error {
 	return c.JSONPretty(status, data, " ")
 }
@@ -40,6 +44,10 @@ func BadReq(message interface{}) *echo.HTTPError {
 
 func MakeDataResp[V interface{}](c echo.Context, message string, data *V) error {
 	return JsonRep(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
+}
+
+func MakeValidResp(c echo.Context, message string, valid bool) error {
+	return MakeDataResp(c, message, &ValidResp{Valid: valid})
 }
 
 func MakeSuccessResp(c echo.Context, message string, success bool) error {

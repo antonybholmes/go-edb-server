@@ -126,12 +126,12 @@ func main() {
 	}
 
 	// we need to verify some user info using jwts
-	authGroup := group.Group("/")
+	authGroup := group.Group("")
 	authGroup.Use(echojwt.WithConfig(config))
 	//authGroup.Use(JwtOtpCheckMiddleware)
 
 	authGroup.POST("/verify", func(c echo.Context) error {
-		return routes.Verification(c)
+		return routes.EmailVerificationRoute(c)
 	})
 
 	// Keep some routes for testing purposes during dev
@@ -156,23 +156,23 @@ func main() {
 	group = e.Group("/tokens")
 
 	// Configure middleware with the custom claims type
-	config = echojwt.Config{
-		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(auth.JwtCustomClaims)
-		},
-		SigningKey: []byte(consts.JWT_SECRET),
-	}
-	group.Use(echojwt.WithConfig(config))
-	//group.Use(JwtCheckMiddleware)
+	// config = echojwt.Config{
+	// 	NewClaimsFunc: func(c echo.Context) jwt.Claims {
+	// 		return new(auth.JwtCustomClaims)
+	// 	},
+	// 	SigningKey: []byte(consts.JWT_SECRET),
+	// }
+	// group.Use(echojwt.WithConfig(config))
+	// //group.Use(JwtCheckMiddleware)
 
-	group.GET("/info", routes.JWTInfoRoute)
+	group.POST("/info", routes.TokenInfoRoute)
 
-	group.POST("/validate", func(c echo.Context) error {
-		return routes.ValidateToken(c)
+	group.POST("/valid", func(c echo.Context) error {
+		return routes.TokenValidRoute(c)
 	})
 
-	group.POST("/renew", func(c echo.Context) error {
-		return routes.RenewToken(c)
+	group.POST("/access", func(c echo.Context) error {
+		return routes.NewAccessTokenRoute(c)
 	})
 
 	group = e.Group("/modules")

@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
@@ -25,14 +24,10 @@ type LoginResp struct {
 	JwtResp
 }
 
-type JwtValidResp struct {
-	JwtIsValid bool `json:"jwtIsValid"`
-}
-
 type JwtInfo struct {
 	UserId string `json:"userId"`
 	//Name  string `json:"name"`
-	//Email   string `json:"email"`
+	Type    string `json:"type"`
 	IpAddr  string `json:"ipAddr"`
 	Expires string `json:"expires"`
 	Expired bool   `json:"expired"`
@@ -70,7 +65,7 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 		return BadReq("user is already verified")
 	}
 
-	otpJwt, err := auth.CreateOtpJwt(authUser, randCode, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.CreateOtpJwt(authUser.UserId, randCode, c.RealIP(), consts.JWT_SECRET)
 
 	log.Debug().Msgf("%s", otpJwt)
 
@@ -148,7 +143,7 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 		}
 	}
 
-	log.Debug().Msgf("%s", body.String())
+	//log.Debug().Msgf("%s", body.String())
 
 	err = email.SendHtmlEmail(loginUser.Mailbox(), "Email verification", body.String())
 
@@ -180,10 +175,10 @@ func Signup(c echo.Context, userdb *auth.UserDb, secret string) error {
 	// 	return echo.NewHTTPError(http.StatusBadRequest, err)
 	// }
 
-	return MakeDataResp(c, "verification email sent", &[]string{}) //c.JSON(http.StatusOK, JWTResp{t})
+	return MakeSuccessResp(c, "verification email sent", true) //c.JSON(http.StatusOK, JWTResp{t})
 }
 
-func Verification(c echo.Context) error {
+func EmailVerificationRoute(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtOtpCustomClaims)
 
@@ -233,121 +228,25 @@ func LoginRoute(c echo.Context) error {
 		return BadReq("user does not exist")
 	}
 
+	if !authUser.IsVerified {
+		return BadReq("email address not verified")
+	}
+
+	if !authUser.CanAuth {
+		return BadReq("user not allowed tokens")
+	}
+
 	if !authUser.CheckPasswords(user.Password) {
 		return BadReq("incorrect password")
 	}
 
-	// Throws unauthorized error
-	//if username != "edb" || password != "tod4EwVHEyCRK8encuLE" {
-	//	return echo.ErrUnauthorized
-	//}
-
-	// Set custom claims
-	claims := &auth.JwtCustomClaims{
-		UserId: authUser.UserId,
-		//Email: authUser.Email,
-		IpAddr: c.RealIP(),
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * auth.JWT_TOKEN_EXPIRES_HOURS)),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(consts.JWT_SECRET))
+	t, err := auth.CreateRefreshToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
 
 	if err != nil {
 		return BadReq("error signing token")
 	}
 
-	return MakeDataResp(c, "", &LoginResp{JwtResp: JwtResp{Jwt: t},
-		PublicUser: auth.PublicUser{UserId: authUser.UserId,
-			User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
-}
-
-func ValidateToken(c echo.Context) error {
-	// jwtReq := new(ReqJwt)
-
-	// err := c.Bind(jwtReq)
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// token, err := jwt.ParseWithClaims(jwtReq.Jwt, &JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-	// 	return []byte(consts.JWT_SECRET), nil
-	// })
-
-	// if err != nil {
-	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
-	// }
-
-	// claims := token.Claims.(*JwtCustomClaims)
-
-	// user := c.Get("user").(*jwt.Token)
-	// claims := user.Claims.(*JwtCustomClaims)
-
-	// IpAddr := c.RealIP()
-
-	// log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
-
-	// //t := claims.ExpiresAt.Unix()
-	// //expired := t != 0 && t < time.Now().Unix()
-
-	// if IpAddr != claims.IpAddr {
-	// 	return MakeDataResp(c, &JWTValidResp{JwtIsValid: false})
-	// }
-
-	return MakeDataResp(c, "", &JwtValidResp{JwtIsValid: true})
-
-}
-
-func RenewToken(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
-
-	// Throws unauthorized error
-	//if username != "edb" || password != "tod4EwVHEyCRK8encuLE" {
-	//	return echo.ErrUnauthorized
-	//}
-
-	// Set custom claims
-	renewClaims := auth.JwtCustomClaims{
-		UserId: claims.UserId,
-		//Email: authUser.Email,
-		IpAddr: claims.IpAddr,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * auth.JWT_TOKEN_EXPIRES_HOURS)),
-		},
-	}
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, renewClaims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(consts.JWT_SECRET))
-
-	if err != nil {
-		return BadReq("error signing token")
-	}
-
-	return MakeDataResp(c, "", &JwtResp{t})
-}
-
-func GetJwtInfoFromRoute(c echo.Context) *JwtInfo {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
-
-	t := claims.ExpiresAt.Unix()
-	expired := t != 0 && t < time.Now().Unix()
-
-	return &JwtInfo{UserId: claims.UserId, IpAddr: claims.IpAddr, Expires: time.Unix(t, 0).String(), Expired: expired}
-}
-
-func JWTInfoRoute(c echo.Context) error {
-	info := GetJwtInfoFromRoute(c)
-
-	return MakeDataResp(c, "", info)
+	return MakeDataResp(c, "", &LoginResp{
+		JwtResp:    JwtResp{Jwt: t},
+		PublicUser: auth.PublicUser{UserId: authUser.UserId, User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
 }
