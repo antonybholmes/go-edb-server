@@ -140,6 +140,12 @@ func main() {
 		return users.UserInfoRoute(c)
 	}, jwtMiddleWare)
 
+	passwordGroup := userGroup.Group("/password")
+
+	passwordGroup.POST("/reset", func(c echo.Context) error {
+		return users.ResetPasswordEmailRoute(c)
+	})
+
 	passwordlessGroup := userGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
