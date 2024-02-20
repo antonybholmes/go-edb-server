@@ -6,6 +6,7 @@ import (
 	"github.com/antonybholmes/go-auth"
 )
 
+// pretend its a global const
 var USERS *auth.UserDb = nil
 
 func init() {

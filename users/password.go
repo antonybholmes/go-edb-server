@@ -5,6 +5,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-edb-api/userdb"
+	"github.com/rs/zerolog/log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -55,20 +56,26 @@ func ResetPasswordEmailRoute(c echo.Context) error {
 		req.CallbackUrl,
 		req.Url)
 
+	if err != nil {
+		return routes.BadReq(err)
+	}
+
 	return routes.MakeSuccessResp(c, "password reset email sent", true)
 }
 
-func ResetPasswordRoute(c echo.Context) error {
+func UpdatePasswordRoute(c echo.Context) error {
 	req := new(PasswordResetReq)
 
 	err := c.Bind(req)
 
 	if err != nil {
-		return err
+		return routes.BadReq(err)
 	}
 
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtCustomClaims)
+
+	log.Debug().Msgf("reset %s", claims.UserId)
 
 	if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
 		return routes.BadReq("wrong token type")
@@ -86,5 +93,5 @@ func ResetPasswordRoute(c echo.Context) error {
 		return routes.BadReq("error setting password")
 	}
 
-	return routes.MakeSuccessResp(c, "password reset", true)
+	return routes.MakeSuccessResp(c, "password updated", true)
 }

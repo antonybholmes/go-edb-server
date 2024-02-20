@@ -146,6 +146,10 @@ func main() {
 		return users.ResetPasswordEmailRoute(c)
 	})
 
+	passwordGroup.POST("/update", func(c echo.Context) error {
+		return users.UpdatePasswordRoute(c)
+	}, jwtMiddleWare)
+
 	passwordlessGroup := userGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
