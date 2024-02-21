@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/modules"
@@ -92,14 +93,14 @@ func main() {
 	e.Use(middleware.CORS())
 	//e.Logger.SetLevel(log.DEBUG)
 
-	userdb, err := auth.NewUserDb("data/users.db")
+	err = userdb.Init("data/users.db")
 
 	if err != nil {
 		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
-	dnadbcache.SetDir("data/dna")
-	genedbcache.SetDir("data/genes")
+	dnadbcache.Init("data/dna")
+	genedbcache.Init("data/genes")
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
@@ -125,7 +126,7 @@ func main() {
 	userGroup := e.Group("/users")
 
 	userGroup.POST("/signup", func(c echo.Context) error {
-		return users.SignupRoute(c, userdb, consts.JWT_SECRET)
+		return users.SignupRoute(c)
 	})
 
 	userGroup.POST("/login", func(c echo.Context) error {

@@ -12,8 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const DEFAULT_ASSEMBLY = "grch38"
-const DEFAULT_CHR = "chr1"        //"chr3"
+const DEFAULT_ASSEMBLY string = "grch38"
+const DEFAULT_CHR string = "chr1" //"chr3"
 const DEFAULT_START uint = 100000 //187728170
 const DEFAULT_END uint = 100100   //187752257
 
