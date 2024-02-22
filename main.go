@@ -122,25 +122,35 @@ func main() {
 	// user groups: start
 	//
 
-	userGroup := e.Group("/users")
+	authGroup := e.Group("/auth")
 
-	userGroup.POST("/signup", func(c echo.Context) error {
+	authGroup.POST("/signup", func(c echo.Context) error {
 		return authroutes.SignupRoute(c)
 	})
 
-	userGroup.POST("/login", func(c echo.Context) error {
-		return authroutes.LoginRoute(c)
+	loginGroup := authGroup.Group("/login")
+
+	loginGroup.POST("/email", func(c echo.Context) error {
+		return authroutes.EmailPasswordLoginRoute(c)
 	})
 
-	userGroup.POST("/verify", func(c echo.Context) error {
+	loginGroup.POST("/username", func(c echo.Context) error {
+		return authroutes.UsernamePasswordLoginRoute(c)
+	})
+
+	authGroup.POST("/login", func(c echo.Context) error {
+		return authroutes.EmailPasswordLoginRoute(c)
+	})
+
+	authGroup.POST("/verify", func(c echo.Context) error {
 		return authroutes.EmailVerificationRoute(c)
 	}, jwtMiddleWare)
 
-	userGroup.POST("/info", func(c echo.Context) error {
+	authGroup.POST("/info", func(c echo.Context) error {
 		return authroutes.UserInfoRoute(c)
 	}, jwtMiddleWare)
 
-	passwordGroup := userGroup.Group("/password")
+	passwordGroup := authGroup.Group("/password")
 
 	passwordGroup.POST("/reset", func(c echo.Context) error {
 		return authroutes.ResetPasswordEmailRoute(c)
@@ -150,7 +160,7 @@ func main() {
 		return authroutes.UpdatePasswordRoute(c)
 	}, jwtMiddleWare)
 
-	passwordlessGroup := userGroup.Group("/passwordless")
+	passwordlessGroup := authGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
 		return authroutes.PasswordlessEmailRoute(c)
@@ -187,7 +197,7 @@ func main() {
 
 	moduleGroup := e.Group("/modules")
 	moduleGroup.Use(jwtMiddleWare)
-	moduleGroup.Use(JwtIsAccessMiddleware)
+	moduleGroup.Use(JwtIsAccessTokenMiddleware)
 
 	dnaGroup := moduleGroup.Group("/dna")
 

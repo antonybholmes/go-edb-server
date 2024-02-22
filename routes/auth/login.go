@@ -9,8 +9,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func LoginRoute(c echo.Context) error {
-	req := new(auth.LoginReq)
+func EmailPasswordLoginRoute(c echo.Context) error {
+	req := new(auth.EmailPasswordLoginReq)
 
 	err := c.Bind(req)
 
@@ -29,6 +29,33 @@ func LoginRoute(c echo.Context) error {
 		return routes.BadReq("user does not exist")
 	}
 
+	return loginRoute(c, authUser, req.Password)
+}
+
+func UsernamePasswordLoginRoute(c echo.Context) error {
+	req := new(auth.UsernamePasswordLoginReq)
+
+	err := c.Bind(req)
+
+	if err != nil {
+		return err
+	}
+
+	if req.Password == "" {
+		return routes.BadReq("empty password: use passwordless")
+	}
+
+	authUser, err := userdb.FindUserByEmail(req.Username)
+
+	if err != nil {
+		return routes.BadReq("user does not exist")
+	}
+
+	return loginRoute(c, authUser, req.Password)
+}
+
+func loginRoute(c echo.Context, authUser *auth.AuthUser, password string) error {
+
 	if !authUser.IsVerified {
 		return routes.BadReq("email address not verified")
 	}
@@ -37,11 +64,7 @@ func LoginRoute(c echo.Context) error {
 		return routes.BadReq("user not allowed tokens")
 	}
 
-	if req.Password == "" {
-		return routes.BadReq("empty password: use passwordless")
-	}
-
-	if !authUser.CheckPasswords(req.Password) {
+	if !authUser.CheckPasswords(password) {
 		return routes.BadReq("incorrect password")
 	}
 

@@ -80,9 +80,9 @@ func TokenInfoRoute(c echo.Context) error {
 	}
 
 	return routes.MakeDataResp(c, "", &routes.JwtInfo{
-		Uuid:    claims.Uuid,
-		Type:    auth.TokenTypeString(claims.Type),
-		IpAddr:  claims.IpAddr,
+		Uuid: claims.Uuid,
+		Type: auth.TokenTypeString(claims.Type),
+		//IpAddr:  claims.IpAddr,
 		Expires: claims.ExpiresAt.UTC().String()})
 
 }
