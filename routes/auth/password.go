@@ -1,4 +1,4 @@
-package users
+package auth
 
 import (
 	"github.com/antonybholmes/go-auth"
@@ -35,7 +35,7 @@ func ResetPasswordEmailRoute(c echo.Context) error {
 		return routes.BadReq("email address not verified")
 	}
 
-	otpJwt, err := auth.ResetPasswordToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.ResetPasswordToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.BadReq(err)
@@ -75,19 +75,19 @@ func UpdatePasswordRoute(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtCustomClaims)
 
-	log.Debug().Msgf("reset %s", claims.UserId)
+	log.Debug().Msgf("reset %s", claims.Uuid)
 
 	if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
 		return routes.BadReq("wrong token type")
 	}
 
-	authUser, err := userdb.FindUserById(claims.UserId)
+	authUser, err := userdb.FindUserByUuid(claims.Uuid)
 
 	if err != nil {
 		return routes.BadReq("user does not exist")
 	}
 
-	err = userdb.SetPassword(authUser.UserId, req.Password)
+	err = userdb.SetPassword(authUser.Uuid, req.Password)
 
 	if err != nil {
 		return routes.BadReq("error setting password")

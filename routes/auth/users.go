@@ -1,4 +1,4 @@
-package users
+package auth
 
 import (
 	"bytes"
@@ -41,16 +41,18 @@ func UserInfoRoute(c echo.Context) error {
 		return routes.BadReq("wrong token type")
 	}
 
-	authUser, err := userdb.FindUserById(claims.UserId)
+	authUser, err := userdb.FindUserByUuid(claims.Uuid)
 
 	if err != nil {
 		return routes.BadReq("user does not exist")
 	}
 
 	return routes.MakeDataResp(c, "", &UserInfoResp{
-		PublicUser: auth.PublicUser{UserId: authUser.UserId, User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
+		PublicUser: auth.PublicUser{Uuid: authUser.Uuid, User: auth.User{Name: authUser.Name, Email: authUser.Email}}})
 }
 
+// Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites
+// it can craft a callback url with the token added as a parameter so that the web app can deal with the response.
 func TokenEmail(subject string,
 	authUser *auth.AuthUser,
 	file string,
@@ -116,7 +118,7 @@ func TokenEmail(subject string,
 		}
 	}
 
-	err = email.SendHtmlEmail(authUser.Mailbox(), subject, body.String())
+	err = email.SendHtmlEmail(authUser.Address(), subject, body.String())
 
 	if err != nil {
 		return err

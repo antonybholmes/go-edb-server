@@ -10,7 +10,7 @@ replace github.com/antonybholmes/go-math => ../go-math
 
 replace github.com/antonybholmes/go-auth => ../go-auth
 
-replace github.com/antonybholmes/go-env => ../go-env
+replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mailer => ../go-mailer
 
@@ -23,7 +23,6 @@ require (
 
 require (
 	github.com/antonybholmes/go-auth v0.0.0-20240220233159-3c0eb135aebe
-	github.com/antonybholmes/go-env v0.0.0-20240219230548-9ab0febd5fc5
 	github.com/antonybholmes/go-genes v0.0.0-20240220233158-15b6002680ec
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -32,11 +31,14 @@ require (
 	github.com/rs/zerolog v1.32.0
 )
 
-require github.com/antonybholmes/go-mailer v0.0.0-20240219230546-a8e3e894e0d7
+require (
+	github.com/antonybholmes/go-mailer v0.0.0-20240219230546-a8e3e894e0d7
+	github.com/antonybholmes/go-sys v0.0.0-20240219230548-9ab0febd5fc5
+)
 
 require (
-	github.com/gofrs/uuid/v5 v5.0.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

@@ -13,7 +13,7 @@ type JwtResp struct {
 }
 
 type JwtInfo struct {
-	UserId string `json:"userId"`
+	Uuid string `json:"uuid"`
 	//Name  string `json:"name"`
 	Type    string `json:"type"`
 	IpAddr  string `json:"ipAddr"`

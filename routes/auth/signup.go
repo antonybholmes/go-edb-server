@@ -1,4 +1,4 @@
-package users
+package auth
 
 import (
 	"github.com/antonybholmes/go-auth"
@@ -29,7 +29,7 @@ func SignupRoute(c echo.Context) error {
 		return routes.BadReq("user is already verified")
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.VerifyEmailToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	log.Debug().Msgf("%s", otpJwt)
 
@@ -63,7 +63,7 @@ func EmailVerificationRoute(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtCustomClaims)
 
-	authUser, err := userdb.FindUserById(claims.UserId)
+	authUser, err := userdb.FindUserByUuid(claims.Uuid)
 
 	if err != nil {
 		return routes.MakeSuccessResp(c, "user not found", false)
@@ -74,7 +74,7 @@ func EmailVerificationRoute(c echo.Context) error {
 		return routes.MakeSuccessResp(c, "", true)
 	}
 
-	err = userdb.SetIsVerified(authUser.UserId)
+	err = userdb.SetIsVerified(authUser.Uuid)
 
 	if err != nil {
 		return routes.MakeSuccessResp(c, "unable to verify user", false)

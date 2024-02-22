@@ -1,4 +1,4 @@
-package users
+package auth
 
 import (
 	"github.com/antonybholmes/go-auth"
@@ -45,7 +45,7 @@ func LoginRoute(c echo.Context) error {
 		return routes.BadReq("incorrect password")
 	}
 
-	t, err := auth.RefreshToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
+	t, err := auth.RefreshToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.BadReq("error signing token")
@@ -74,7 +74,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		return routes.BadReq("email address not verified")
 	}
 
-	otpJwt, err := auth.PasswordlessToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.PasswordlessToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.BadReq(err)
@@ -110,7 +110,7 @@ func PasswordlessLoginRoute(c echo.Context) error {
 		return routes.BadReq("wrong token type")
 	}
 
-	authUser, err := userdb.FindUserById(claims.UserId)
+	authUser, err := userdb.FindUserByUuid(claims.Uuid)
 
 	if err != nil {
 		return routes.BadReq("user does not exist")
@@ -124,7 +124,7 @@ func PasswordlessLoginRoute(c echo.Context) error {
 		return routes.BadReq("user not allowed tokens")
 	}
 
-	t, err := auth.RefreshToken(authUser.UserId, c.RealIP(), consts.JWT_SECRET)
+	t, err := auth.RefreshToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.BadReq("error signing token")

@@ -13,11 +13,10 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/modules"
-	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/antonybholmes/go-edb-api/users"
-	"github.com/antonybholmes/go-env"
+	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
+	modroutes "github.com/antonybholmes/go-edb-api/routes/modules"
 	"github.com/antonybholmes/go-genes/genedbcache"
+	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -126,39 +125,39 @@ func main() {
 	userGroup := e.Group("/users")
 
 	userGroup.POST("/signup", func(c echo.Context) error {
-		return users.SignupRoute(c)
+		return authroutes.SignupRoute(c)
 	})
 
 	userGroup.POST("/login", func(c echo.Context) error {
-		return users.LoginRoute(c)
+		return authroutes.LoginRoute(c)
 	})
 
 	userGroup.POST("/verify", func(c echo.Context) error {
-		return users.EmailVerificationRoute(c)
+		return authroutes.EmailVerificationRoute(c)
 	}, jwtMiddleWare)
 
 	userGroup.POST("/info", func(c echo.Context) error {
-		return users.UserInfoRoute(c)
+		return authroutes.UserInfoRoute(c)
 	}, jwtMiddleWare)
 
 	passwordGroup := userGroup.Group("/password")
 
 	passwordGroup.POST("/reset", func(c echo.Context) error {
-		return users.ResetPasswordEmailRoute(c)
+		return authroutes.ResetPasswordEmailRoute(c)
 	})
 
 	passwordGroup.POST("/update", func(c echo.Context) error {
-		return users.UpdatePasswordRoute(c)
+		return authroutes.UpdatePasswordRoute(c)
 	}, jwtMiddleWare)
 
 	passwordlessGroup := userGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
-		return users.PasswordlessEmailRoute(c)
+		return authroutes.PasswordlessEmailRoute(c)
 	})
 
 	passwordlessGroup.POST("/login", func(c echo.Context) error {
-		return users.PasswordlessLoginRoute(c)
+		return authroutes.PasswordlessLoginRoute(c)
 	}, jwtMiddleWare)
 
 	//
@@ -170,12 +169,12 @@ func main() {
 	//
 
 	tokenGroup := e.Group("/tokens")
-	tokenGroup.POST("/info", routes.TokenInfoRoute)
+	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
 
 	tokenAuthGroup := tokenGroup.Group("")
 	tokenAuthGroup.Use(jwtMiddleWare)
 	tokenAuthGroup.POST("/access", func(c echo.Context) error {
-		return routes.NewAccessTokenRoute(c)
+		return authroutes.NewAccessTokenRoute(c)
 	})
 
 	//
@@ -193,21 +192,21 @@ func main() {
 	dnaGroup := moduleGroup.Group("/dna")
 
 	dnaGroup.POST("/:assembly", func(c echo.Context) error {
-		return modules.DNARoute(c)
+		return modroutes.DNARoute(c)
 	})
 
 	genesGroup := moduleGroup.Group("/genes")
 
 	genesGroup.POST("/within/:assembly", func(c echo.Context) error {
-		return modules.WithinGenesRoute(c)
+		return modroutes.WithinGenesRoute(c)
 	})
 
 	genesGroup.POST("/closest/:assembly", func(c echo.Context) error {
-		return modules.ClosestGeneRoute(c)
+		return modroutes.ClosestGeneRoute(c)
 	})
 
 	genesGroup.POST("/annotation/:assembly", func(c echo.Context) error {
-		return modules.AnnotationRoute(c)
+		return modroutes.AnnotationRoute(c)
 	})
 
 	//

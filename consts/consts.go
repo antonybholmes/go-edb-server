@@ -3,7 +3,7 @@ package consts
 import (
 	"os"
 
-	"github.com/antonybholmes/go-env"
+	"github.com/antonybholmes/go-sys/env"
 )
 
 var NAME string

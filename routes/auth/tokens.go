@@ -1,10 +1,11 @@
-package routes
+package auth
 
 import (
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
+	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -40,7 +41,7 @@ type AuthReq struct {
 // 	t, err := token.SignedString([]byte(consts.JWT_SECRET))
 
 // 	if err != nil {
-// 		return BadReq("error signing token")
+// 		return routes.BadReq("error signing token")
 // 	}
 
 // 	return MakeDataResp(c, "", &JwtResp{t})
@@ -51,17 +52,17 @@ func TokenInfoRoute(c echo.Context) error {
 	h := c.Request().Header.Get("Authorization")
 
 	if h == "" {
-		return BadReq("authorization header not present")
+		return routes.BadReq("authorization header not present")
 	}
 
 	if !strings.Contains(h, "Bearer") {
-		return BadReq("bearer not present")
+		return routes.BadReq("bearer not present")
 	}
 
 	tokens := strings.Split(h, " ")
 
 	if len(tokens) < 2 {
-		return BadReq("jwt not present")
+		return routes.BadReq("jwt not present")
 	}
 
 	t := tokens[1]
@@ -75,11 +76,11 @@ func TokenInfoRoute(c echo.Context) error {
 	})
 
 	if err != nil {
-		return BadReq(err)
+		return routes.BadReq(err)
 	}
 
-	return MakeDataResp(c, "", &JwtInfo{
-		UserId:  claims.UserId,
+	return routes.MakeDataResp(c, "", &routes.JwtInfo{
+		Uuid:    claims.Uuid,
 		Type:    auth.TokenTypeString(claims.Type),
 		IpAddr:  claims.IpAddr,
 		Expires: claims.ExpiresAt.UTC().String()})
@@ -91,15 +92,15 @@ func NewAccessTokenRoute(c echo.Context) error {
 	claims := user.Claims.(*auth.JwtCustomClaims)
 
 	if claims.Type != auth.TOKEN_TYPE_REFRESH {
-		return BadReq("wrong token type")
+		return routes.BadReq("wrong token type")
 	}
 
 	// Generate encoded token and send it as response.
-	t, err := auth.AccessToken(claims.UserId, c.RealIP(), consts.JWT_SECRET)
+	t, err := auth.AccessToken(claims.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	if err != nil {
-		return MakeDataResp(c, "error signing token", &JwtResp{""})
+		return routes.MakeDataResp(c, "error signing token", &routes.JwtResp{Jwt: ""})
 	}
 
-	return MakeDataResp(c, "", &JwtResp{t})
+	return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
 }
