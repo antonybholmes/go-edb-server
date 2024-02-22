@@ -138,19 +138,11 @@ func main() {
 		return authroutes.UsernamePasswordLoginRoute(c)
 	})
 
-	authGroup.POST("/login", func(c echo.Context) error {
-		return authroutes.EmailPasswordLoginRoute(c)
-	})
-
 	authGroup.POST("/verify", func(c echo.Context) error {
 		return authroutes.EmailVerificationRoute(c)
 	}, jwtMiddleWare)
 
-	authGroup.POST("/info", func(c echo.Context) error {
-		return authroutes.UserInfoRoute(c)
-	}, jwtMiddleWare)
-
-	passwordGroup := authGroup.Group("/password")
+	passwordGroup := authGroup.Group("/passwords")
 
 	passwordGroup.POST("/reset", func(c echo.Context) error {
 		return authroutes.ResetPasswordEmailRoute(c)
@@ -170,26 +162,27 @@ func main() {
 		return authroutes.PasswordlessLoginRoute(c)
 	}, jwtMiddleWare)
 
+	tokenGroup := authGroup.Group("/tokens")
+	tokenGroup.Use(jwtMiddleWare)
+	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
+
 	//
 	// passwordless groups: end
 	//
 
-	//
-	// token groups: start
-	//
+	usersGroup := e.Group("/users")
+	usersGroup.Use(jwtMiddleWare)
+	usersGroup.Use(JwtIsAccessTokenMiddleware)
 
-	tokenGroup := e.Group("/tokens")
-	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
-
-	tokenAuthGroup := tokenGroup.Group("")
-	tokenAuthGroup.Use(jwtMiddleWare)
-	tokenAuthGroup.POST("/access", func(c echo.Context) error {
-		return authroutes.NewAccessTokenRoute(c)
+	usersGroup.POST("/info", func(c echo.Context) error {
+		return authroutes.UserInfoRoute(c)
 	})
 
-	//
-	// token groups: end
-	//
+	accountsGroup := authGroup.Group("/accounts")
+
+	accountsGroup.POST("/usernames/reset", func(c echo.Context) error {
+		return authroutes.ResetPasswordEmailRoute(c)
+	})
 
 	//
 	// module groups: start

@@ -45,10 +45,16 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 		return routes.BadReq("empty password: use passwordless")
 	}
 
-	authUser, err := userdb.FindUserByEmail(req.Username)
+	authUser, err := userdb.FindUserByUsername(req.Username)
 
 	if err != nil {
-		return routes.BadReq("user does not exist")
+		// also check if username is valid email and try to login
+		// with that
+		authUser, err = userdb.FindUserByEmail(req.Username)
+
+		if err != nil {
+			return routes.BadReq("user does not exist")
+		}
 	}
 
 	return loginRoute(c, authUser, req.Password)
@@ -56,7 +62,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 
 func loginRoute(c echo.Context, authUser *auth.AuthUser, password string) error {
 
-	if !authUser.IsVerified {
+	if !authUser.EmailVerified {
 		return routes.BadReq("email address not verified")
 	}
 
@@ -93,7 +99,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		return routes.BadReq("user does not exist")
 	}
 
-	if !authUser.IsVerified {
+	if !authUser.EmailVerified {
 		return routes.BadReq("email address not verified")
 	}
 
@@ -139,7 +145,7 @@ func PasswordlessLoginRoute(c echo.Context) error {
 		return routes.BadReq("user does not exist")
 	}
 
-	if !authUser.IsVerified {
+	if !authUser.EmailVerified {
 		return routes.BadReq("email address not verified")
 	}
 

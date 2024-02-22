@@ -25,10 +25,6 @@ func SignupRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	if authUser.IsVerified {
-		return routes.BadReq("user is already verified")
-	}
-
 	otpJwt, err := auth.VerifyEmailToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
 	log.Debug().Msgf("%s", otpJwt)
@@ -70,7 +66,7 @@ func EmailVerificationRoute(c echo.Context) error {
 	}
 
 	// if verified, stop and just return true
-	if authUser.IsVerified {
+	if authUser.EmailVerified {
 		return routes.MakeSuccessResp(c, "", true)
 	}
 
@@ -78,6 +74,19 @@ func EmailVerificationRoute(c echo.Context) error {
 
 	if err != nil {
 		return routes.MakeSuccessResp(c, "unable to verify user", false)
+	}
+
+	file := "templates/email/verify/verified.html"
+
+	err = TokenEmail("Email Address Verified",
+		authUser,
+		file,
+		"",
+		"",
+		"")
+
+	if err != nil {
+		return routes.BadReq(err)
 	}
 
 	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
