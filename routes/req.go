@@ -13,6 +13,14 @@ type JwtResp struct {
 	Jwt string `json:"jwt"`
 }
 
+type RefreshTokenResp struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+type AccessTokenResp struct {
+	AccessToken string `json:"accessToken"`
+}
+
 type JwtInfo struct {
 	Uuid string `json:"uuid"`
 	//Name  string `json:"name"`

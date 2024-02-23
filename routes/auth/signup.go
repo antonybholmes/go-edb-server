@@ -24,7 +24,7 @@ func SignupRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	log.Debug().Msgf("%s", otpJwt)
 
@@ -40,7 +40,7 @@ func SignupRoute(c echo.Context) error {
 		file = "templates/email/verify/api.html"
 	}
 
-	err = TokenEmail("Email Verification",
+	err = SendEmailWithToken("Email Verification",
 		authUser,
 		file,
 		otpJwt,
@@ -55,34 +55,34 @@ func SignupRoute(c echo.Context) error {
 }
 
 func EmailVerificationRoute(c echo.Context) error {
-	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
-			// if verified, stop and just return true
-			if authUser.EmailVerified {
-				return routes.MakeSuccessResp(c, "", true)
-			}
+	return routes.UserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
-			err := userdb.SetIsVerified(authUser.Uuid)
+		// if verified, stop and just return true
+		if authUser.EmailVerified {
+			return routes.MakeSuccessResp(c, "", true)
+		}
 
-			if err != nil {
-				return routes.MakeSuccessResp(c, "unable to verify user", false)
-			}
+		err := userdb.SetIsVerified(authUser.Uuid)
 
-			file := "templates/email/verify/verified.html"
+		if err != nil {
+			return routes.MakeSuccessResp(c, "unable to verify user", false)
+		}
 
-			err = TokenEmail("Email Address Verified",
-				authUser,
-				file,
-				"",
-				"",
-				"")
+		file := "templates/email/verify/verified.html"
 
-			if err != nil {
-				return routes.BadReq(err)
-			}
+		err = SendEmailWithToken("Email Address Verified",
+			authUser,
+			file,
+			"",
+			"",
+			"")
 
-			return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
-		})
+		if err != nil {
+			return routes.BadReq(err)
+		}
+
+		return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
 	})
+
 }

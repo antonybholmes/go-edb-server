@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"net/mail"
 	"net/url"
 	"strings"
 
@@ -37,6 +36,10 @@ type UsernameReq struct {
 	Username string `json:"username"`
 }
 
+type NameReq struct {
+	Name string `json:"name"`
+}
+
 // Start passwordless login by sending an email
 func ResetPasswordEmailRoute(c echo.Context) error {
 	req := new(auth.EmailOnlyLoginReq)
@@ -47,39 +50,38 @@ func ResetPasswordEmailRoute(c echo.Context) error {
 		return err
 	}
 
-	return routes.ValidEmailCB(c, req.Email, func(c echo.Context, email *mail.Address) error {
-		return routes.EmailUserCB(c, email, func(c echo.Context, authUser *auth.AuthUser) error {
-			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
+	return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
+		return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
 
-				otpJwt, err := auth.ResetPasswordToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
+			otpJwt, err := auth.ResetPasswordToken(c, authUser.Uuid, consts.JWT_SECRET)
 
-				if err != nil {
-					return routes.BadReq(err)
-				}
+			if err != nil {
+				return routes.BadReq(err)
+			}
 
-				var file string
+			var file string
 
-				if req.Url != "" {
-					file = "templates/email/password/reset/web.html"
-				} else {
-					file = "templates/email/password/reset/api.html"
-				}
+			if req.Url != "" {
+				file = "templates/email/password/reset/web.html"
+			} else {
+				file = "templates/email/password/reset/api.html"
+			}
 
-				err = TokenEmail("Password Reset",
-					authUser,
-					file,
-					otpJwt,
-					req.CallbackUrl,
-					req.Url)
+			err = SendEmailWithToken("Password Reset",
+				authUser,
+				file,
+				otpJwt,
+				req.CallbackUrl,
+				req.Url)
 
-				if err != nil {
-					return routes.BadReq(err)
-				}
+			if err != nil {
+				return routes.BadReq(err)
+			}
 
-				return routes.MakeSuccessResp(c, "password reset email sent", true)
-			})
+			return routes.MakeSuccessResp(c, "password reset email sent", true)
 		})
 	})
+
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
@@ -91,21 +93,18 @@ func UpdatePasswordRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-
+	return routes.UserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 		if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
 			return routes.BadReq("wrong token type")
 		}
 
-		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-			err = userdb.SetPassword(authUser.Uuid, req.Password)
+		err = userdb.SetPassword(authUser.Uuid, req.Password)
 
-			if err != nil {
-				return routes.BadReq("error setting password")
-			}
+		if err != nil {
+			return routes.BadReq("error setting password")
+		}
 
-			return routes.MakeSuccessResp(c, "password updated", true)
-		})
+		return routes.MakeSuccessResp(c, "password updated", true)
 	})
 }
 
@@ -118,8 +117,9 @@ func UpdateUsernameRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+
+		return routes.UserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
 			err = userdb.SetUsername(authUser.Uuid, req.Username)
 
@@ -130,11 +130,35 @@ func UpdateUsernameRoute(c echo.Context) error {
 			return routes.MakeSuccessResp(c, "password updated", true)
 		})
 	})
+
+}
+
+func UpdateNameRoute(c echo.Context) error {
+	req := new(NameReq)
+
+	err := c.Bind(req)
+
+	if err != nil {
+		return routes.BadReq(err)
+	}
+	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		return routes.UserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+
+			err = userdb.SetName(authUser.Uuid, req.Name)
+
+			if err != nil {
+				return routes.BadReq("error setting password")
+			}
+
+			return routes.MakeSuccessResp(c, "password updated", true)
+		})
+	})
+
 }
 
 func UserInfoRoute(c echo.Context) error {
-	return routes.RefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+	return routes.IsValidRefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		return routes.UserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 			return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
 		})
 	})
@@ -142,7 +166,7 @@ func UserInfoRoute(c echo.Context) error {
 
 // Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites
 // it can craft a callback url with the token added as a parameter so that the web app can deal with the response.
-func TokenEmail(subject string,
+func SendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
 	file string,
 	token string,
@@ -157,7 +181,15 @@ func TokenEmail(subject string,
 		return routes.BadReq(err)
 	}
 
-	firstName := strings.Split(authUser.Name, " ")[0]
+	var firstName string = ""
+
+	if len(authUser.Name) > 0 {
+		firstName = authUser.Name
+	} else {
+		firstName = authUser.Email.Address
+	}
+
+	firstName = strings.Split(firstName, " ")[0]
 
 	time := fmt.Sprintf("%d minutes", int(auth.TOKEN_TYPE_OTP_TTL_MINS.Minutes()))
 
@@ -207,7 +239,7 @@ func TokenEmail(subject string,
 		}
 	}
 
-	err = email.SendHtmlEmail(authUser.Address(), subject, body.String())
+	err = email.SendHtmlEmail(authUser.Email, subject, body.String())
 
 	if err != nil {
 		return err

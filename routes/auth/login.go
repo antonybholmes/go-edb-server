@@ -19,19 +19,13 @@ func EmailPasswordLoginRoute(c echo.Context) error {
 		return err
 	}
 
-	email, err := mail.ParseAddress(req.Email)
-
-	if err != nil {
-		return routes.BadReq("user does not exist")
+	if req.Password == "" {
+		return routes.BadReq("empty password: use passwordless")
 	}
 
-	authUser, err := userdb.FindUserByEmail(email)
-
-	if err != nil {
-		return routes.BadReq("user does not exist")
-	}
-
-	return loginRoute(c, authUser, req.Password)
+	return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
+		return loginRoute(c, authUser, req.Password)
+	})
 }
 
 func UsernamePasswordLoginRoute(c echo.Context) error {
@@ -82,13 +76,13 @@ func loginRoute(c echo.Context, authUser *auth.AuthUser, password string) error 
 		return routes.BadReq("incorrect password")
 	}
 
-	t, err := auth.RefreshToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
+	t, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.BadReq("error signing token")
 	}
 
-	return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
+	return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
 }
 
 // Start passwordless login by sending an email
@@ -117,7 +111,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		return routes.BadReq("email address not verified")
 	}
 
-	otpJwt, err := auth.PasswordlessToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
+	otpJwt, err := auth.PasswordlessToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.BadReq(err)
@@ -131,7 +125,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		file = "templates/email/passwordless/api.html"
 	}
 
-	err = TokenEmail("Passwordless Login",
+	err = SendEmailWithToken("Passwordless Login",
 		authUser,
 		file,
 		otpJwt,
@@ -146,26 +140,25 @@ func PasswordlessEmailRoute(c echo.Context) error {
 }
 
 func PasswordlessLoginRoute(c echo.Context) error {
-	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 
-		if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-			return routes.BadReq("wrong token type")
-		}
+	return routes.UserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+		return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
+			if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+				return routes.BadReq("wrong token type")
+			}
 
-		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
-				if !authUser.CanAuth {
-					return routes.BadReq("user not allowed tokens")
-				}
+			if !authUser.CanAuth {
+				return routes.BadReq("user not allowed tokens")
+			}
 
-				t, err := auth.RefreshToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
+			t, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
-				if err != nil {
-					return routes.BadReq("error signing token")
-				}
+			if err != nil {
+				return routes.BadReq("error signing token")
+			}
 
-				return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
-			})
+			return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
 		})
 	})
+
 }

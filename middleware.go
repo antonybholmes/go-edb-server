@@ -4,7 +4,6 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 // func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
@@ -51,9 +50,7 @@ import (
 
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return routes.AccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-
-			log.Debug().Msgf("type: %d, %d", claims.Type, auth.TOKEN_TYPE_ACCESS)
+		return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 
 			return next(c)
 		})

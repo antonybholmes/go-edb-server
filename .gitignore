@@ -24,9 +24,10 @@
 
 # vendor/
 
-go-edb-api
 
 data
 logs
+deployments/*
+go-edb-api
 
 tests.sh

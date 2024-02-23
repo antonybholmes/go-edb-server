@@ -9,7 +9,7 @@ import (
 )
 
 type AuthReq struct {
-	Authorization string `header:"authorization"`
+	Authorization string `header:"Authorization"`
 }
 
 // func RenewTokenRoute(c echo.Context) error {
@@ -71,16 +71,16 @@ func TokenInfoRoute(c echo.Context) error {
 
 func NewAccessTokenRoute(c echo.Context) error {
 
-	return routes.RefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+	return routes.IsValidRefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(claims.Uuid, c.RealIP(), consts.JWT_SECRET)
+		t, err := auth.AccessToken(c, claims.Uuid, consts.JWT_SECRET)
 
 		if err != nil {
-			return routes.MakeDataResp(c, "error signing token", &routes.JwtResp{Jwt: ""})
+			return routes.BadReq("error creating access token")
 		}
 
-		return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
+		return routes.MakeDataResp(c, "", &routes.AccessTokenResp{AccessToken: t})
 	})
 
 }
