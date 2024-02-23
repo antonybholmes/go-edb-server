@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,50 +25,16 @@ type ReqJwt struct {
 	Jwt string `json:"jwt"`
 }
 
-type StatusResp struct {
-	Status int `json:"status"`
+func InvalidEmailReq() *echo.HTTPError {
+	return BadReq("invalid email address")
 }
 
-type StatusMessageResp struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
+func UserDoesNotExistReq() *echo.HTTPError {
+	return BadReq("user does not exist")
 }
-
-type DataResp struct {
-	StatusMessageResp
-	Data interface{} `json:"data"`
-}
-
-type SuccessResp struct {
-	Success bool `json:"success"`
-}
-
-type ValidResp struct {
-	Valid bool `json:"valid"`
-}
-
-func JsonRep[V any](c echo.Context, status int, data V) error {
-	return c.JSONPretty(status, data, " ")
-}
-
-// func MakeBadResp(c echo.Context, err error) error {
-// 	return JsonRep(c, http.StatusBadRequest, StatusResp{StatusResp: StatusResp{Status: http.StatusBadRequest}, Message: err.Error()})
-// }
 
 func BadReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
-}
-
-func MakeDataResp[V any](c echo.Context, message string, data V) error {
-	return JsonRep(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
-}
-
-func MakeValidResp(c echo.Context, message string, valid bool) error {
-	return MakeDataResp(c, message, &ValidResp{Valid: valid})
-}
-
-func MakeSuccessResp(c echo.Context, message string, success bool) error {
-	return MakeDataResp(c, message, &SuccessResp{Success: success})
 }
 
 // parsedLocation takes an echo context and attempts to extract parameters
@@ -114,4 +81,26 @@ func ParseOutput(c echo.Context) string {
 	} else {
 		return "json"
 	}
+}
+
+// get the auth token from the header
+func HeaderAuthToken(c echo.Context) (string, error) {
+
+	h := c.Request().Header.Get("Authorization")
+
+	if h == "" {
+		return "", fmt.Errorf("authorization header not present")
+	}
+
+	if !strings.Contains(h, "Bearer") {
+		return "", fmt.Errorf("bearer not present")
+	}
+
+	tokens := strings.Split(h, " ")
+
+	if len(tokens) < 2 {
+		return "", fmt.Errorf("jwt not present")
+	}
+
+	return tokens[1], nil
 }

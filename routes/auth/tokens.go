@@ -1,14 +1,11 @@
 package auth
 
 import (
-	"strings"
-
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type AuthReq struct {
@@ -48,30 +45,15 @@ type AuthReq struct {
 // }
 
 func TokenInfoRoute(c echo.Context) error {
+	t, err := routes.HeaderAuthToken(c)
 
-	h := c.Request().Header.Get("Authorization")
-
-	if h == "" {
-		return routes.BadReq("authorization header not present")
+	if err != nil {
+		return routes.BadReq(err)
 	}
-
-	if !strings.Contains(h, "Bearer") {
-		return routes.BadReq("bearer not present")
-	}
-
-	tokens := strings.Split(h, " ")
-
-	if len(tokens) < 2 {
-		return routes.BadReq("jwt not present")
-	}
-
-	t := tokens[1]
-
-	log.Debug().Msgf("%s", t)
 
 	claims := auth.JwtCustomClaims{}
 
-	_, err := jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (interface{}, error) {
+	_, err = jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(consts.JWT_SECRET), nil
 	})
 
@@ -88,19 +70,17 @@ func TokenInfoRoute(c echo.Context) error {
 }
 
 func NewAccessTokenRoute(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
 
-	if claims.Type != auth.TOKEN_TYPE_REFRESH {
-		return routes.BadReq("wrong token type")
-	}
+	return routes.RefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 
-	// Generate encoded token and send it as response.
-	t, err := auth.AccessToken(claims.Uuid, c.RealIP(), consts.JWT_SECRET)
+		// Generate encoded token and send it as response.
+		t, err := auth.AccessToken(claims.Uuid, c.RealIP(), consts.JWT_SECRET)
 
-	if err != nil {
-		return routes.MakeDataResp(c, "error signing token", &routes.JwtResp{Jwt: ""})
-	}
+		if err != nil {
+			return routes.MakeDataResp(c, "error signing token", &routes.JwtResp{Jwt: ""})
+		}
 
-	return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
+		return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
+	})
+
 }

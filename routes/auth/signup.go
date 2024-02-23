@@ -5,7 +5,6 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -56,38 +55,34 @@ func SignupRoute(c echo.Context) error {
 }
 
 func EmailVerificationRoute(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
+	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
-	authUser, err := userdb.FindUserByUuid(claims.Uuid)
+			// if verified, stop and just return true
+			if authUser.EmailVerified {
+				return routes.MakeSuccessResp(c, "", true)
+			}
 
-	if err != nil {
-		return routes.MakeSuccessResp(c, "user not found", false)
-	}
+			err := userdb.SetIsVerified(authUser.Uuid)
 
-	// if verified, stop and just return true
-	if authUser.EmailVerified {
-		return routes.MakeSuccessResp(c, "", true)
-	}
+			if err != nil {
+				return routes.MakeSuccessResp(c, "unable to verify user", false)
+			}
 
-	err = userdb.SetIsVerified(authUser.Uuid)
+			file := "templates/email/verify/verified.html"
 
-	if err != nil {
-		return routes.MakeSuccessResp(c, "unable to verify user", false)
-	}
+			err = TokenEmail("Email Address Verified",
+				authUser,
+				file,
+				"",
+				"",
+				"")
 
-	file := "templates/email/verify/verified.html"
+			if err != nil {
+				return routes.BadReq(err)
+			}
 
-	err = TokenEmail("Email Address Verified",
-		authUser,
-		file,
-		"",
-		"",
-		"")
-
-	if err != nil {
-		return routes.BadReq(err)
-	}
-
-	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
+			return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
+		})
+	})
 }

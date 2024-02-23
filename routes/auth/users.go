@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"net/mail"
 	"net/url"
 	"strings"
 
@@ -11,10 +12,8 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-mailer/email"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -48,42 +47,39 @@ func ResetPasswordEmailRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.FindUserByEmail(req.Email)
+	return routes.ValidEmailCB(c, req.Email, func(c echo.Context, email *mail.Address) error {
+		return routes.EmailUserCB(c, email, func(c echo.Context, authUser *auth.AuthUser) error {
+			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
 
-	if err != nil {
-		return routes.BadReq("user does not exist")
-	}
+				otpJwt, err := auth.ResetPasswordToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
-	if !authUser.EmailVerified {
-		return routes.BadReq("email address not verified")
-	}
+				if err != nil {
+					return routes.BadReq(err)
+				}
 
-	otpJwt, err := auth.ResetPasswordToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
+				var file string
 
-	if err != nil {
-		return routes.BadReq(err)
-	}
+				if req.Url != "" {
+					file = "templates/email/password/reset/web.html"
+				} else {
+					file = "templates/email/password/reset/api.html"
+				}
 
-	var file string
+				err = TokenEmail("Password Reset",
+					authUser,
+					file,
+					otpJwt,
+					req.CallbackUrl,
+					req.Url)
 
-	if req.Url != "" {
-		file = "templates/email/password/reset/web.html"
-	} else {
-		file = "templates/email/password/reset/api.html"
-	}
+				if err != nil {
+					return routes.BadReq(err)
+				}
 
-	err = TokenEmail("Password Reset",
-		authUser,
-		file,
-		otpJwt,
-		req.CallbackUrl,
-		req.Url)
-
-	if err != nil {
-		return routes.BadReq(err)
-	}
-
-	return routes.MakeSuccessResp(c, "password reset email sent", true)
+				return routes.MakeSuccessResp(c, "password reset email sent", true)
+			})
+		})
+	})
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
@@ -95,28 +91,22 @@ func UpdatePasswordRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
+	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 
-	log.Debug().Msgf("reset %s", claims.Uuid)
+		if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
+			return routes.BadReq("wrong token type")
+		}
 
-	if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
-		return routes.BadReq("wrong token type")
-	}
+		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+			err = userdb.SetPassword(authUser.Uuid, req.Password)
 
-	authUser, err := userdb.FindUserByUuid(claims.Uuid)
+			if err != nil {
+				return routes.BadReq("error setting password")
+			}
 
-	if err != nil {
-		return routes.BadReq("user does not exist")
-	}
-
-	err = userdb.SetPassword(authUser.Uuid, req.Password)
-
-	if err != nil {
-		return routes.BadReq("error setting password")
-	}
-
-	return routes.MakeSuccessResp(c, "password updated", true)
+			return routes.MakeSuccessResp(c, "password updated", true)
+		})
+	})
 }
 
 func UpdateUsernameRoute(c echo.Context) error {
@@ -128,39 +118,26 @@ func UpdateUsernameRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
+	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
-	authUser, err := userdb.FindUserByUuid(claims.Uuid)
+			err = userdb.SetUsername(authUser.Uuid, req.Username)
 
-	if err != nil {
-		return routes.BadReq("user does not exist")
-	}
+			if err != nil {
+				return routes.BadReq("error setting password")
+			}
 
-	err = userdb.SetUsername(authUser.Uuid, req.Username)
-
-	if err != nil {
-		return routes.BadReq("error setting password")
-	}
-
-	return routes.MakeSuccessResp(c, "password updated", true)
+			return routes.MakeSuccessResp(c, "password updated", true)
+		})
+	})
 }
 
 func UserInfoRoute(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
-
-	if claims.Type < auth.TOKEN_TYPE_REFRESH {
-		return routes.BadReq("wrong token type")
-	}
-
-	authUser, err := userdb.FindUserByUuid(claims.Uuid)
-
-	if err != nil {
-		return routes.BadReq("user does not exist")
-	}
-
-	return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
+	return routes.RefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+			return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
+		})
+	})
 }
 
 // Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites

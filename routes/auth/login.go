@@ -1,11 +1,12 @@
 package auth
 
 import (
+	"net/mail"
+
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,12 +19,13 @@ func EmailPasswordLoginRoute(c echo.Context) error {
 		return err
 	}
 
-	//email := c.FormValue("email")
-	//password := c.FormValue("password")
+	email, err := mail.ParseAddress(req.Email)
 
-	//user := auth.LoginUserFromReq(req)
+	if err != nil {
+		return routes.BadReq("user does not exist")
+	}
 
-	authUser, err := userdb.FindUserByEmail(req.Email)
+	authUser, err := userdb.FindUserByEmail(email)
 
 	if err != nil {
 		return routes.BadReq("user does not exist")
@@ -48,9 +50,15 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 	authUser, err := userdb.FindUserByUsername(req.Username)
 
 	if err != nil {
+		email, err := mail.ParseAddress(req.Username)
+
+		if err != nil {
+			return routes.InvalidEmailReq()
+		}
+
 		// also check if username is valid email and try to login
 		// with that
-		authUser, err = userdb.FindUserByEmail(req.Username)
+		authUser, err = userdb.FindUserByEmail(email)
 
 		if err != nil {
 			return routes.BadReq("user does not exist")
@@ -93,7 +101,13 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.FindUserByEmail(req.Email)
+	email, err := mail.ParseAddress(req.Email)
+
+	if err != nil {
+		return routes.InvalidEmailReq()
+	}
+
+	authUser, err := userdb.FindUserByEmail(email)
 
 	if err != nil {
 		return routes.BadReq("user does not exist")
@@ -132,32 +146,26 @@ func PasswordlessEmailRoute(c echo.Context) error {
 }
 
 func PasswordlessLoginRoute(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*auth.JwtCustomClaims)
+	return routes.JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 
-	if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-		return routes.BadReq("wrong token type")
-	}
+		if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+			return routes.BadReq("wrong token type")
+		}
 
-	authUser, err := userdb.FindUserByUuid(claims.Uuid)
+		return routes.UuidUserCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
+				if !authUser.CanAuth {
+					return routes.BadReq("user not allowed tokens")
+				}
 
-	if err != nil {
-		return routes.BadReq("user does not exist")
-	}
+				t, err := auth.RefreshToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
 
-	if !authUser.EmailVerified {
-		return routes.BadReq("email address not verified")
-	}
+				if err != nil {
+					return routes.BadReq("error signing token")
+				}
 
-	if !authUser.CanAuth {
-		return routes.BadReq("user not allowed tokens")
-	}
-
-	t, err := auth.RefreshToken(authUser.Uuid, c.RealIP(), consts.JWT_SECRET)
-
-	if err != nil {
-		return routes.BadReq("error signing token")
-	}
-
-	return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
+				return routes.MakeDataResp(c, "", &routes.JwtResp{Jwt: t})
+			})
+		})
+	})
 }
