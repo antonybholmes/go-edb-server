@@ -71,7 +71,6 @@ func TokenInfoRoute(c echo.Context) error {
 
 func NewAccessTokenRoute(c echo.Context) error {
 	return routes.IsValidRefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-
 		// Generate encoded token and send it as response.
 		t, err := auth.AccessToken(c, claims.Uuid, consts.JWT_SECRET)
 

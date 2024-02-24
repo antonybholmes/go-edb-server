@@ -55,7 +55,6 @@ func SignupRoute(c echo.Context) error {
 }
 
 func EmailVerificationRoute(c echo.Context) error {
-
 	return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
 		// if verified, stop and just return true
