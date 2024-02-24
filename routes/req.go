@@ -21,6 +21,11 @@ type AccessTokenResp struct {
 	AccessToken string `json:"accessToken"`
 }
 
+type LoginResp struct {
+	RefreshToken string `json:"refreshToken"`
+	AccessToken  string `json:"accessToken"`
+}
+
 type JwtInfo struct {
 	Uuid string `json:"uuid"`
 	//Name  string `json:"name"`
@@ -43,6 +48,16 @@ func UserDoesNotExistReq() *echo.HTTPError {
 
 func BadReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
+}
+
+func ReqBind[T any](c echo.Context, req *T) (*T, error) {
+	err := c.Bind(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return req, err
 }
 
 // parsedLocation takes an echo context and attempts to extract parameters

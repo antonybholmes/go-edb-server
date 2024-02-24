@@ -128,14 +128,12 @@ func main() {
 		return authroutes.SignupRoute(c)
 	})
 
-	loginGroup := authGroup.Group("/login")
-
-	loginGroup.POST("/email", func(c echo.Context) error {
-		return authroutes.EmailPasswordLoginRoute(c)
+	authGroup.POST("/login", func(c echo.Context) error {
+		return authroutes.UsernamePasswordLoginRoute(c)
 	})
 
-	loginGroup.POST("/username", func(c echo.Context) error {
-		return authroutes.UsernamePasswordLoginRoute(c)
+	authGroup.POST("/login/email", func(c echo.Context) error {
+		return authroutes.EmailPasswordLoginRoute(c)
 	})
 
 	authGroup.POST("/verify", func(c echo.Context) error {
@@ -165,6 +163,7 @@ func main() {
 	tokenGroup := authGroup.Group("/tokens")
 	tokenGroup.Use(jwtMiddleWare)
 	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
+	tokenGroup.POST("/access", authroutes.NewAccessTokenRoute)
 
 	//
 	// passwordless groups: end
@@ -178,10 +177,14 @@ func main() {
 		return authroutes.UserInfoRoute(c)
 	})
 
-	accountsGroup := authGroup.Group("/accounts")
+	accountsGroup := usersGroup.Group("/accounts")
 
 	accountsGroup.POST("/usernames/reset", func(c echo.Context) error {
 		return authroutes.ResetPasswordEmailRoute(c)
+	})
+
+	accountsGroup.POST("/names/update", func(c echo.Context) error {
+		return authroutes.UpdateNameRoute(c)
 	})
 
 	//

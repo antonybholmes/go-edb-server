@@ -42,123 +42,99 @@ type NameReq struct {
 
 // Start passwordless login by sending an email
 func ResetPasswordEmailRoute(c echo.Context) error {
-	req := new(auth.EmailOnlyLoginReq)
 
-	err := c.Bind(req)
+	return routes.ReqBindCB(c, new(auth.EmailOnlyLoginReq), func(c echo.Context, req *auth.EmailOnlyLoginReq) error {
+		return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
+			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
 
-	if err != nil {
-		return err
-	}
+				otpJwt, err := auth.ResetPasswordToken(c, authUser.Uuid, consts.JWT_SECRET)
 
-	return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
-		return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
+				if err != nil {
+					return routes.BadReq(err)
+				}
 
-			otpJwt, err := auth.ResetPasswordToken(c, authUser.Uuid, consts.JWT_SECRET)
+				var file string
 
-			if err != nil {
-				return routes.BadReq(err)
-			}
+				if req.Url != "" {
+					file = "templates/email/password/reset/web.html"
+				} else {
+					file = "templates/email/password/reset/api.html"
+				}
 
-			var file string
+				err = SendEmailWithToken("Password Reset",
+					authUser,
+					file,
+					otpJwt,
+					req.CallbackUrl,
+					req.Url)
 
-			if req.Url != "" {
-				file = "templates/email/password/reset/web.html"
-			} else {
-				file = "templates/email/password/reset/api.html"
-			}
+				if err != nil {
+					return routes.BadReq(err)
+				}
 
-			err = SendEmailWithToken("Password Reset",
-				authUser,
-				file,
-				otpJwt,
-				req.CallbackUrl,
-				req.Url)
-
-			if err != nil {
-				return routes.BadReq(err)
-			}
-
-			return routes.MakeSuccessResp(c, "password reset email sent", true)
+				return routes.MakeSuccessResp(c, "password reset email sent", true)
+			})
 		})
 	})
-
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
-	req := new(PasswordResetReq)
 
-	err := c.Bind(req)
+	return routes.ReqBindCB(c, new(PasswordResetReq), func(c echo.Context, req *PasswordResetReq) error {
+		return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+			if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
+				return routes.BadReq("wrong token type")
+			}
 
-	if err != nil {
-		return routes.BadReq(err)
-	}
-
-	return routes.UserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-		if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
-			return routes.BadReq("wrong token type")
-		}
-
-		err = userdb.SetPassword(authUser.Uuid, req.Password)
-
-		if err != nil {
-			return routes.BadReq("error setting password")
-		}
-
-		return routes.MakeSuccessResp(c, "password updated", true)
-	})
-}
-
-func UpdateUsernameRoute(c echo.Context) error {
-	req := new(UsernameReq)
-
-	err := c.Bind(req)
-
-	if err != nil {
-		return routes.BadReq(err)
-	}
-
-	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-
-		return routes.UserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-
-			err = userdb.SetUsername(authUser.Uuid, req.Username)
+			err := userdb.SetPassword(authUser.Uuid, req.Password)
 
 			if err != nil {
 				return routes.BadReq("error setting password")
 			}
 
 			return routes.MakeSuccessResp(c, "password updated", true)
+		})
+	})
+}
+
+func UpdateUsernameRoute(c echo.Context) error {
+
+	return routes.ReqBindCB(c, new(UsernameReq), func(c echo.Context, req *UsernameReq) error {
+		return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+			return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+				err := userdb.SetUsername(authUser.Uuid, req.Username)
+
+				if err != nil {
+					return routes.BadReq("error setting password")
+				}
+
+				return routes.MakeSuccessResp(c, "password updated", true)
+			})
 		})
 	})
 
 }
 
 func UpdateNameRoute(c echo.Context) error {
-	req := new(NameReq)
+	return routes.ReqBindCB(c, new(NameReq), func(c echo.Context, req *NameReq) error {
+		return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+			return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 
-	err := c.Bind(req)
+				err := userdb.SetName(authUser.Uuid, req.Name)
 
-	if err != nil {
-		return routes.BadReq(err)
-	}
-	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-		return routes.UserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+				if err != nil {
+					return routes.BadReq("error setting password")
+				}
 
-			err = userdb.SetName(authUser.Uuid, req.Name)
-
-			if err != nil {
-				return routes.BadReq("error setting password")
-			}
-
-			return routes.MakeSuccessResp(c, "password updated", true)
+				return routes.MakeSuccessResp(c, "name updated", true)
+			})
 		})
 	})
-
 }
 
 func UserInfoRoute(c echo.Context) error {
-	return routes.IsValidRefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-		return routes.UserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 			return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
 		})
 	})

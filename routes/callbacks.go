@@ -15,6 +15,16 @@ import (
 // the correct data for a route
 //
 
+func ReqBindCB[T any](c echo.Context, req *T, callback func(c echo.Context, req *T) error) error {
+	req, err := ReqBind(c, req)
+
+	if err != nil {
+		return err
+	}
+
+	return callback(c, req)
+}
+
 func ValidEmailCB(c echo.Context,
 	email string,
 	callback func(c echo.Context, email *mail.Address) error) error {
@@ -66,13 +76,13 @@ func JwtCB(c echo.Context,
 // If claims are supplied, this step is skipped. This is so this function can
 // be nested in other call backs that may have already extracted the claims
 // without having to repeat this part.
-func UserFromUuidCB(c echo.Context,
+func AuthUserFromUuidCB(c echo.Context,
 	claims *auth.JwtCustomClaims,
 	callback func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error) error {
 	if claims == nil {
 		// if no claims specified, extract the claims and run function with claims
 		return JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-			return UserFromUuidCB(c, claims, callback)
+			return AuthUserFromUuidCB(c, claims, callback)
 		})
 
 	}
