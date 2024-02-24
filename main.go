@@ -132,10 +132,6 @@ func main() {
 		return authroutes.UsernamePasswordLoginRoute(c)
 	})
 
-	authGroup.POST("/login/email", func(c echo.Context) error {
-		return authroutes.EmailPasswordLoginRoute(c)
-	})
-
 	authGroup.POST("/verify", func(c echo.Context) error {
 		return authroutes.EmailVerificationRoute(c)
 	}, jwtMiddleWare)

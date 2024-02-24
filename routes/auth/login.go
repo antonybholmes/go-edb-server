@@ -10,26 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func EmailPasswordLoginRoute(c echo.Context) error {
-	req := new(auth.EmailPasswordLoginReq)
-
-	err := c.Bind(req)
-
-	if err != nil {
-		return err
-	}
-
-	if req.Password == "" {
-		return routes.BadReq("empty password: use passwordless")
-	}
-
-	return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
-		return loginRoute(c, authUser, req.Password)
-	})
-}
-
 func UsernamePasswordLoginRoute(c echo.Context) error {
-
 	return routes.ReqBindCB(c, new(auth.UsernamePasswordLoginReq), func(c echo.Context, req *auth.UsernamePasswordLoginReq) error {
 
 		if req.Password == "" {
@@ -42,7 +23,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 			email, err := mail.ParseAddress(req.Username)
 
 			if err != nil {
-				return routes.InvalidEmailReq()
+				return routes.BadReq("email address not valid")
 			}
 
 			// also check if username is valid email and try to login
@@ -54,42 +35,36 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 			}
 		}
 
-		return loginRoute(c, authUser, req.Password)
+		if !authUser.EmailVerified {
+			return routes.BadReq("email address not verified")
+		}
+
+		if !authUser.CanAuth {
+			return routes.BadReq("user not allowed tokens")
+		}
+
+		if !authUser.CheckPasswords(req.Password) {
+			return routes.BadReq("incorrect password")
+		}
+
+		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
+
+		if err != nil {
+			return routes.BadReq("error signing token")
+		}
+
+		accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
+
+		if err != nil {
+			return routes.BadReq("error signing token")
+		}
+
+		return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
 	})
-}
-
-func loginRoute(c echo.Context, authUser *auth.AuthUser, password string) error {
-
-	if !authUser.EmailVerified {
-		return routes.BadReq("email address not verified")
-	}
-
-	if !authUser.CanAuth {
-		return routes.BadReq("user not allowed tokens")
-	}
-
-	if !authUser.CheckPasswords(password) {
-		return routes.BadReq("incorrect password")
-	}
-
-	refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
-
-	if err != nil {
-		return routes.BadReq("error signing token")
-	}
-
-	accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
-
-	if err != nil {
-		return routes.BadReq("error signing token")
-	}
-
-	return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
 }
 
 // Start passwordless login by sending an email
 func PasswordlessEmailRoute(c echo.Context) error {
-
 	return routes.ReqBindCB(c, new(auth.EmailOnlyLoginReq), func(c echo.Context, req *auth.EmailOnlyLoginReq) error {
 		return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
 			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
@@ -126,7 +101,6 @@ func PasswordlessEmailRoute(c echo.Context) error {
 }
 
 func PasswordlessLoginRoute(c echo.Context) error {
-
 	return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 		return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
 			if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {

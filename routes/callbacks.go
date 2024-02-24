@@ -52,6 +52,21 @@ func AuthUserFromEmailCB(c echo.Context,
 	})
 }
 
+func AuthUserFromUsernameCB(c echo.Context,
+	username string,
+	callback func(c echo.Context, authUser *auth.AuthUser) error) error {
+	return ValidEmailCB(c, username, func(c echo.Context, email *mail.Address) error {
+
+		authUser, err := userdb.FindUserByUsername(username)
+
+		if err != nil {
+			return UserDoesNotExistReq()
+		}
+
+		return callback(c, authUser)
+	})
+}
+
 func VerifiedEmailCB(c echo.Context,
 	authUser *auth.AuthUser,
 	callback func(c echo.Context, authUser *auth.AuthUser) error) error {

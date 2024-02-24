@@ -16,24 +16,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// type LoginResp struct {
-// 	auth.PublicUser
-// 	JwtResp
-// }
-
 type EmailBody struct {
 	Name string
 	From string
 	Time string
 	Link string
-}
-
-type PasswordResetReq struct {
-	Password string `json:"password"`
-}
-
-type UsernameReq struct {
-	Username string `json:"username"`
 }
 
 type NameReq struct {
@@ -42,7 +29,6 @@ type NameReq struct {
 
 // Start passwordless login by sending an email
 func ResetPasswordEmailRoute(c echo.Context) error {
-
 	return routes.ReqBindCB(c, new(auth.EmailOnlyLoginReq), func(c echo.Context, req *auth.EmailOnlyLoginReq) error {
 		return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
 			return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
@@ -79,8 +65,7 @@ func ResetPasswordEmailRoute(c echo.Context) error {
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
-
-	return routes.ReqBindCB(c, new(PasswordResetReq), func(c echo.Context, req *PasswordResetReq) error {
+	return routes.ReqBindCB(c, new(auth.PasswordResetReq), func(c echo.Context, req *auth.PasswordResetReq) error {
 		return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 			if claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
 				return routes.BadReq("wrong token type")
@@ -98,8 +83,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 }
 
 func UpdateUsernameRoute(c echo.Context) error {
-
-	return routes.ReqBindCB(c, new(UsernameReq), func(c echo.Context, req *UsernameReq) error {
+	return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
 		return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 			return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 				err := userdb.SetUsername(authUser.Uuid, req.Username)
