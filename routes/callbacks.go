@@ -15,31 +15,31 @@ import (
 // the correct data for a route
 //
 
-func ReqBindCB[T any](c echo.Context, req *T, callback func(c echo.Context, req *T) error) error {
-	req, err := ReqBind(c, req)
+func ReqBindCB[T any](c echo.Context, req *T, success func(c echo.Context, req *T) error) error {
+	err := c.Bind(req)
 
 	if err != nil {
 		return err
 	}
 
-	return callback(c, req)
+	return success(c, req)
 }
 
 func ValidEmailCB(c echo.Context,
 	email string,
-	callback func(c echo.Context, email *mail.Address) error) error {
+	success func(c echo.Context, email *mail.Address) error) error {
 	address, err := mail.ParseAddress(email)
 
 	if err != nil {
 		return InvalidEmailReq()
 	}
 
-	return callback(c, address)
+	return success(c, address)
 }
 
 func AuthUserFromEmailCB(c echo.Context,
 	email string,
-	callback func(c echo.Context, authUser *auth.AuthUser) error) error {
+	success func(c echo.Context, authUser *auth.AuthUser) error) error {
 	return ValidEmailCB(c, email, func(c echo.Context, email *mail.Address) error {
 
 		authUser, err := userdb.FindUserByEmail(email)
@@ -48,13 +48,13 @@ func AuthUserFromEmailCB(c echo.Context,
 			return UserDoesNotExistReq()
 		}
 
-		return callback(c, authUser)
+		return success(c, authUser)
 	})
 }
 
 func AuthUserFromUsernameCB(c echo.Context,
 	username string,
-	callback func(c echo.Context, authUser *auth.AuthUser) error) error {
+	success func(c echo.Context, authUser *auth.AuthUser) error) error {
 	return ValidEmailCB(c, username, func(c echo.Context, email *mail.Address) error {
 
 		authUser, err := userdb.FindUserByUsername(username)
@@ -63,41 +63,41 @@ func AuthUserFromUsernameCB(c echo.Context,
 			return UserDoesNotExistReq()
 		}
 
-		return callback(c, authUser)
+		return success(c, authUser)
 	})
 }
 
 func VerifiedEmailCB(c echo.Context,
 	authUser *auth.AuthUser,
-	callback func(c echo.Context, authUser *auth.AuthUser) error) error {
+	success func(c echo.Context, authUser *auth.AuthUser) error) error {
 
 	if !authUser.EmailVerified {
 		return BadReq("email address not verified")
 	}
 
-	return callback(c, authUser)
+	return success(c, authUser)
 }
 
 func JwtCB(c echo.Context,
-	callback func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
+	success func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*auth.JwtCustomClaims)
 
-	return callback(c, claims)
+	return success(c, claims)
 }
 
-// Extracts uuid from token, checks user exists and calls callback function.
+// Extracts uuid from token, checks user exists and calls success function.
 // If claims argument is nil, function will search for claims automatically.
 // If claims are supplied, this step is skipped. This is so this function can
 // be nested in other call backs that may have already extracted the claims
 // without having to repeat this part.
 func AuthUserFromUuidCB(c echo.Context,
 	claims *auth.JwtCustomClaims,
-	callback func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error) error {
+	success func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error) error {
 	if claims == nil {
 		// if no claims specified, extract the claims and run function with claims
 		return JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-			return AuthUserFromUuidCB(c, claims, callback)
+			return AuthUserFromUuidCB(c, claims, success)
 		})
 
 	}
@@ -110,27 +110,27 @@ func AuthUserFromUuidCB(c echo.Context,
 		return UserDoesNotExistReq()
 	}
 
-	return callback(c, claims, authUser)
+	return success(c, claims, authUser)
 }
 
 func IsValidRefreshTokenCB(c echo.Context,
-	callback func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
+	success func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
 	return JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 		if claims.Type != auth.TOKEN_TYPE_REFRESH {
 			return BadReq("wrong token type")
 		}
 
-		return callback(c, claims)
+		return success(c, claims)
 	})
 }
 
 func IsValidAccessTokenCB(c echo.Context,
-	callback func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
+	success func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
 	return JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 		if claims.Type != auth.TOKEN_TYPE_ACCESS {
 			return BadReq("wrong token type")
 		}
 
-		return callback(c, claims)
+		return success(c, claims)
 	})
 }

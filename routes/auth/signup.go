@@ -55,33 +55,67 @@ func SignupRoute(c echo.Context) error {
 }
 
 func EmailVerificationRoute(c echo.Context) error {
-	return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+	validator, err := routes.NewValidator(c).AuthUserFromUuid().Ok()
 
-		// if verified, stop and just return true
-		if authUser.EmailVerified {
-			return routes.MakeSuccessResp(c, "", true)
-		}
+	if err != nil {
+		return err
+	}
 
-		err := userdb.SetIsVerified(authUser.Uuid)
+	authUser := validator.AuthUser
 
-		if err != nil {
-			return routes.MakeSuccessResp(c, "unable to verify user", false)
-		}
+	// if verified, stop and just return true
+	if authUser.EmailVerified {
+		return routes.MakeSuccessResp(c, "", true)
+	}
 
-		file := "templates/email/verify/verified.html"
+	err = userdb.SetIsVerified(authUser.Uuid)
 
-		err = SendEmailWithToken("Email Address Verified",
-			authUser,
-			file,
-			"",
-			"",
-			"")
+	if err != nil {
+		return routes.MakeSuccessResp(c, "unable to verify user", false)
+	}
 
-		if err != nil {
-			return routes.BadReq(err)
-		}
+	file := "templates/email/verify/verified.html"
 
-		return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
-	})
+	err = SendEmailWithToken("Email Address Verified",
+		authUser,
+		file,
+		"",
+		"",
+		"")
+
+	if err != nil {
+		return routes.BadReq(err)
+	}
+
+	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
+
+	// return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+
+	// 	// if verified, stop and just return true
+	// 	if authUser.EmailVerified {
+	// 		return routes.MakeSuccessResp(c, "", true)
+	// 	}
+
+	// 	err := userdb.SetIsVerified(authUser.Uuid)
+
+	// 	if err != nil {
+	// 		return routes.MakeSuccessResp(c, "unable to verify user", false)
+	// 	}
+
+	// 	file := "templates/email/verify/verified.html"
+
+	// 	err = SendEmailWithToken("Email Address Verified",
+	// 		authUser,
+	// 		file,
+	// 		"",
+	// 		"",
+	// 		"")
+
+	// 	if err != nil {
+	// 		return routes.BadReq(err)
+	// 	}
+
+	// 	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
+	// })
 
 }

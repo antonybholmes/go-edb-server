@@ -70,9 +70,10 @@ func TokenInfoRoute(c echo.Context) error {
 }
 
 func NewAccessTokenRoute(c echo.Context) error {
-	return routes.IsValidRefreshTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+	return routes.NewValidator(c).IsValidRefreshToken().Success(func(validator *routes.Validator) error {
+
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(c, claims.Uuid, consts.JWT_SECRET)
+		t, err := auth.AccessToken(c, validator.Claims.Uuid, consts.JWT_SECRET)
 
 		if err != nil {
 			return routes.BadReq("error creating access token")

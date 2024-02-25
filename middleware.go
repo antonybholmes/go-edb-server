@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/labstack/echo/v4"
 )
@@ -50,9 +49,13 @@ import (
 
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
+		_, err := routes.NewValidator(c).IsValidAccessToken().Ok()
 
-			return next(c)
-		})
+		if err != nil {
+			return err
+		}
+
+		return next(c)
+
 	}
 }

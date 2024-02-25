@@ -28,6 +28,23 @@ type ValidResp struct {
 	Valid bool `json:"valid"`
 }
 
+type JwtResp struct {
+	Jwt string `json:"jwt"`
+}
+
+type RefreshTokenResp struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+type AccessTokenResp struct {
+	AccessToken string `json:"accessToken"`
+}
+
+type LoginResp struct {
+	RefreshToken string `json:"refreshToken"`
+	AccessToken  string `json:"accessToken"`
+}
+
 func JsonResp[V any](c echo.Context, status int, data V) error {
 	return c.JSONPretty(status, data, " ")
 }

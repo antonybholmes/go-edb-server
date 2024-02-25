@@ -139,7 +139,7 @@ func main() {
 	passwordGroup := authGroup.Group("/passwords")
 
 	passwordGroup.POST("/reset", func(c echo.Context) error {
-		return authroutes.ResetPasswordEmailRoute(c)
+		return authroutes.ResetPasswordFromUsernameRoute(c)
 	})
 
 	passwordGroup.POST("/update", func(c echo.Context) error {
@@ -174,10 +174,6 @@ func main() {
 	})
 
 	accountsGroup := usersGroup.Group("/accounts")
-
-	accountsGroup.POST("/usernames/reset", func(c echo.Context) error {
-		return authroutes.ResetPasswordEmailRoute(c)
-	})
 
 	accountsGroup.POST("/names/update", func(c echo.Context) error {
 		return authroutes.UpdateNameRoute(c)
