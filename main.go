@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/gorilla/sessions"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -18,10 +19,12 @@ import (
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo-contrib/session"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/michaeljs1990/sqlitestore"
 )
 
 type AboutResp struct {
@@ -33,6 +36,27 @@ type AboutResp struct {
 type InfoResp struct {
 	IpAddr string `json:"ipAddr"`
 	Arch   string `json:"arch"`
+}
+
+var store *sqlitestore.SqliteStore
+var sessOpt24 *sessions.Options
+
+func init() {
+	var err error
+	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.JWT_SECRET))
+	if err != nil {
+		panic(err)
+	}
+
+	sessOpt24 = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400,
+		HttpOnly: true,
+		Secure:   true,
+	}
+
+	dnadbcache.Init("data/dna")
+	genedbcache.Init("data/genes")
 }
 
 func main() {
@@ -60,6 +84,8 @@ func main() {
 	e := echo.New()
 
 	//e.Use(middleware.Logger())
+
+	e.Use(session.Middleware(store))
 
 	// write to both stdout and log file
 	f := env.GetStr("LOG_FILE", "logs/app.log")
@@ -98,8 +124,29 @@ func main() {
 		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
-	dnadbcache.Init("data/dna")
-	genedbcache.Init("data/genes")
+	e.GET("/write", func(c echo.Context) error {
+		sess, err := session.Get("session", c)
+		if err != nil {
+			return err
+		}
+		sess.Options = sessOpt24
+		sess.Values["name"] = "Steve"
+		sess.Save(c.Request(), c.Response())
+
+		log.Debug().Msgf("%s", sess.Options)
+
+		return c.NoContent(http.StatusOK)
+	})
+
+	e.GET("/read", func(c echo.Context) error {
+		sess, err := session.Get("session", c)
+		if err != nil {
+			return err
+		}
+		log.Debug().Msgf("%s", sess.ID)
+
+		return c.JSON(http.StatusOK, sess.Values["name"])
+	})
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
