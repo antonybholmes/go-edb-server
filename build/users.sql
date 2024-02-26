@@ -21,3 +21,12 @@ CREATE TRIGGER users_updated_trigger AFTER UPDATE ON users
 BEGIN
       update users SET updated_on = CURRENT_TIMESTAMP WHERE id=NEW.id;
 END;
+
+CREATE TABLE users_sessions(
+  id INTEGER PRIMARY KEY ASC,
+  uuid TEXT NOT NULL,
+  session_id INTEGER NOT NULL UNIQUE,
+  FOREIGN KEY(uuid) REFERENCES users(uuid)
+);
+CREATE INDEX users_sessions_uuid ON users_sessions (uuid);
+CREATE INDEX users_sessions_session_id ON users_sessions (session_id);
