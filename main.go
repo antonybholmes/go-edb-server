@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"net/http"
+	"net/mail"
 	"os"
 	"runtime"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
+	"github.com/antonybholmes/go-edb-api/routes"
 	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
 	modroutes "github.com/antonybholmes/go-edb-api/routes/modules"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -39,7 +41,7 @@ type InfoResp struct {
 }
 
 var store *sqlitestore.SqliteStore
-var sessOpt24 *sessions.Options
+var sessOpt24H *sessions.Options
 
 func init() {
 	var err error
@@ -48,7 +50,7 @@ func init() {
 		panic(err)
 	}
 
-	sessOpt24 = &sessions.Options{
+	sessOpt24H = &sessions.Options{
 		Path:     "/",
 		MaxAge:   86400,
 		HttpOnly: true,
@@ -129,11 +131,61 @@ func main() {
 		if err != nil {
 			return err
 		}
-		sess.Options = sessOpt24
+		sess.Options = sessOpt24H
 		sess.Values["name"] = "Steve"
 		sess.Save(c.Request(), c.Response())
 
-		log.Debug().Msgf("%s", sess.Options)
+		return c.NoContent(http.StatusOK)
+	})
+
+	e.POST("/login", func(c echo.Context) error {
+		validator, err := routes.NewValidator(c).ReqBind().Ok()
+
+		if err != nil {
+			return err
+		}
+
+		if validator.Req.Password == "" {
+			return routes.BadReq("empty password: use passwordless")
+		}
+
+		authUser, err := userdb.FindUserByUsername(validator.Req.Username)
+
+		if err != nil {
+			email, err := mail.ParseAddress(validator.Req.Username)
+
+			if err != nil {
+				return routes.BadReq("email address not valid")
+			}
+
+			// also check if username is valid email and try to login
+			// with that
+			authUser, err = userdb.FindUserByEmail(email)
+
+			if err != nil {
+				return routes.BadReq("user does not exist")
+			}
+		}
+
+		if !authUser.EmailVerified {
+			return routes.BadReq("email address not verified")
+		}
+
+		if !authUser.CanAuth {
+			return routes.BadReq("user not allowed tokens")
+		}
+
+		if !authUser.CheckPasswords(validator.Req.Password) {
+			return routes.BadReq("incorrect password")
+		}
+
+		sess, err := session.Get("session", c)
+		if err != nil {
+			return err
+		}
+		sess.Options = sessOpt24H
+		sess.Values["uuid"] = authUser.Uuid
+		sess.Save(c.Request(), c.Response())
 
 		return c.NoContent(http.StatusOK)
 	})
