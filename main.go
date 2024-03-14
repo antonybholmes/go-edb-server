@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/gorilla/sessions"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -41,20 +40,12 @@ type InfoResp struct {
 }
 
 var store *sqlitestore.SqliteStore
-var sessOpt24H *sessions.Options
 
 func init() {
 	var err error
-	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.JWT_SECRET))
+	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET))
 	if err != nil {
 		panic(err)
-	}
-
-	sessOpt24H = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400,
-		HttpOnly: true,
-		Secure:   true,
 	}
 
 	dnadbcache.Init("data/dna")
@@ -117,7 +108,13 @@ func main() {
 
 	//e.Use(loggerMiddleware)
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	//e.Use(middleware.CORS())
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+	}))
+
 	//e.Logger.SetLevel(log.DEBUG)
 
 	err = userdb.Init("data/users.db")
@@ -131,7 +128,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		sess.Options = sessOpt24H
+		sess.Options = authroutes.SESSION_OPT_24H
 		sess.Values["name"] = "Steve"
 		sess.Save(c.Request(), c.Response())
 
@@ -171,8 +168,8 @@ func main() {
 			return routes.BadReq("email address not verified")
 		}
 
-		if !authUser.CanAuth {
-			return routes.BadReq("user not allowed tokens")
+		if !authUser.CanLogin {
+			return routes.BadReq("user not allowed to login")
 		}
 
 		if !authUser.CheckPasswords(validator.Req.Password) {
@@ -183,7 +180,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		sess.Options = sessOpt24H
+		sess.Options = authroutes.SESSION_OPT_24H
 		sess.Values["uuid"] = authUser.Uuid
 		sess.Save(c.Request(), c.Response())
 
@@ -259,6 +256,22 @@ func main() {
 	tokenGroup.Use(jwtMiddleWare)
 	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
 	tokenGroup.POST("/access", authroutes.NewAccessTokenRoute)
+
+	//
+	// Deal with logins where we want a session
+	//
+
+	sessionGroup := authGroup.Group("/sessions")
+
+	sessionGroup.POST("/login", func(c echo.Context) error {
+		return authroutes.SessionUsernamePasswordLoginRoute(c)
+	})
+
+	sessionGroup.POST("/tokens/access", authroutes.SessionNewAccessTokenRoute)
+
+	//
+	// sessions: end
+	//
 
 	//
 	// passwordless groups: end

@@ -51,7 +51,7 @@ func SignupRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	return routes.MakeSuccessResp(c, "verification email sent", true) //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkResp(c, "verification email sent") //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func EmailVerificationRoute(c echo.Context) error {
@@ -65,7 +65,7 @@ func EmailVerificationRoute(c echo.Context) error {
 
 	// if verified, stop and just return true
 	if authUser.EmailVerified {
-		return routes.MakeSuccessResp(c, "", true)
+		return routes.MakeOkResp(c, "")
 	}
 
 	err = userdb.SetIsVerified(authUser.Uuid)
@@ -87,7 +87,7 @@ func EmailVerificationRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkResp(c, "") //c.JSON(http.StatusOK, JWTResp{t})
 
 	// return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 

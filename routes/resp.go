@@ -57,8 +57,12 @@ func MakeDataResp[V any](c echo.Context, message string, data V) error {
 	return JsonResp(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
 }
 
-func MakeValidResp(c echo.Context, message string, valid bool) error {
-	return MakeDataResp(c, message, &ValidResp{Valid: valid})
+// func MakeValidResp(c echo.Context, message string, valid bool) error {
+// 	return MakeDataResp(c, message, &ValidResp{Valid: valid})
+// }
+
+func MakeOkResp(c echo.Context, message string) error {
+	return MakeSuccessResp(c, message, true)
 }
 
 func MakeSuccessResp(c echo.Context, message string, success bool) error {

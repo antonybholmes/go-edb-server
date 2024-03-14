@@ -43,8 +43,8 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 		return routes.BadReq("email address not verified")
 	}
 
-	if !authUser.CanAuth {
-		return routes.BadReq("user not allowed tokens")
+	if !authUser.CanLogin {
+		return routes.BadReq("user not allowed to login")
 	}
 
 	if !authUser.CheckPasswords(validator.Req.Password) {
@@ -150,7 +150,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		return routes.BadReq(err)
 	}
 
-	return routes.MakeSuccessResp(c, "passwordless email sent", true)
+	return routes.MakeOkResp(c, "passwordless email sent")
 
 	// return routes.ReqBindCB(c, new(auth.EmailOnlyLoginReq), func(c echo.Context, req *auth.EmailOnlyLoginReq) error {
 	// 	return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
@@ -194,8 +194,8 @@ func PasswordlessLoginRoute(c echo.Context) error {
 			return routes.BadReq("wrong token type")
 		}
 
-		if !validator.AuthUser.CanAuth {
-			return routes.BadReq("user not allowed tokens")
+		if !validator.AuthUser.CanLogin {
+			return routes.BadReq("user not allowed to login")
 		}
 
 		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)

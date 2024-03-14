@@ -58,7 +58,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 			return routes.BadReq(err)
 		}
 
-		return routes.MakeSuccessResp(c, "password reset email sent", true)
+		return routes.MakeOkResp(c, "password reset email sent")
 	})
 
 	// return routes.ReqBindCB(c, new(auth.EmailOnlyLoginReq), func(c echo.Context, req *auth.EmailOnlyLoginReq) error {
@@ -109,7 +109,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.BadReq("error setting password")
 		}
 
-		return routes.MakeSuccessResp(c, "password updated", true)
+		return routes.MakeOkResp(c, "password updated")
 	})
 
 }
@@ -123,7 +123,7 @@ func UpdateUsernameRoute(c echo.Context) error {
 			return routes.BadReq("error setting password")
 		}
 
-		return routes.MakeSuccessResp(c, "password updated", true)
+		return routes.MakeOkResp(c, "password updated")
 	})
 
 	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
@@ -155,7 +155,7 @@ func UpdateNameRoute(c echo.Context) error {
 				return routes.BadReq("error setting password")
 			}
 
-			return routes.MakeSuccessResp(c, "name updated", true)
+			return routes.MakeOkResp(c, "name updated")
 		})
 
 	// return routes.ReqBindCB(c, new(NameReq), func(c echo.Context, req *NameReq) error {
