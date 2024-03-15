@@ -38,7 +38,7 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 	}
 
 	if validator.Req.Password == "" {
-		return routes.BadReq("empty password: use passwordless")
+		return routes.ErrorReq("empty password: use passwordless")
 	}
 
 	user := validator.Req.Username
@@ -53,7 +53,7 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 		email, err := mail.ParseAddress(user)
 
 		if err != nil {
-			return routes.BadReq("email address not valid")
+			return routes.ErrorReq("email address not valid")
 		}
 
 		// also check if username is valid email and try to login
@@ -61,30 +61,28 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 		authUser, err = userdb.FindUserByEmail(email)
 
 		if err != nil {
-			return routes.BadReq("user does not exist")
+			return routes.ErrorReq("user does not exist")
 		}
 	}
 
 	if !authUser.EmailVerified {
-		return routes.BadReq("email address not verified")
+		return routes.ErrorReq("email address not verified")
 	}
 
 	if !authUser.CanLogin {
-		return routes.BadReq("user not allowed to login")
+		return routes.ErrorReq("user not allowed to login")
 	}
 
 	if !authUser.CheckPasswords(validator.Req.Password) {
-		return routes.BadReq("incorrect password")
+		return routes.InvalidPasswordReq()
 	}
 
 	sess, err := session.Get(SESSION_NAME, c)
 	if err != nil {
-		return routes.BadReq("error creating session")
+		return routes.ErrorReq("error creating session")
 	}
 	sess.Options = SESSION_OPT_24H
 	sess.Values[SESSION_UUID] = authUser.Uuid
-
-	log.Debug().Msgf("session %s", sess.Values)
 
 	sess.Save(c.Request(), c.Response())
 
@@ -93,30 +91,36 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 }
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
-	sess, err := session.Get(SESSION_NAME, c)
-	if err != nil {
-		return err
-	}
+	sess, _ := session.Get(SESSION_NAME, c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	log.Debug().Msgf("%s", sess.ID)
+	log.Debug().Msgf("session tokens %s", uuid)
 
-	uuid, ok := sess.Values[SESSION_UUID].(string)
-
-	if !ok {
-		return routes.BadReq("cannot get user id from session")
-	}
-
-	_, err = userdb.FindUserByUuid(uuid)
+	_, err := userdb.FindUserByUuid(uuid)
 
 	if err != nil {
-		return routes.BadReq("user does not exist")
+		return routes.ErrorReq("user does not exist")
 	}
 
 	t, err := auth.AccessToken(c, uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.BadReq("error creating access token")
+		return routes.ErrorReq("error creating access token")
 	}
 
 	return routes.MakeDataResp(c, "", &routes.AccessTokenResp{AccessToken: t})
+}
+
+func SessionUserInfoRoute(c echo.Context) error {
+	sess, _ := session.Get(SESSION_NAME, c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	authUser, err := userdb.FindUserByUuid(uuid)
+
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+
+	}
+
+	return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
 }

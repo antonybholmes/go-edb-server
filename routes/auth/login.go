@@ -18,7 +18,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 	}
 
 	if validator.Req.Password == "" {
-		return routes.BadReq("empty password: use passwordless")
+		return routes.ErrorReq("empty password: use passwordless")
 	}
 
 	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
@@ -27,7 +27,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 		email, err := mail.ParseAddress(validator.Req.Username)
 
 		if err != nil {
-			return routes.BadReq("email address not valid")
+			return routes.ErrorReq("email address not valid")
 		}
 
 		// also check if username is valid email and try to login
@@ -35,32 +35,32 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 		authUser, err = userdb.FindUserByEmail(email)
 
 		if err != nil {
-			return routes.BadReq("user does not exist")
+			return routes.ErrorReq("user does not exist")
 		}
 	}
 
 	if !authUser.EmailVerified {
-		return routes.BadReq("email address not verified")
+		return routes.ErrorReq("email address not verified")
 	}
 
 	if !authUser.CanLogin {
-		return routes.BadReq("user not allowed to login")
+		return routes.ErrorReq("user not allowed to login")
 	}
 
 	if !authUser.CheckPasswords(validator.Req.Password) {
-		return routes.BadReq("incorrect password")
+		return routes.ErrorReq("incorrect password")
 	}
 
 	refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.BadReq("error signing token")
+		return routes.ErrorReq("error signing token")
 	}
 
 	accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.BadReq("error signing token")
+		return routes.ErrorReq("error signing token")
 	}
 
 	return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
@@ -68,7 +68,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 	// return routes.ReqBindCB(c, new(auth.UsernamePasswordLoginReq), func(c echo.Context, req *auth.UsernamePasswordLoginReq) error {
 
 	// 	if req.Password == "" {
-	// 		return routes.BadReq("empty password: use passwordless")
+	// 		return routes.ErrorReq("empty password: use passwordless")
 	// 	}
 
 	// 	authUser, err := userdb.FindUserByUsername(req.Username)
@@ -77,7 +77,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 	// 		email, err := mail.ParseAddress(req.Username)
 
 	// 		if err != nil {
-	// 			return routes.BadReq("email address not valid")
+	// 			return routes.ErrorReq("email address not valid")
 	// 		}
 
 	// 		// also check if username is valid email and try to login
@@ -85,32 +85,32 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 	// 		authUser, err = userdb.FindUserByEmail(email)
 
 	// 		if err != nil {
-	// 			return routes.BadReq("user does not exist")
+	// 			return routes.ErrorReq("user does not exist")
 	// 		}
 	// 	}
 
 	// 	if !authUser.EmailVerified {
-	// 		return routes.BadReq("email address not verified")
+	// 		return routes.ErrorReq("email address not verified")
 	// 	}
 
 	// 	if !authUser.CanAuth {
-	// 		return routes.BadReq("user not allowed tokens")
+	// 		return routes.ErrorReq("user not allowed tokens")
 	// 	}
 
 	// 	if !authUser.CheckPasswords(req.Password) {
-	// 		return routes.BadReq("incorrect password")
+	// 		return routes.ErrorReq("incorrect password")
 	// 	}
 
 	// 	refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	// 	if err != nil {
-	// 		return routes.BadReq("error signing token")
+	// 		return routes.ErrorReq("error signing token")
 	// 	}
 
 	// 	accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	// 	if err != nil {
-	// 		return routes.BadReq("error signing token")
+	// 		return routes.ErrorReq("error signing token")
 	// 	}
 
 	// 	return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
@@ -128,7 +128,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 	otpJwt, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	var file string
@@ -147,7 +147,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		validator.Req.Url)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	return routes.MakeOkResp(c, "passwordless email sent")
@@ -159,7 +159,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 	// 			otpJwt, err := auth.PasswordlessToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	// 			if err != nil {
-	// 				return routes.BadReq(err)
+	// 				return routes.ErrorReq(err)
 	// 			}
 
 	// 			var file string
@@ -178,7 +178,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 	// 				req.Url)
 
 	// 			if err != nil {
-	// 				return routes.BadReq(err)
+	// 				return routes.ErrorReq(err)
 	// 			}
 
 	// 			return routes.MakeSuccessResp(c, "passwordless email sent", true)
@@ -191,17 +191,17 @@ func PasswordlessLoginRoute(c echo.Context) error {
 	return routes.NewValidator(c).AuthUserFromUuid().VerifiedEmail().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-			return routes.BadReq("wrong token type")
+			return routes.ErrorReq("wrong token type")
 		}
 
 		if !validator.AuthUser.CanLogin {
-			return routes.BadReq("user not allowed to login")
+			return routes.ErrorReq("user not allowed to login")
 		}
 
 		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
 
 		if err != nil {
-			return routes.BadReq("error signing token")
+			return routes.ErrorReq("error signing token")
 		}
 
 		return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
@@ -210,17 +210,17 @@ func PasswordlessLoginRoute(c echo.Context) error {
 	// return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
 	// 	return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
 	// 		if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-	// 			return routes.BadReq("wrong token type")
+	// 			return routes.ErrorReq("wrong token type")
 	// 		}
 
 	// 		if !authUser.CanAuth {
-	// 			return routes.BadReq("user not allowed tokens")
+	// 			return routes.ErrorReq("user not allowed tokens")
 	// 		}
 
 	// 		t, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	// 		if err != nil {
-	// 			return routes.BadReq("error signing token")
+	// 			return routes.ErrorReq("error signing token")
 	// 		}
 
 	// 		return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})

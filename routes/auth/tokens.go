@@ -38,7 +38,7 @@ type AuthReq struct {
 // 	t, err := token.SignedString([]byte(consts.JWT_SECRET))
 
 // 	if err != nil {
-// 		return routes.BadReq("error signing token")
+// 		return routes.ErrorReq("error signing token")
 // 	}
 
 // 	return MakeDataResp(c, "", &JwtResp{t})
@@ -48,7 +48,7 @@ func TokenInfoRoute(c echo.Context) error {
 	t, err := routes.HeaderAuthToken(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	claims := auth.JwtCustomClaims{}
@@ -58,12 +58,12 @@ func TokenInfoRoute(c echo.Context) error {
 	})
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	return routes.MakeDataResp(c, "", &routes.JwtInfo{
 		Uuid: claims.Uuid,
-		Type: auth.TokenTypeString(claims.Type),
+		Type: claims.Type, //.TokenTypeString(claims.Type),
 		//IpAddr:  claims.IpAddr,
 		Expires: claims.ExpiresAt.UTC().String()})
 
@@ -76,7 +76,7 @@ func NewAccessTokenRoute(c echo.Context) error {
 		t, err := auth.AccessToken(c, validator.Claims.Uuid, consts.JWT_SECRET)
 
 		if err != nil {
-			return routes.BadReq("error creating access token")
+			return routes.ErrorReq("error creating access token")
 		}
 
 		return routes.MakeDataResp(c, "", &routes.AccessTokenResp{AccessToken: t})

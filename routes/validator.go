@@ -127,7 +127,7 @@ func (validator *Validator) IsAuthUser() *Validator {
 	}
 
 	if validator.AuthUser == nil {
-		validator.Err = BadReq("no auth user")
+		validator.Err = ErrorReq("no auth user")
 	}
 
 	return validator
@@ -141,7 +141,7 @@ func (validator *Validator) VerifiedEmail() *Validator {
 	}
 
 	if !validator.AuthUser.EmailVerified {
-		validator.Err = BadReq("email address not verified")
+		validator.Err = ErrorReq("email address not verified")
 	}
 
 	return validator
@@ -193,7 +193,7 @@ func (validator *Validator) IsValidRefreshToken() *Validator {
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_REFRESH {
-		validator.Err = BadReq("wrong token type")
+		validator.Err = ErrorReq("wrong token type")
 	}
 
 	return validator
@@ -208,7 +208,7 @@ func (validator *Validator) IsValidAccessToken() *Validator {
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_ACCESS {
-		validator.Err = BadReq("wrong token type")
+		validator.Err = ErrorReq("wrong token type")
 	}
 
 	return validator

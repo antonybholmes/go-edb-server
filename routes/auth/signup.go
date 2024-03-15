@@ -21,7 +21,7 @@ func SignupRoute(c echo.Context) error {
 	authUser, err := userdb.CreateUser(req)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_SECRET)
@@ -29,7 +29,7 @@ func SignupRoute(c echo.Context) error {
 	log.Debug().Msgf("%s", otpJwt)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	var file string
@@ -48,7 +48,7 @@ func SignupRoute(c echo.Context) error {
 		req.Url)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	return routes.MakeOkResp(c, "verification email sent") //c.JSON(http.StatusOK, JWTResp{t})
@@ -84,7 +84,7 @@ func EmailVerificationRoute(c echo.Context) error {
 		"")
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	return routes.MakeOkResp(c, "") //c.JSON(http.StatusOK, JWTResp{t})
@@ -112,7 +112,7 @@ func EmailVerificationRoute(c echo.Context) error {
 	// 		"")
 
 	// 	if err != nil {
-	// 		return routes.BadReq(err)
+	// 		return routes.ErrorReq(err)
 	// 	}
 
 	// 	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})

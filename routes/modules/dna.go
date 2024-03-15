@@ -154,7 +154,7 @@ func DNARoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	assembly := c.Param("assembly")
@@ -162,13 +162,13 @@ func DNARoute(c echo.Context) error {
 	query, err := ParseDNAQuery(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	seqs := []*DNA{}
@@ -177,7 +177,7 @@ func DNARoute(c echo.Context) error {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		seqs = append(seqs, &DNA{Location: &location, DNA: dna})

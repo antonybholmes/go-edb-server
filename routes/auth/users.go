@@ -36,7 +36,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 		otpJwt, err := auth.ResetPasswordToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		var file string
@@ -55,7 +55,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 			req.Url)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		return routes.MakeOkResp(c, "password reset email sent")
@@ -68,7 +68,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 	// 			otpJwt, err := auth.ResetPasswordToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	// 			if err != nil {
-	// 				return routes.BadReq(err)
+	// 				return routes.ErrorReq(err)
 	// 			}
 
 	// 			var file string
@@ -87,7 +87,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 	// 				req.Url)
 
 	// 			if err != nil {
-	// 				return routes.BadReq(err)
+	// 				return routes.ErrorReq(err)
 	// 			}
 
 	// 			return routes.MakeSuccessResp(c, "password reset email sent", true)
@@ -100,13 +100,13 @@ func UpdatePasswordRoute(c echo.Context) error {
 	return routes.NewValidator(c).AuthUserFromUuid().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
-			return routes.BadReq("wrong token type")
+			return routes.ErrorReq("wrong token type")
 		}
 
 		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
 		if err != nil {
-			return routes.BadReq("error setting password")
+			return routes.ErrorReq("error setting password")
 		}
 
 		return routes.MakeOkResp(c, "password updated")
@@ -120,7 +120,7 @@ func UpdateUsernameRoute(c echo.Context) error {
 		err := userdb.SetUsername(validator.AuthUser.Uuid, validator.Req.Username)
 
 		if err != nil {
-			return routes.BadReq("error setting password")
+			return routes.ErrorReq("error setting password")
 		}
 
 		return routes.MakeOkResp(c, "password updated")
@@ -132,7 +132,7 @@ func UpdateUsernameRoute(c echo.Context) error {
 	// 			err := userdb.SetUsername(authUser.Uuid, req.Username)
 
 	// 			if err != nil {
-	// 				return routes.BadReq("error setting password")
+	// 				return routes.ErrorReq("error setting password")
 	// 			}
 
 	// 			return routes.MakeSuccessResp(c, "password updated", true)
@@ -152,7 +152,7 @@ func UpdateNameRoute(c echo.Context) error {
 			err := userdb.SetName(validator.AuthUser.Uuid, validator.Req.Name)
 
 			if err != nil {
-				return routes.BadReq("error setting password")
+				return routes.ErrorReq("error setting password")
 			}
 
 			return routes.MakeOkResp(c, "name updated")
@@ -165,7 +165,7 @@ func UpdateNameRoute(c echo.Context) error {
 	// 			err := userdb.SetName(authUser.Uuid, req.Name)
 
 	// 			if err != nil {
-	// 				return routes.BadReq("error setting password")
+	// 				return routes.ErrorReq("error setting password")
 	// 			}
 
 	// 			return routes.MakeSuccessResp(c, "name updated", true)
@@ -177,11 +177,8 @@ func UpdateNameRoute(c echo.Context) error {
 func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
 		AuthUserFromUuid().
-		IsValidAccessToken().
 		Success(func(validator *routes.Validator) error {
-
 			return routes.MakeDataResp(c, "", *validator.AuthUser.ToPublicUser())
-
 		})
 }
 
@@ -199,7 +196,7 @@ func SendEmailWithToken(subject string,
 	t, err := template.ParseFiles(file)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	var firstName string = ""
@@ -218,13 +215,13 @@ func SendEmailWithToken(subject string,
 		callbackUrl, err := url.Parse(callbackUrl)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		params, err := url.ParseQuery(callbackUrl.RawQuery)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		if vistUrl != "" {
@@ -245,7 +242,7 @@ func SendEmailWithToken(subject string,
 		})
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 	} else {
 		err = t.Execute(&body, EmailBody{
@@ -256,7 +253,7 @@ func SendEmailWithToken(subject string,
 		})
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 	}
 

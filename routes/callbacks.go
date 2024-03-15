@@ -72,7 +72,7 @@ func VerifiedEmailCB(c echo.Context,
 	success func(c echo.Context, authUser *auth.AuthUser) error) error {
 
 	if !authUser.EmailVerified {
-		return BadReq("email address not verified")
+		return ErrorReq("email address not verified")
 	}
 
 	return success(c, authUser)
@@ -117,7 +117,7 @@ func IsValidRefreshTokenCB(c echo.Context,
 	success func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
 	return JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 		if claims.Type != auth.TOKEN_TYPE_REFRESH {
-			return BadReq("wrong token type")
+			return ErrorReq("wrong token type")
 		}
 
 		return success(c, claims)
@@ -128,7 +128,7 @@ func IsValidAccessTokenCB(c echo.Context,
 	success func(c echo.Context, claims *auth.JwtCustomClaims) error) error {
 	return JwtCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 		if claims.Type != auth.TOKEN_TYPE_ACCESS {
-			return BadReq("wrong token type")
+			return ErrorReq("wrong token type")
 		}
 
 		return success(c, claims)

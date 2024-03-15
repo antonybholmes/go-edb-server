@@ -144,7 +144,7 @@ func main() {
 		}
 
 		if validator.Req.Password == "" {
-			return routes.BadReq("empty password: use passwordless")
+			return routes.ErrorReq("empty password: use passwordless")
 		}
 
 		authUser, err := userdb.FindUserByUsername(validator.Req.Username)
@@ -153,7 +153,7 @@ func main() {
 			email, err := mail.ParseAddress(validator.Req.Username)
 
 			if err != nil {
-				return routes.BadReq("email address not valid")
+				return routes.ErrorReq("email address not valid")
 			}
 
 			// also check if username is valid email and try to login
@@ -161,20 +161,20 @@ func main() {
 			authUser, err = userdb.FindUserByEmail(email)
 
 			if err != nil {
-				return routes.BadReq("user does not exist")
+				return routes.UserDoesNotExistReq()
 			}
 		}
 
 		if !authUser.EmailVerified {
-			return routes.BadReq("email address not verified")
+			return routes.ErrorReq("email address not verified")
 		}
 
 		if !authUser.CanLogin {
-			return routes.BadReq("user not allowed to login")
+			return routes.ErrorReq("user not allowed to login")
 		}
 
 		if !authUser.CheckPasswords(validator.Req.Password) {
-			return routes.BadReq("incorrect password")
+			return routes.InvalidPasswordReq()
 		}
 
 		sess, err := session.Get("session", c)
@@ -262,13 +262,22 @@ func main() {
 	// Deal with logins where we want a session
 	//
 
-	sessionGroup := authGroup.Group("/sessions")
+	sessionGroup := e.Group("/sessions")
 
-	sessionGroup.POST("/login", func(c echo.Context) error {
+	sessionAuthGroup := sessionGroup.Group("/auth")
+
+	sessionAuthGroup.POST("/login", func(c echo.Context) error {
 		return authroutes.SessionUsernamePasswordLoginRoute(c)
 	})
 
-	sessionGroup.POST("/tokens/access", authroutes.SessionNewAccessTokenRoute)
+	sessionAuthGroup.POST("/tokens/access", authroutes.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
+
+	sessionUsersGroup := sessionGroup.Group("/users")
+	sessionUsersGroup.Use(SessionIsValidMiddleware)
+
+	sessionUsersGroup.POST("/info", func(c echo.Context) error {
+		return authroutes.SessionUserInfoRoute(c)
+	})
 
 	//
 	// sessions: end

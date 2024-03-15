@@ -22,14 +22,18 @@ type ReqJwt struct {
 }
 
 func InvalidEmailReq() *echo.HTTPError {
-	return BadReq("invalid email address")
+	return ErrorReq("invalid email address")
 }
 
 func UserDoesNotExistReq() *echo.HTTPError {
-	return BadReq("user does not exist")
+	return ErrorReq("user does not exist")
 }
 
-func BadReq(message interface{}) *echo.HTTPError {
+func InvalidPasswordReq() *echo.HTTPError {
+	return ErrorReq("invalid username or password")
+}
+
+func ErrorReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
