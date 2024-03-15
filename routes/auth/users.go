@@ -100,7 +100,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 	return routes.NewValidator(c).AuthUserFromUuid().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
-			return routes.ErrorReq("wrong token type")
+			return routes.WrongTokentTypeReq()
 		}
 
 		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
@@ -109,21 +109,27 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq("error setting password")
 		}
 
-		return routes.MakeOkResp(c, "password updated")
+		return routes.PasswordUpdatedResp(c)
 	})
 
 }
 
-func UpdateUsernameRoute(c echo.Context) error {
+func UpdateUserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).AuthUserFromUuid().Success(func(validator *routes.Validator) error {
 
 		err := userdb.SetUsername(validator.AuthUser.Uuid, validator.Req.Username)
 
 		if err != nil {
-			return routes.ErrorReq("error setting password")
+			return routes.ErrorReq("error changing username")
 		}
 
-		return routes.MakeOkResp(c, "password updated")
+		err = userdb.SetName(validator.AuthUser.Uuid, validator.Req.Name)
+
+		if err != nil {
+			return routes.ErrorReq("error changing name")
+		}
+
+		return routes.MakeOkResp(c, "user info updated")
 	})
 
 	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
@@ -142,37 +148,22 @@ func UpdateUsernameRoute(c echo.Context) error {
 
 }
 
-func UpdateNameRoute(c echo.Context) error {
-	return routes.NewValidator(c).
-		IsValidAccessToken().
-		AuthUserFromUuid().
-		ReqBind().
-		Success(func(validator *routes.Validator) error {
+// func UpdateNameRoute(c echo.Context) error {
+// 	return routes.NewValidator(c).
+// 		IsValidAccessToken().
+// 		AuthUserFromUuid().
+// 		ReqBind().
+// 		Success(func(validator *routes.Validator) error {
 
-			err := userdb.SetName(validator.AuthUser.Uuid, validator.Req.Name)
+// 			err := userdb.SetName(validator.AuthUser.Uuid, validator.Req.Name)
 
-			if err != nil {
-				return routes.ErrorReq("error setting password")
-			}
+// 			if err != nil {
+// 				return routes.ErrorReq("error setting password")
+// 			}
 
-			return routes.MakeOkResp(c, "name updated")
-		})
-
-	// return routes.ReqBindCB(c, new(NameReq), func(c echo.Context, req *NameReq) error {
-	// 	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-	// 		return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-
-	// 			err := userdb.SetName(authUser.Uuid, req.Name)
-
-	// 			if err != nil {
-	// 				return routes.ErrorReq("error setting password")
-	// 			}
-
-	// 			return routes.MakeSuccessResp(c, "name updated", true)
-	// 		})
-	// 	})
-	// })
-}
+// 			return routes.MakeOkResp(c, "name updated")
+// 		})
+// }
 
 func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).

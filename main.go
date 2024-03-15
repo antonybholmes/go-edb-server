@@ -215,15 +215,15 @@ func main() {
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
 
+	e.POST("/signup", func(c echo.Context) error {
+		return authroutes.SignupRoute(c)
+	})
+
 	//
 	// user groups: start
 	//
 
 	authGroup := e.Group("/auth")
-
-	authGroup.POST("/signup", func(c echo.Context) error {
-		return authroutes.SignupRoute(c)
-	})
 
 	authGroup.POST("/login", func(c echo.Context) error {
 		return authroutes.UsernamePasswordLoginRoute(c)
@@ -279,6 +279,17 @@ func main() {
 		return authroutes.SessionUserInfoRoute(c)
 	})
 
+	sessionUsersGroup.POST("/update", func(c echo.Context) error {
+		return authroutes.SessionUpdateUserInfoRoute(c)
+	})
+
+	sessionPasswordGroup := sessionGroup.Group("/passwords")
+	sessionPasswordGroup.Use(SessionIsValidMiddleware)
+
+	sessionPasswordGroup.POST("/update", func(c echo.Context) error {
+		return authroutes.SessionUpdatePasswordRoute(c)
+	})
+
 	//
 	// sessions: end
 	//
@@ -295,10 +306,12 @@ func main() {
 		return authroutes.UserInfoRoute(c)
 	})
 
-	accountsGroup := usersGroup.Group("/accounts")
+	usersGroup.POST("/update", func(c echo.Context) error {
+		return authroutes.UpdateUserInfoRoute(c)
+	})
 
-	accountsGroup.POST("/names/update", func(c echo.Context) error {
-		return authroutes.UpdateNameRoute(c)
+	usersGroup.POST("/passwords/update", func(c echo.Context) error {
+		return authroutes.UpdatePasswordRoute(c)
 	})
 
 	//

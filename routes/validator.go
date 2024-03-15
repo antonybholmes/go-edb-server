@@ -72,7 +72,7 @@ func (validator *Validator) ValidEmail() *Validator {
 		return validator
 	}
 
-	address, err := mail.ParseAddress(validator.Req.Username)
+	address, err := mail.ParseAddress(validator.Req.Email)
 
 	if err != nil {
 		validator.Err = InvalidEmailReq()

@@ -33,6 +33,10 @@ func InvalidPasswordReq() *echo.HTTPError {
 	return ErrorReq("invalid username or password")
 }
 
+func WrongTokentTypeReq() *echo.HTTPError {
+	return ErrorReq("wrong token type")
+}
+
 func ErrorReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }

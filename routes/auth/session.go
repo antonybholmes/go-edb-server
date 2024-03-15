@@ -22,9 +22,10 @@ var SESSION_OPT_24H *sessions.Options
 func init() {
 
 	SESSION_OPT_24H = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400,
-		HttpOnly: true,
+		Path:   "/",
+		MaxAge: 86400,
+		// http only false to allow js to delete etc on the client side
+		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
@@ -38,7 +39,7 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 	}
 
 	if validator.Req.Password == "" {
-		return routes.ErrorReq("empty password: use passwordless")
+		return routes.ErrorReq("password required")
 	}
 
 	user := validator.Req.Username
@@ -119,8 +120,88 @@ func SessionUserInfoRoute(c echo.Context) error {
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
-
 	}
 
 	return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
+}
+
+func SessionUpdateUserInfoRoute(c echo.Context) error {
+	sess, _ := session.Get(SESSION_NAME, c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	req := new(auth.LoginReq)
+
+	err := c.Bind(req)
+
+	if err != nil {
+		return routes.ErrorReq("login parameters missing")
+	}
+
+	authUser, err := userdb.FindUserByUuid(uuid)
+
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+	}
+
+	if !authUser.CheckPasswords(req.Password) {
+		log.Debug().Msgf("%s", routes.InvalidPasswordReq())
+		return routes.InvalidPasswordReq()
+	}
+
+	err = userdb.SetUsername(authUser.Uuid, req.Username)
+
+	if err != nil {
+		return routes.ErrorReq("error changing username")
+	}
+
+	err = userdb.SetName(authUser.Uuid, req.Name)
+
+	if err != nil {
+		return routes.ErrorReq("error changing name")
+	}
+
+	address, err := mail.ParseAddress(req.Email)
+
+	if err != nil {
+		return routes.InvalidEmailReq()
+	}
+
+	err = userdb.SetEmail(authUser.Uuid, address)
+
+	if err != nil {
+		return routes.ErrorReq("error changing email")
+	}
+
+	return routes.MakeOkResp(c, "user info updated")
+}
+
+func SessionUpdatePasswordRoute(c echo.Context) error {
+	sess, _ := session.Get(SESSION_NAME, c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	req := new(auth.NewPasswordReq)
+
+	err := c.Bind(req)
+
+	if err != nil {
+		return routes.ErrorReq("login parameters missing")
+	}
+
+	authUser, err := userdb.FindUserByUuid(uuid)
+
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+	}
+
+	if !authUser.CheckPasswords(req.Password) {
+		return routes.InvalidPasswordReq()
+	}
+
+	err = userdb.SetPassword(authUser.Uuid, req.NewPassword)
+
+	if err != nil {
+		return routes.ErrorReq("error setting password")
+	}
+
+	return routes.PasswordUpdatedResp(c)
 }
