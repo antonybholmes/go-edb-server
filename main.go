@@ -111,8 +111,9 @@ func main() {
 	//e.Use(middleware.CORS())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
-		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowOrigins:     []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowCredentials: true,
 	}))
 
 	//e.Logger.SetLevel(log.DEBUG)
@@ -194,7 +195,7 @@ func main() {
 		}
 		log.Debug().Msgf("%s", sess.ID)
 
-		return c.JSON(http.StatusOK, sess.Values["name"])
+		return c.JSON(http.StatusOK, sess.Values[authroutes.SESSION_UUID])
 	})
 
 	e.GET("/about", func(c echo.Context) error {
