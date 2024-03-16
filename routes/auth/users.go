@@ -41,7 +41,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 
 		var file string
 
-		if req.Url != "" {
+		if req.CallbackUrl != "" {
 			file = "templates/email/password/reset/web.html"
 		} else {
 			file = "templates/email/password/reset/api.html"

@@ -137,7 +137,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 
 	var file string
 
-	if validator.Req.Url != "" {
+	if validator.Req.CallbackUrl != "" {
 		file = "templates/email/passwordless/web.html"
 	} else {
 		file = "templates/email/passwordless/api.html"

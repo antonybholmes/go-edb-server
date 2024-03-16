@@ -34,7 +34,7 @@ func SignupRoute(c echo.Context) error {
 
 	var file string
 
-	if req.Url != "" {
+	if req.CallbackUrl != "" {
 		file = "templates/email/verify/web.html"
 	} else {
 		file = "templates/email/verify/api.html"

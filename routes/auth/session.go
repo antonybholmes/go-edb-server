@@ -169,10 +169,10 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	if !authUser.CheckPasswords(req.Password) {
-		log.Debug().Msgf("%s", routes.InvalidPasswordReq())
-		return routes.InvalidPasswordReq()
-	}
+	// if !authUser.CheckPasswords(req.Password) {
+	// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())
+	// 	return routes.InvalidPasswordReq()
+	// }
 
 	err = userdb.SetUsername(authUser.Uuid, req.Username)
 
