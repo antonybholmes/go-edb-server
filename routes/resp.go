@@ -72,3 +72,11 @@ func MakeSuccessResp(c echo.Context, message string, success bool) error {
 func PasswordUpdatedResp(c echo.Context) error {
 	return MakeOkResp(c, "password updated")
 }
+
+func UserSignedInResp(c echo.Context) error {
+	return MakeOkResp(c, "user signed in")
+}
+
+func PasswordlessEmailSentResp(c echo.Context) error {
+	return MakeOkResp(c, "passwordless email sent")
+}

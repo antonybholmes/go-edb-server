@@ -25,8 +25,16 @@ func InvalidEmailReq() *echo.HTTPError {
 	return ErrorReq("invalid email address")
 }
 
+func EmailNotVerifiedReq() *echo.HTTPError {
+	return ErrorReq("email address not verified")
+}
+
 func UserDoesNotExistReq() *echo.HTTPError {
 	return ErrorReq("user does not exist")
+}
+
+func UserNotAllowedToSignIn() *echo.HTTPError {
+	return ErrorReq("user not allowed to sign in")
 }
 
 func InvalidPasswordReq() *echo.HTTPError {
@@ -35,6 +43,10 @@ func InvalidPasswordReq() *echo.HTTPError {
 
 func WrongTokentTypeReq() *echo.HTTPError {
 	return ErrorReq("wrong token type")
+}
+
+func TokenErrorReq() *echo.HTTPError {
+	return ErrorReq("token not generated")
 }
 
 func ErrorReq(message interface{}) *echo.HTTPError {

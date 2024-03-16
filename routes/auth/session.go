@@ -18,6 +18,9 @@ const SESSION_NAME string = "session"
 const SESSION_UUID string = "uuid"
 
 var SESSION_OPT_24H *sessions.Options
+var SESSION_OPT_30D *sessions.Options
+
+const MONTH_SECONDS = 2592000
 
 func init() {
 
@@ -29,9 +32,18 @@ func init() {
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
+
+	SESSION_OPT_30D = &sessions.Options{
+		Path:   "/",
+		MaxAge: MONTH_SECONDS,
+		// http only false to allow js to delete etc on the client side
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	}
 }
 
-func SessionUsernamePasswordLoginRoute(c echo.Context) error {
+func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	validator, err := routes.NewValidator(c).ReqBind().Ok()
 
 	if err != nil {
@@ -39,7 +51,7 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 	}
 
 	if validator.Req.Password == "" {
-		return routes.ErrorReq("password required")
+		return PasswordlessEmailRoute(c, validator)
 	}
 
 	user := validator.Req.Username
@@ -54,7 +66,7 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 		email, err := mail.ParseAddress(user)
 
 		if err != nil {
-			return routes.ErrorReq("email address not valid")
+			return routes.InvalidEmailReq()
 		}
 
 		// also check if username is valid email and try to login
@@ -62,16 +74,16 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 		authUser, err = userdb.FindUserByEmail(email)
 
 		if err != nil {
-			return routes.ErrorReq("user does not exist")
+			return routes.UserDoesNotExistReq()
 		}
 	}
 
 	if !authUser.EmailVerified {
-		return routes.ErrorReq("email address not verified")
+		return routes.EmailNotVerifiedReq()
 	}
 
-	if !authUser.CanLogin {
-		return routes.ErrorReq("user not allowed to login")
+	if !authUser.CanSignIn {
+		return routes.UserNotAllowedToSignIn()
 	}
 
 	if !authUser.CheckPasswords(validator.Req.Password) {
@@ -82,13 +94,27 @@ func SessionUsernamePasswordLoginRoute(c echo.Context) error {
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
-	sess.Options = SESSION_OPT_24H
+	sess.Options = SESSION_OPT_30D
 	sess.Values[SESSION_UUID] = authUser.Uuid
 
 	sess.Save(c.Request(), c.Response())
 
-	return routes.MakeOkResp(c, "user was signed in")
+	return routes.UserSignedInResp(c)
 	//return c.NoContent(http.StatusOK)
+}
+
+func SessionSignOutRoute(c echo.Context) error {
+	sess, err := session.Get(SESSION_NAME, c)
+	if err != nil {
+		return routes.ErrorReq("error creating session")
+	}
+
+	// invalidate by time
+	sess.Options.MaxAge = 0
+
+	sess.Save(c.Request(), c.Response())
+
+	return routes.MakeOkResp(c, "user was signed out")
 }
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
@@ -100,13 +126,13 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	_, err := userdb.FindUserByUuid(uuid)
 
 	if err != nil {
-		return routes.ErrorReq("user does not exist")
+		return routes.UserDoesNotExistReq()
 	}
 
 	t, err := auth.AccessToken(c, uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.ErrorReq("error creating access token")
+		return routes.TokenErrorReq()
 	}
 
 	return routes.MakeDataResp(c, "", &routes.AccessTokenResp{AccessToken: t})
@@ -204,4 +230,54 @@ func SessionUpdatePasswordRoute(c echo.Context) error {
 	}
 
 	return routes.PasswordUpdatedResp(c)
+}
+
+func SessionPasswordlessSignInRoute(c echo.Context) error {
+
+	return routes.NewValidator(c).AuthUserFromUuid().VerifiedEmail().Success(func(validator *routes.Validator) error {
+
+		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+			return routes.WrongTokentTypeReq()
+		}
+
+		if !validator.AuthUser.CanSignIn {
+			return routes.UserNotAllowedToSignIn()
+		}
+
+		sess, err := session.Get(SESSION_NAME, c)
+
+		if err != nil {
+			return routes.ErrorReq("error creating session")
+		}
+
+		sess.Options = SESSION_OPT_30D
+		sess.Values[SESSION_UUID] = validator.AuthUser.Uuid
+
+		sess.Save(c.Request(), c.Response())
+
+		log.Debug().Msgf("cheese")
+
+		return routes.UserSignedInResp(c)
+	})
+
+	// return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
+	// 	return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
+	// 		if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+	// 			return routes.ErrorReq("wrong token type")
+	// 		}
+
+	// 		if !authUser.CanAuth {
+	// 			return routes.ErrorReq("user not allowed tokens")
+	// 		}
+
+	// 		t, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
+
+	// 		if err != nil {
+	// 			return routes.ErrorReq("error signing token")
+	// 		}
+
+	// 		return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
+	// 	})
+	// })
+
 }

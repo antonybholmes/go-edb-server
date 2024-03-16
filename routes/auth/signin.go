@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func UsernamePasswordLoginRoute(c echo.Context) error {
+func UsernamePasswordSignInRoute(c echo.Context) error {
 	validator, err := routes.NewValidator(c).ReqBind().Ok()
 
 	if err != nil {
@@ -18,7 +18,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 	}
 
 	if validator.Req.Password == "" {
-		return routes.ErrorReq("empty password: use passwordless")
+		return PasswordlessEmailRoute(c, validator)
 	}
 
 	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
@@ -27,7 +27,7 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 		email, err := mail.ParseAddress(validator.Req.Username)
 
 		if err != nil {
-			return routes.ErrorReq("email address not valid")
+			return routes.InvalidEmailReq()
 		}
 
 		// also check if username is valid email and try to login
@@ -35,32 +35,32 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 		authUser, err = userdb.FindUserByEmail(email)
 
 		if err != nil {
-			return routes.ErrorReq("user does not exist")
+			return routes.UserDoesNotExistReq()
 		}
 	}
 
 	if !authUser.EmailVerified {
-		return routes.ErrorReq("email address not verified")
+		return routes.EmailNotVerifiedReq()
 	}
 
-	if !authUser.CanLogin {
-		return routes.ErrorReq("user not allowed to login")
+	if !authUser.CanSignIn {
+		return routes.UserNotAllowedToSignIn()
 	}
 
 	if !authUser.CheckPasswords(validator.Req.Password) {
-		return routes.ErrorReq("incorrect password")
+		return routes.InvalidPasswordReq()
 	}
 
 	refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.ErrorReq("error signing token")
+		return routes.TokenErrorReq()
 	}
 
 	accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
-		return routes.ErrorReq("error signing token")
+		return routes.TokenErrorReq()
 	}
 
 	return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
@@ -118,8 +118,12 @@ func UsernamePasswordLoginRoute(c echo.Context) error {
 }
 
 // Start passwordless login by sending an email
-func PasswordlessEmailRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).AuthUserFromUsername().VerifiedEmail().Ok()
+func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
+	if validator == nil {
+		validator = routes.NewValidator(c)
+	}
+
+	validator, err := validator.AuthUserFromUsername().VerifiedEmail().Ok()
 
 	if err != nil {
 		return err
@@ -139,7 +143,7 @@ func PasswordlessEmailRoute(c echo.Context) error {
 		file = "templates/email/passwordless/api.html"
 	}
 
-	err = SendEmailWithToken("Passwordless Login",
+	err = SendEmailWithToken("Passwordless Sign In",
 		validator.AuthUser,
 		file,
 		otpJwt,
@@ -187,21 +191,21 @@ func PasswordlessEmailRoute(c echo.Context) error {
 	// })
 }
 
-func PasswordlessLoginRoute(c echo.Context) error {
+func PasswordlessSignInRoute(c echo.Context) error {
 	return routes.NewValidator(c).AuthUserFromUuid().VerifiedEmail().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-			return routes.ErrorReq("wrong token type")
+			return routes.WrongTokentTypeReq()
 		}
 
-		if !validator.AuthUser.CanLogin {
-			return routes.ErrorReq("user not allowed to login")
+		if !validator.AuthUser.CanSignIn {
+			return routes.UserNotAllowedToSignIn()
 		}
 
 		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
 
 		if err != nil {
-			return routes.ErrorReq("error signing token")
+			return routes.TokenErrorReq()
 		}
 
 		return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})

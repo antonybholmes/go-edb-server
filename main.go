@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"net/http"
-	"net/mail"
 	"os"
 	"runtime"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
 	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
 	modroutes "github.com/antonybholmes/go-edb-api/routes/modules"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -124,79 +122,79 @@ func main() {
 		log.Fatal().Msgf("Error loading user db: %s", err)
 	}
 
-	e.GET("/write", func(c echo.Context) error {
-		sess, err := session.Get("session", c)
-		if err != nil {
-			return err
-		}
-		sess.Options = authroutes.SESSION_OPT_24H
-		sess.Values["name"] = "Steve"
-		sess.Save(c.Request(), c.Response())
+	// e.GET("/write", func(c echo.Context) error {
+	// 	sess, err := session.Get("session", c)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	sess.Options = authroutes.SESSION_OPT_24H
+	// 	sess.Values["name"] = "Steve"
+	// 	sess.Save(c.Request(), c.Response())
 
-		return c.NoContent(http.StatusOK)
-	})
+	// 	return c.NoContent(http.StatusOK)
+	// })
 
-	e.POST("/login", func(c echo.Context) error {
-		validator, err := routes.NewValidator(c).ReqBind().Ok()
+	// e.POST("/login", func(c echo.Context) error {
+	// 	validator, err := routes.NewValidator(c).ReqBind().Ok()
 
-		if err != nil {
-			return err
-		}
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		if validator.Req.Password == "" {
-			return routes.ErrorReq("empty password: use passwordless")
-		}
+	// 	if validator.Req.Password == "" {
+	// 		return routes.ErrorReq("empty password: use passwordless")
+	// 	}
 
-		authUser, err := userdb.FindUserByUsername(validator.Req.Username)
+	// 	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
 
-		if err != nil {
-			email, err := mail.ParseAddress(validator.Req.Username)
+	// 	if err != nil {
+	// 		email, err := mail.ParseAddress(validator.Req.Username)
 
-			if err != nil {
-				return routes.ErrorReq("email address not valid")
-			}
+	// 		if err != nil {
+	// 			return routes.ErrorReq("email address not valid")
+	// 		}
 
-			// also check if username is valid email and try to login
-			// with that
-			authUser, err = userdb.FindUserByEmail(email)
+	// 		// also check if username is valid email and try to login
+	// 		// with that
+	// 		authUser, err = userdb.FindUserByEmail(email)
 
-			if err != nil {
-				return routes.UserDoesNotExistReq()
-			}
-		}
+	// 		if err != nil {
+	// 			return routes.UserDoesNotExistReq()
+	// 		}
+	// 	}
 
-		if !authUser.EmailVerified {
-			return routes.ErrorReq("email address not verified")
-		}
+	// 	if !authUser.EmailVerified {
+	// 		return routes.ErrorReq("email address not verified")
+	// 	}
 
-		if !authUser.CanLogin {
-			return routes.ErrorReq("user not allowed to login")
-		}
+	// 	if !authUser.CanSignIn {
+	// 		return routes.ErrorReq("user not allowed to login")
+	// 	}
 
-		if !authUser.CheckPasswords(validator.Req.Password) {
-			return routes.InvalidPasswordReq()
-		}
+	// 	if !authUser.CheckPasswords(validator.Req.Password) {
+	// 		return routes.InvalidPasswordReq()
+	// 	}
 
-		sess, err := session.Get("session", c)
-		if err != nil {
-			return err
-		}
-		sess.Options = authroutes.SESSION_OPT_24H
-		sess.Values["uuid"] = authUser.Uuid
-		sess.Save(c.Request(), c.Response())
+	// 	sess, err := session.Get("session", c)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	sess.Options = authroutes.SESSION_OPT_30D
+	// 	sess.Values["uuid"] = authUser.Uuid
+	// 	sess.Save(c.Request(), c.Response())
 
-		return c.NoContent(http.StatusOK)
-	})
+	// 	return c.NoContent(http.StatusOK)
+	// })
 
-	e.GET("/read", func(c echo.Context) error {
-		sess, err := session.Get("session", c)
-		if err != nil {
-			return err
-		}
-		log.Debug().Msgf("%s", sess.ID)
+	// e.GET("/read", func(c echo.Context) error {
+	// 	sess, err := session.Get("session", c)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	log.Debug().Msgf("%s", sess.ID)
 
-		return c.JSON(http.StatusOK, sess.Values[authroutes.SESSION_UUID])
-	})
+	// 	return c.JSON(http.StatusOK, sess.Values[authroutes.SESSION_UUID])
+	// })
 
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
@@ -225,8 +223,8 @@ func main() {
 
 	authGroup := e.Group("/auth")
 
-	authGroup.POST("/login", func(c echo.Context) error {
-		return authroutes.UsernamePasswordLoginRoute(c)
+	authGroup.POST("/signin", func(c echo.Context) error {
+		return authroutes.UsernamePasswordSignInRoute(c)
 	})
 
 	authGroup.POST("/verify", func(c echo.Context) error {
@@ -246,11 +244,11 @@ func main() {
 	passwordlessGroup := authGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
-		return authroutes.PasswordlessEmailRoute(c)
+		return authroutes.PasswordlessEmailRoute(c, nil)
 	})
 
-	passwordlessGroup.POST("/login", func(c echo.Context) error {
-		return authroutes.PasswordlessLoginRoute(c)
+	passwordlessGroup.POST("/signin", func(c echo.Context) error {
+		return authroutes.PasswordlessSignInRoute(c)
 	}, jwtMiddleWare)
 
 	tokenGroup := authGroup.Group("/tokens")
@@ -266,9 +264,13 @@ func main() {
 
 	sessionAuthGroup := sessionGroup.Group("/auth")
 
-	sessionAuthGroup.POST("/login", func(c echo.Context) error {
-		return authroutes.SessionUsernamePasswordLoginRoute(c)
+	sessionAuthGroup.POST("/signin", func(c echo.Context) error {
+		return authroutes.SessionUsernamePasswordSignInRoute(c)
 	})
+
+	sessionAuthGroup.POST("/passwordless/signin", func(c echo.Context) error {
+		return authroutes.SessionPasswordlessSignInRoute(c)
+	}, jwtMiddleWare)
 
 	sessionAuthGroup.POST("/tokens/access", authroutes.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
 
@@ -283,7 +285,7 @@ func main() {
 		return authroutes.SessionUpdateUserInfoRoute(c)
 	})
 
-	sessionPasswordGroup := sessionGroup.Group("/passwords")
+	sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
 	sessionPasswordGroup.Use(SessionIsValidMiddleware)
 
 	sessionPasswordGroup.POST("/update", func(c echo.Context) error {
