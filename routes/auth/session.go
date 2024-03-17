@@ -193,25 +193,19 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 	err = userdb.SetUsername(authUser.Uuid, req.Username)
 
 	if err != nil {
-		return routes.ErrorReq("error changing username")
+		return routes.ErrorReq(err)
 	}
 
 	err = userdb.SetName(authUser.Uuid, req.Name)
 
 	if err != nil {
-		return routes.ErrorReq("error changing name")
+		return routes.ErrorReq(err)
 	}
 
-	address, err := mail.ParseAddress(req.Email)
+	err = userdb.SetEmail(authUser.Uuid, req.Email)
 
 	if err != nil {
-		return routes.InvalidEmailReq()
-	}
-
-	err = userdb.SetEmail(authUser.Uuid, address)
-
-	if err != nil {
-		return routes.ErrorReq("error changing email")
+		return routes.ErrorReq(err)
 	}
 
 	return routes.MakeOkResp(c, "user info updated")
