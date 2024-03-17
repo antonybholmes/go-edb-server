@@ -88,7 +88,26 @@ func UpdatePasswordRoute(c echo.Context) error {
 		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
 		if err != nil {
-			return routes.ErrorReq("error setting password")
+			return routes.ErrorReq(err)
+		}
+
+		var file string
+
+		if validator.Req.Password == "" {
+			file = "templates/email/password/switch-to-passwordless.html"
+		} else {
+			file = "templates/email/password/updated.html"
+		}
+
+		err = SendEmailWithToken("Password Updated",
+			validator.AuthUser,
+			file,
+			"",
+			"",
+			"")
+
+		if err != nil {
+			return routes.ErrorReq(err)
 		}
 
 		return routes.PasswordUpdatedResp(c)
