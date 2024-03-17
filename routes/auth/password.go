@@ -42,7 +42,6 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 
 		return routes.MakeOkResp(c, "password reset email sent")
 	})
-
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
