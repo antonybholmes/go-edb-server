@@ -17,12 +17,22 @@ import (
 const SESSION_NAME string = "session"
 const SESSION_UUID string = "uuid"
 
+var SESSION_OPT_MAX_AGE_ZERO *sessions.Options
 var SESSION_OPT_24H *sessions.Options
-var SESSION_OPT_30D *sessions.Options
+var SESSION_OPT_MAX_AGE_30D *sessions.Options
 
 const MONTH_SECONDS = 2592000
 
 func init() {
+
+	SESSION_OPT_MAX_AGE_ZERO = &sessions.Options{
+		Path:   "/",
+		MaxAge: 0,
+		// http only false to allow js to delete etc on the client side
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	}
 
 	SESSION_OPT_24H = &sessions.Options{
 		Path:   "/",
@@ -33,7 +43,7 @@ func init() {
 		SameSite: http.SameSiteNoneMode,
 	}
 
-	SESSION_OPT_30D = &sessions.Options{
+	SESSION_OPT_MAX_AGE_30D = &sessions.Options{
 		Path:   "/",
 		MaxAge: MONTH_SECONDS,
 		// http only false to allow js to delete etc on the client side
@@ -94,7 +104,13 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
-	sess.Options = SESSION_OPT_30D
+
+	if validator.Req.StaySignedIn {
+		sess.Options = SESSION_OPT_MAX_AGE_30D
+	} else {
+		sess.Options = SESSION_OPT_MAX_AGE_ZERO
+	}
+
 	sess.Values[SESSION_UUID] = authUser.Uuid
 
 	sess.Save(c.Request(), c.Response())
@@ -250,7 +266,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 			return routes.ErrorReq("error creating session")
 		}
 
-		sess.Options = SESSION_OPT_30D
+		sess.Options = SESSION_OPT_MAX_AGE_30D
 		sess.Values[SESSION_UUID] = validator.AuthUser.Uuid
 
 		sess.Save(c.Request(), c.Response())
