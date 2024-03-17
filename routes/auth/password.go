@@ -43,39 +43,6 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 		return routes.MakeOkResp(c, "password reset email sent")
 	})
 
-	// return routes.ReqBindCB(c, new(auth.EmailOnlyLoginReq), func(c echo.Context, req *auth.EmailOnlyLoginReq) error {
-	// 	return routes.AuthUserFromEmailCB(c, req.Email, func(c echo.Context, authUser *auth.AuthUser) error {
-	// 		return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
-
-	// 			otpJwt, err := auth.ResetPasswordToken(c, authUser.Uuid, consts.JWT_SECRET)
-
-	// 			if err != nil {
-	// 				return routes.ErrorReq(err)
-	// 			}
-
-	// 			var file string
-
-	// 			if req.Url != "" {
-	// 				file = "templates/email/password/reset/web.html"
-	// 			} else {
-	// 				file = "templates/email/password/reset/api.html"
-	// 			}
-
-	// 			err = SendEmailWithToken("Password Reset",
-	// 				authUser,
-	// 				file,
-	// 				otpJwt,
-	// 				req.CallbackUrl,
-	// 				req.Url)
-
-	// 			if err != nil {
-	// 				return routes.ErrorReq(err)
-	// 			}
-
-	// 			return routes.MakeSuccessResp(c, "password reset email sent", true)
-	// 		})
-	// 	})
-	// })
 }
 
 func UpdatePasswordRoute(c echo.Context) error {

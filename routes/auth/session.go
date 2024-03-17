@@ -275,25 +275,4 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		return routes.UserSignedInResp(c)
 	})
-
-	// return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-	// 	return routes.VerifiedEmailCB(c, authUser, func(c echo.Context, authUser *auth.AuthUser) error {
-	// 		if claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-	// 			return routes.ErrorReq("wrong token type")
-	// 		}
-
-	// 		if !authUser.CanAuth {
-	// 			return routes.ErrorReq("user not allowed tokens")
-	// 		}
-
-	// 		t, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
-
-	// 		if err != nil {
-	// 			return routes.ErrorReq("error signing token")
-	// 		}
-
-	// 		return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
-	// 	})
-	// })
-
 }

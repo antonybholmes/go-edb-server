@@ -88,34 +88,4 @@ func EmailVerificationRoute(c echo.Context) error {
 	}
 
 	return routes.MakeOkResp(c, "") //c.JSON(http.StatusOK, JWTResp{t})
-
-	// return routes.AuthUserFromUuidCB(c, nil, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-
-	// 	// if verified, stop and just return true
-	// 	if authUser.EmailVerified {
-	// 		return routes.MakeSuccessResp(c, "", true)
-	// 	}
-
-	// 	err := userdb.SetIsVerified(authUser.Uuid)
-
-	// 	if err != nil {
-	// 		return routes.MakeSuccessResp(c, "unable to verify user", false)
-	// 	}
-
-	// 	file := "templates/email/verify/verified.html"
-
-	// 	err = SendEmailWithToken("Email Address Verified",
-	// 		authUser,
-	// 		file,
-	// 		"",
-	// 		"",
-	// 		"")
-
-	// 	if err != nil {
-	// 		return routes.ErrorReq(err)
-	// 	}
-
-	// 	return routes.MakeSuccessResp(c, "", true) //c.JSON(http.StatusOK, JWTResp{t})
-	// })
-
 }
