@@ -96,8 +96,10 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	if !authUser.CheckPasswords(validator.Req.Password) {
-		return routes.InvalidPasswordReq()
+	err = authUser.CheckPasswordsMatch(validator.Req.Password)
+
+	if err != nil {
+		return routes.ErrorReq(err)
 	}
 
 	sess, err := session.Get(SESSION_NAME, c)
@@ -167,48 +169,43 @@ func SessionUserInfoRoute(c echo.Context) error {
 	return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
 }
 
-func SessionUpdateUserInfoRoute(c echo.Context) error {
+func SessionUpdateAccountRoute(c echo.Context) error {
 	sess, _ := session.Get(SESSION_NAME, c)
 	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	req := new(auth.LoginReq)
+	return routes.NewValidator(c).ValidEmail().Success(func(validator *routes.Validator) error {
 
-	err := c.Bind(req)
+		authUser, err := userdb.FindUserByUuid(uuid)
 
-	if err != nil {
-		return routes.ErrorReq("login parameters missing")
-	}
+		if err != nil {
+			return routes.UserDoesNotExistReq()
+		}
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+		// if !authUser.CheckPasswords(req.Password) {
+		// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())
+		// 	return routes.InvalidPasswordReq()
+		// }
 
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
+		err = userdb.SetUsername(authUser.Uuid, validator.Req.Username)
 
-	// if !authUser.CheckPasswords(req.Password) {
-	// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())
-	// 	return routes.InvalidPasswordReq()
-	// }
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
 
-	err = userdb.SetUsername(authUser.Uuid, req.Username)
+		err = userdb.SetName(authUser.Uuid, validator.Req.Name)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
 
-	err = userdb.SetName(authUser.Uuid, req.Name)
+		err = userdb.SetEmailAddress(authUser.Uuid, validator.Address)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
 
-	err = userdb.SetEmail(authUser.Uuid, req.Email)
-
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
-
-	return routes.MakeOkResp(c, "user info updated")
+		return routes.MakeOkResp(c, "account updated")
+	})
 }
 
 func SessionUpdatePasswordRoute(c echo.Context) error {
@@ -229,17 +226,19 @@ func SessionUpdatePasswordRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	if !authUser.CheckPasswords(req.Password) {
-		return routes.InvalidPasswordReq()
+	err = authUser.CheckPasswordsMatch(req.Password)
+
+	if err != nil {
+		return routes.ErrorReq(err)
 	}
 
 	err = userdb.SetPassword(authUser.Uuid, req.NewPassword)
 
 	if err != nil {
-		return routes.ErrorReq("error setting password")
+		return routes.ErrorReq(err)
 	}
 
-	return routes.PasswordUpdatedResp(c)
+	return SendPasswordEmail(c, authUser, req.NewPassword)
 }
 
 func SessionPasswordlessSignInRoute(c echo.Context) error {
@@ -264,8 +263,6 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 		sess.Values[SESSION_UUID] = validator.AuthUser.Uuid
 
 		sess.Save(c.Request(), c.Response())
-
-		log.Debug().Msgf("cheese")
 
 		return routes.UserSignedInResp(c)
 	})

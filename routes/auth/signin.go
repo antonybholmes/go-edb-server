@@ -47,8 +47,10 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	if !authUser.CheckPasswords(validator.Req.Password) {
-		return routes.InvalidPasswordReq()
+	err = authUser.CheckPasswordsMatch(validator.Req.Password)
+
+	if err != nil {
+		return routes.ErrorReq(err)
 	}
 
 	refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)

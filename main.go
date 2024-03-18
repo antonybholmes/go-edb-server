@@ -282,7 +282,7 @@ func main() {
 	})
 
 	sessionUsersGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.SessionUpdateUserInfoRoute(c)
+		return authroutes.SessionUpdateAccountRoute(c)
 	})
 
 	sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
@@ -309,7 +309,7 @@ func main() {
 	})
 
 	usersGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.UpdateUserInfoRoute(c)
+		return authroutes.UpdateAccountRoute(c)
 	})
 
 	usersGroup.POST("/passwords/update", func(c echo.Context) error {

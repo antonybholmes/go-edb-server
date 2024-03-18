@@ -37,8 +37,12 @@ func UserNotAllowedToSignIn() *echo.HTTPError {
 	return ErrorReq("user not allowed to sign in")
 }
 
-func InvalidPasswordReq() *echo.HTTPError {
-	return ErrorReq("invalid username or password")
+func InvalidUsernameReq() *echo.HTTPError {
+	return ErrorReq("invalid username")
+}
+
+func PasswordsDoNotMatchReq() *echo.HTTPError {
+	return ErrorReq("passwords do not match")
 }
 
 func WrongTokentTypeReq() *echo.HTTPError {

@@ -57,25 +57,31 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		var file string
-
-		if validator.Req.Password == "" {
-			file = "templates/email/password/switch-to-passwordless.html"
-		} else {
-			file = "templates/email/password/updated.html"
-		}
-
-		err = SendEmailWithToken("Password Updated",
-			validator.AuthUser,
-			file,
-			"",
-			"",
-			"")
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		return routes.PasswordUpdatedResp(c)
+		return SendPasswordEmail(c, validator.AuthUser, validator.Req.Password)
 	})
+}
+
+func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string) error {
+
+	var file string
+
+	if password == "" {
+		file = "templates/email/password/switch-to-passwordless.html"
+	} else {
+		file = "templates/email/password/updated.html"
+	}
+
+	err := SendEmailWithToken("Password Updated",
+		authUser,
+		file,
+		"",
+		"",
+		"")
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.PasswordUpdatedResp(c)
+
 }

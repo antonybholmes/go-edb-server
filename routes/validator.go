@@ -20,7 +20,7 @@ type Validator struct {
 	Req      *auth.LoginReq
 	AuthUser *auth.AuthUser
 	Claims   *auth.JwtCustomClaims
-	Err      error
+	Err      *echo.HTTPError
 }
 
 func NewValidator(c echo.Context) *Validator {
@@ -55,7 +55,7 @@ func (validator *Validator) ReqBind() *Validator {
 		err := validator.c.Bind(req)
 
 		if err != nil {
-			validator.Err = err
+			validator.Err = ErrorReq(err)
 		} else {
 			validator.Req = req
 		}
@@ -71,10 +71,10 @@ func (validator *Validator) ValidEmail() *Validator {
 		return validator
 	}
 
-	address, err := mail.ParseAddress(validator.Req.Email)
+	address, err := auth.CheckEmail(validator.Req.Email)
 
 	if err != nil {
-		validator.Err = InvalidEmailReq()
+		validator.Err = ErrorReq(err)
 	} else {
 		validator.Address = address
 	}
