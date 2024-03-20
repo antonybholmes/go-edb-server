@@ -60,13 +60,13 @@ func WithinGenesRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	data := []*genes.GenomicFeatures{}
@@ -75,7 +75,7 @@ func WithinGenesRoute(c echo.Context) error {
 		genes, err := query.Db.WithinGenes(&location, query.Level)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		data = append(data, genes)
@@ -88,13 +88,13 @@ func ClosestGeneRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	n := routes.ParseN(c, DEFAULT_CLOSEST_N)
@@ -105,7 +105,7 @@ func ClosestGeneRoute(c echo.Context) error {
 		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		data = append(data, genes)
@@ -143,7 +143,7 @@ func AnnotationRoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
@@ -152,7 +152,7 @@ func AnnotationRoute(c echo.Context) error {
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	n := routes.ParseN(c, DEFAULT_CLOSEST_N)
@@ -170,7 +170,7 @@ func AnnotationRoute(c echo.Context) error {
 		annotations, err := annotationDb.Annotate(&location)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		data = append(data, annotations)
@@ -180,7 +180,7 @@ func AnnotationRoute(c echo.Context) error {
 		tsv, err := MakeGeneTable(data, tssRegion)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		return c.String(http.StatusOK, tsv)

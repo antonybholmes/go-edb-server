@@ -3,10 +3,10 @@
 <html>
 <body>
     <p>Hi {{.Name}},</p>
-    <p>Please use this link for passwordless login: <a href="{{.Link}}">{{.Link}}</a></p>
+    <p>Please use click on this link, or copy it to your web browser, for a passwordless sign in: <a href="{{.Link}}">{{.Link}}</a></p>
     <p></p>
     <p>The link is valid for {{.Time}}.</p>
     <p></p>
-    <p>This email was sent from a notification-only email address that is not monitored. Please do not reply to this email.</p>
+    <p>{{.DoNotReply}}</p>
 </body>
 </html>

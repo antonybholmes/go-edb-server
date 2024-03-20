@@ -1,9 +1,11 @@
 package main
 
 import (
-	"github.com/antonybholmes/go-auth"
+	"fmt"
+
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/golang-jwt/jwt/v5"
+	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -22,48 +24,62 @@ import (
 // 		//expired := t != 0 && t < time.Now().Unix()
 
 // 		if IpAddr != claims.IpAddr {
-// 			return routes.BadReq("ip address invalid")
+// 			return routes.ErrorReq("ip address invalid")
 // 		}
 
 // 		return next(c)
 // 	}
 // }
 
-func JwtCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// func JwtCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+
+// 		user := c.Get("user").(*jwt.Token)
+// 		claims := user.Claims.(*auth.JwtCustomClaims)
+
+// 		IpAddr := c.RealIP()
+
+// 		log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+
+// 		//t := claims.ExpiresAt.Unix()
+// 		//expired := t != 0 && t < time.Now().Unix()
+
+// 		if IpAddr != claims.IpAddr {
+// 			return routes.ErrorReq("ip address invalid")
+// 		}
+
+// 		return next(c)
+// 	}
+// }
+
+func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		_, err := routes.NewValidator(c).IsValidAccessToken().Ok()
 
-		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
-
-		IpAddr := c.RealIP()
-
-		log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
-
-		//t := claims.ExpiresAt.Unix()
-		//expired := t != 0 && t < time.Now().Unix()
-
-		if IpAddr != claims.IpAddr {
-			return routes.BadReq("ip address invalid")
+		if err != nil {
+			return err
 		}
 
 		return next(c)
 	}
 }
 
-func JwtIsAccessMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-
-		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
-
-		log.Debug().Msgf("type: %s, %s", claims.Type, auth.TOKEN_TYPE_ACCESS)
-
-		//t := claims.ExpiresAt.Unix()
-		//expired := t != 0 && t < time.Now().Unix()
-
-		if claims.Type != auth.TOKEN_TYPE_ACCESS {
-			return routes.BadReq("wrong token type")
+		sess, err := session.Get(authroutes.SESSION_NAME, c)
+		if err != nil {
+			return err
 		}
+
+		log.Debug().Msgf("validate session %s", sess.ID)
+
+		_, ok := sess.Values[authroutes.SESSION_UUID].(string)
+
+		if !ok {
+			return fmt.Errorf("cannot get user id from session")
+		}
+
+		log.Debug().Msgf("validated %s", sess.ID)
 
 		return next(c)
 	}

@@ -12,8 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const DEFAULT_ASSEMBLY = "grch38"
-const DEFAULT_CHR = "chr1"        //"chr3"
+const DEFAULT_ASSEMBLY string = "grch38"
+const DEFAULT_CHR string = "chr1" //"chr3"
 const DEFAULT_START uint = 100000 //187728170
 const DEFAULT_END uint = 100100   //187752257
 
@@ -149,29 +149,26 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 }
 
 func DNARoute(c echo.Context) error {
+	c.Logger().Debugf("%s cake")
 
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
-
-	c.Logger().Debugf("%s s", dnadbcache.Dir())
 
 	assembly := c.Param("assembly")
 
 	query, err := ParseDNAQuery(c)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
-
-	c.Logger().Debugf("%s", dnadbcache.Dir())
 
 	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
 
 	if err != nil {
-		return routes.BadReq(err)
+		return routes.ErrorReq(err)
 	}
 
 	seqs := []*DNA{}
@@ -180,13 +177,11 @@ func DNARoute(c echo.Context) error {
 		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
 
 		if err != nil {
-			return routes.BadReq(err)
+			return routes.ErrorReq(err)
 		}
 
 		seqs = append(seqs, &DNA{Location: &location, DNA: dna})
 	}
-
-	//c.Logger().Debugf("%s", dna)
 
 	return routes.MakeDataResp(c, "", &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
 }
