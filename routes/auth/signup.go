@@ -10,6 +10,7 @@ import (
 )
 
 func SignupRoute(c echo.Context) error {
+
 	req := new(auth.SignupReq)
 
 	err := c.Bind(req)
@@ -19,6 +20,8 @@ func SignupRoute(c echo.Context) error {
 	}
 
 	authUser, err := userdb.CreateUser(req)
+
+	log.Debug().Msgf("%s ss", err)
 
 	if err != nil {
 		return routes.ErrorReq(err)
