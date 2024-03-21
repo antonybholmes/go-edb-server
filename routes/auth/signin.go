@@ -80,7 +80,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		return err
 	}
 
-	otpJwt, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
+	passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -97,7 +97,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 	err = SendEmailWithToken("Passwordless Sign In",
 		validator.AuthUser,
 		file,
-		otpJwt,
+		passwordlessToken,
 		validator.Req.CallbackUrl,
 		validator.Req.Url)
 

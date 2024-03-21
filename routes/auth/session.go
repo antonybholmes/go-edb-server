@@ -66,11 +66,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 	user := validator.Req.Username
 
-	log.Debug().Msgf("session %s", user)
-
 	authUser, err := userdb.FindUserByUsername(user)
-
-	log.Debug().Msgf("session %s", authUser.Email)
 
 	if err != nil {
 		email, err := mail.ParseAddress(user)
