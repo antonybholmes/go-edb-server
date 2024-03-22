@@ -14,6 +14,8 @@ import (
 )
 
 const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
+const TOKEN_PARAM = "token"
+const URL_PARAM = "url"
 
 type EmailBody struct {
 	Name       string
@@ -50,7 +52,7 @@ func SendEmailWithToken(subject string,
 
 	firstName = strings.Split(firstName, " ")[0]
 
-	time := fmt.Sprintf("%d minutes", int(auth.TOKEN_TYPE_OTP_TTL_MINS.Minutes()))
+	time := fmt.Sprintf("%d minutes", int(auth.TOKEN_TYPE_SHORT_TIME_TTL_MINS.Minutes()))
 
 	if callbackUrl != "" {
 		callbackUrl, err := url.Parse(callbackUrl)
@@ -66,10 +68,10 @@ func SendEmailWithToken(subject string,
 		}
 
 		if vistUrl != "" {
-			params.Set("url", vistUrl)
+			params.Set(URL_PARAM, vistUrl)
 		}
 
-		params.Set("otp", token)
+		params.Set(TOKEN_PARAM, token)
 
 		callbackUrl.RawQuery = params.Encode()
 

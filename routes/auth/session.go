@@ -222,6 +222,8 @@ func SessionUpdatePasswordRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
+	log.Debug().Msgf("up %d", authUser.Updated)
+
 	err = authUser.CheckPasswordsMatch(req.Password)
 
 	if err != nil {
