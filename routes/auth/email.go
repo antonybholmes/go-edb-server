@@ -44,8 +44,8 @@ func SendEmailWithToken(subject string,
 
 	var firstName string = ""
 
-	if len(authUser.Name) > 0 {
-		firstName = authUser.Name
+	if len(authUser.FirstName) > 0 {
+		firstName = authUser.FirstName
 	} else {
 		firstName = authUser.Email.Address
 	}

@@ -188,7 +188,7 @@ func SessionUpdateAccountRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetName(authUser.Uuid, validator.Req.Name)
+		err = userdb.SetName(authUser.Uuid, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
