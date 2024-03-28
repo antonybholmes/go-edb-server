@@ -37,6 +37,7 @@ func (validator *Validator) Ok() (*Validator, error) {
 }
 
 func (validator *Validator) Success(success func(validator *Validator) error) error {
+
 	if validator.Err != nil {
 		return validator.Err
 	}

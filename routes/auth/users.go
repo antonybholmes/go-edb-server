@@ -66,6 +66,7 @@ func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
 		AuthUserFromUuid().
 		Success(func(validator *routes.Validator) error {
+
 			return routes.MakeDataResp(c, "", *validator.AuthUser.ToPublicUser())
 		})
 }
