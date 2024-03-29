@@ -16,7 +16,6 @@ import (
 	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
 	modroutes "github.com/antonybholmes/go-edb-api/routes/modules"
 	"github.com/antonybholmes/go-genes/genedbcache"
-	"github.com/antonybholmes/go-mailer"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -353,8 +352,6 @@ func main() {
 	if httpPort == "" {
 		httpPort = "8080"
 	}
-
-	mailer.TestEmail()
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
 }
