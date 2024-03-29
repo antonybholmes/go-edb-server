@@ -66,11 +66,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 	user := validator.Req.Username
 
-	log.Debug().Msgf("session %s", user)
-
 	authUser, err := userdb.FindUserByUsername(user)
-
-	log.Debug().Msgf("session %s", authUser.Email)
 
 	if err != nil {
 		email, err := mail.ParseAddress(user)
@@ -192,7 +188,7 @@ func SessionUpdateAccountRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetName(authUser.Uuid, validator.Req.Name)
+		err = userdb.SetName(authUser.Uuid, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -225,6 +221,8 @@ func SessionUpdatePasswordRoute(c echo.Context) error {
 	if err != nil {
 		return routes.UserDoesNotExistReq()
 	}
+
+	log.Debug().Msgf("up %d", authUser.Updated)
 
 	err = authUser.CheckPasswordsMatch(req.Password)
 

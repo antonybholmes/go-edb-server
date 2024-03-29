@@ -7,7 +7,6 @@ import (
 	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 // func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
@@ -71,15 +70,13 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return err
 		}
 
-		log.Debug().Msgf("validate session %s", sess.ID)
+		//log.Debug().Msgf("validate session %s", sess.ID)
 
 		_, ok := sess.Values[authroutes.SESSION_UUID].(string)
 
 		if !ok {
 			return fmt.Errorf("cannot get user id from session")
 		}
-
-		log.Debug().Msgf("validated %s", sess.ID)
 
 		return next(c)
 	}

@@ -4,7 +4,8 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY ASC, 
     uuid TEXT NOT NULL UNIQUE, 
-    name TEXT NOT NULL DEFAULT '',   
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL DEFAULT '',
@@ -13,7 +14,7 @@ CREATE TABLE users (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_uuid ON users (uuid);
-CREATE INDEX users_name ON users (name);
+-- CREATE INDEX name ON users (first_name, last_name);
 CREATE INDEX users_username ON users (username);
 CREATE INDEX users_email ON users (email);
 

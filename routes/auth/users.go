@@ -20,7 +20,7 @@ func UpdateAccountRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetName(validator.AuthUser.Uuid, validator.Req.Name)
+		err = userdb.SetName(validator.AuthUser.Uuid, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -66,6 +66,7 @@ func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
 		AuthUserFromUuid().
 		Success(func(validator *routes.Validator) error {
+
 			return routes.MakeDataResp(c, "", *validator.AuthUser.ToPublicUser())
 		})
 }

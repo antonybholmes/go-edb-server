@@ -51,7 +51,13 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+		err := auth.CheckOtpValid(validator.AuthUser, validator.Claims.Otp)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		err = userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
 		if err != nil {
 			return routes.ErrorReq(err)
