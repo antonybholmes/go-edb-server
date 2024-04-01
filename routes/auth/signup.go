@@ -43,18 +43,18 @@ func SignupRoute(c echo.Context) error {
 		file = "templates/email/verify/api.html"
 	}
 
-	err = SendEmailWithToken("Email Verification",
+	go SendEmailWithToken("Email Verification",
 		authUser,
 		file,
 		otpJwt,
 		req.CallbackUrl,
 		req.Url)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	//if err != nil {
+	//	return routes.ErrorReq(err)
+	//}
 
-	return routes.MakeOkResp(c, "verification email sent") //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkResp(c, "check your email for a verification link") //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func EmailVerificationRoute(c echo.Context) error {
@@ -79,16 +79,16 @@ func EmailVerificationRoute(c echo.Context) error {
 
 	file := "templates/email/verify/verified.html"
 
-	err = SendEmailWithToken("Email Address Verified",
+	go SendEmailWithToken("Email Address Verified",
 		authUser,
 		file,
 		"",
 		"",
 		"")
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	//if err != nil {
+	//	return routes.ErrorReq(err)
+	//}
 
 	return routes.MakeOkResp(c, "") //c.JSON(http.StatusOK, JWTResp{t})
 }

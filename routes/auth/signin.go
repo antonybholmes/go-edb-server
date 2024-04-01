@@ -94,18 +94,18 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		file = "templates/email/passwordless/api.html"
 	}
 
-	err = SendEmailWithToken("Passwordless Sign In",
+	go SendEmailWithToken("Passwordless Sign In",
 		validator.AuthUser,
 		file,
 		passwordlessToken,
 		validator.Req.CallbackUrl,
 		validator.Req.Url)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	//if err != nil {
+	//	return routes.ErrorReq(err)
+	//}
 
-	return routes.MakeOkResp(c, "passwordless email sent")
+	return routes.MakeOkResp(c, "check your email for a passwordless sign in link")
 }
 
 func PasswordlessSignInRoute(c echo.Context) error {

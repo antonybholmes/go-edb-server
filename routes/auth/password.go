@@ -29,18 +29,18 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 			file = "templates/email/password/reset/api.html"
 		}
 
-		err = SendEmailWithToken("Password Reset",
+		go SendEmailWithToken("Password Reset",
 			authUser,
 			file,
 			otpJwt,
 			req.CallbackUrl,
 			req.Url)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+		//if err != nil {
+		//	return routes.ErrorReq(err)
+		//}
 
-		return routes.MakeOkResp(c, "password reset email sent")
+		return routes.MakeOkResp(c, "check your email for a password reset link")
 	})
 }
 
@@ -77,16 +77,16 @@ func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string)
 		file = "templates/email/password/updated.html"
 	}
 
-	err := SendEmailWithToken("Password Updated",
+	go SendEmailWithToken("Password Updated",
 		authUser,
 		file,
 		"",
 		"",
 		"")
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	//if err != nil {
+	//	return routes.ErrorReq(err)
+	//}
 
 	return routes.PasswordUpdatedResp(c)
 
