@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240329165416-3ab9812f4b8c
+	github.com/antonybholmes/go-mailer v0.0.0-20240401212858-abc85f3c05f4
 	github.com/antonybholmes/go-sys v0.0.0-20240222002015-d0dad7b0c431
 	github.com/gorilla/sessions v1.2.2
 	github.com/labstack/echo-contrib v0.16.0
@@ -40,7 +40,7 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.51.12 // indirect
+	github.com/aws/aws-sdk-go v1.51.14 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
@@ -51,9 +51,9 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xyproto/randomstring v1.0.5 // indirect
-	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
