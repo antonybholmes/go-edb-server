@@ -1,4 +1,4 @@
-package auth
+package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"

@@ -13,8 +13,8 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
-	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
-	modroutes "github.com/antonybholmes/go-edb-api/routes/modules"
+	"github.com/antonybholmes/go-edb-api/routes/authroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
@@ -39,19 +39,21 @@ type InfoResp struct {
 
 var store *sqlitestore.SqliteStore
 
-func init() {
+func initCache() {
 	var err error
 	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET))
 	if err != nil {
 		panic(err)
 	}
 
-	dnadbcache.Init("data/dna")
-	genedbcache.Init("data/genes")
+	dnadbcache.InitCache("data/dna")
+	genedbcache.InitCache("data/genes")
 }
 
 func main() {
 	err := env.Load()
+
+	initCache()
 
 	if err != nil {
 		log.Error().Msgf("Error loading .env file")
@@ -116,7 +118,7 @@ func main() {
 
 	//e.Logger.SetLevel(log.DEBUG)
 
-	err = userdb.Init("data/users.db")
+	err = userdb.InitDB("data/users.db")
 
 	if err != nil {
 		log.Fatal().Msgf("Error loading user db: %s", err)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/antonybholmes/go-edb-api/routes"
-	authroutes "github.com/antonybholmes/go-edb-api/routes/auth"
+	"github.com/antonybholmes/go-edb-api/routes/authroutes"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )

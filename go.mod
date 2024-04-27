@@ -2,13 +2,17 @@ module github.com/antonybholmes/go-edb-api
 
 go 1.22.0
 
+replace github.com/antonybholmes/go-auth => ../go-auth
+
 replace github.com/antonybholmes/go-dna => ../go-dna
 
 replace github.com/antonybholmes/go-genes => ../go-genes
 
+replace github.com/antonybholmes/go-microarray => ../go-microarray
+
 replace github.com/antonybholmes/go-math => ../go-math
 
-replace github.com/antonybholmes/go-auth => ../go-auth
+
 
 replace github.com/antonybholmes/go-sys => ../go-sys
 
@@ -17,7 +21,7 @@ replace github.com/antonybholmes/go-mailer => ../go-mailer
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240315224417-f9bccdb714c5
 	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
-	github.com/labstack/echo/v4 v4.11.4
+	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
@@ -35,12 +39,12 @@ require (
 	github.com/antonybholmes/go-mailer v0.0.0-20240401212858-abc85f3c05f4
 	github.com/antonybholmes/go-sys v0.0.0-20240222002015-d0dad7b0c431
 	github.com/gorilla/sessions v1.2.2
-	github.com/labstack/echo-contrib v0.16.0
+	github.com/labstack/echo-contrib v0.17.1
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.51.20 // indirect
+	github.com/aws/aws-sdk-go v1.51.30 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
