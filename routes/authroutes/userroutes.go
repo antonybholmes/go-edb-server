@@ -12,7 +12,7 @@ type NameReq struct {
 }
 
 func UpdateAccountRoute(c echo.Context) error {
-	return routes.NewValidator(c).AuthUserFromUuid().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
 		err := userdb.SetUsername(validator.AuthUser.Uuid, validator.Req.Username)
 
@@ -64,9 +64,9 @@ func UpdateAccountRoute(c echo.Context) error {
 
 func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
-		AuthUserFromUuid().
+		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {
 
-			return routes.MakeDataResp(c, "", *validator.AuthUser.ToPublicUser())
+			return routes.MakeDataResp(c, "", *validator.AuthUser)
 		})
 }

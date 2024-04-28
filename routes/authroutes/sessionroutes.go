@@ -162,14 +162,14 @@ func SessionUserInfoRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	return routes.MakeDataResp(c, "", *authUser.ToPublicUser())
+	return routes.MakeDataResp(c, "", *authUser)
 }
 
 func SessionUpdateAccountRoute(c echo.Context) error {
 	sess, _ := session.Get(SESSION_NAME, c)
 	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	return routes.NewValidator(c).ValidEmail().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).ValidateEmail().Success(func(validator *routes.Validator) error {
 
 		authUser, err := userdb.FindUserByUuid(uuid)
 
@@ -241,7 +241,7 @@ func SessionUpdatePasswordRoute(c echo.Context) error {
 
 func SessionPasswordlessSignInRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).AuthUserFromUuid().VerifiedEmail().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
 			return routes.WrongTokentTypeReq()

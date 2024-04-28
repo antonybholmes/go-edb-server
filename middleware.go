@@ -53,7 +53,7 @@ import (
 
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_, err := routes.NewValidator(c).IsValidAccessToken().Ok()
+		_, err := routes.NewValidator(c).CheckIsValidAccessToken().Ok()
 
 		if err != nil {
 			return err

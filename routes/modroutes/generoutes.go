@@ -23,7 +23,7 @@ const DEFAULT_CLOSEST_N uint16 = 5
 // A GeneQuery contains info from query params.
 type GeneQuery struct {
 	Level    genes.Level
-	Db       *genes.GeneDb
+	Db       *genes.GeneDB
 	Assembly string
 }
 

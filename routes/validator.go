@@ -65,14 +65,14 @@ func (validator *Validator) ReqBind() *Validator {
 	return validator
 }
 
-func (validator *Validator) ValidEmail() *Validator {
+func (validator *Validator) ValidateEmail() *Validator {
 	validator.ReqBind()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	address, err := auth.CheckEmail(validator.Req.Email)
+	address, err := auth.CheckEmail(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = ErrorReq(err)
@@ -83,8 +83,8 @@ func (validator *Validator) ValidEmail() *Validator {
 	return validator
 }
 
-func (validator *Validator) AuthUserFromEmail() *Validator {
-	validator.ValidEmail()
+func (validator *Validator) LoadAuthUserFromEmail() *Validator {
+	validator.ValidateEmail()
 
 	if validator.Err != nil {
 		return validator
@@ -102,7 +102,7 @@ func (validator *Validator) AuthUserFromEmail() *Validator {
 
 }
 
-func (validator *Validator) AuthUserFromUsername() *Validator {
+func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 	validator.ReqBind()
 
 	if validator.Err != nil {
@@ -121,7 +121,7 @@ func (validator *Validator) AuthUserFromUsername() *Validator {
 
 }
 
-func (validator *Validator) IsAuthUser() *Validator {
+func (validator *Validator) CheckAuthUserIsLoaded() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -133,8 +133,8 @@ func (validator *Validator) IsAuthUser() *Validator {
 	return validator
 }
 
-func (validator *Validator) VerifiedEmail() *Validator {
-	validator.IsAuthUser()
+func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
+	validator.CheckAuthUserIsLoaded()
 
 	if validator.Err != nil {
 		return validator
@@ -147,7 +147,9 @@ func (validator *Validator) VerifiedEmail() *Validator {
 	return validator
 }
 
-func (validator *Validator) JwtClaims() *Validator {
+// If using jwt middleware, token is put into user variable
+// and we can extract data from the jwt
+func (validator *Validator) LoadTokeClaims() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -165,8 +167,8 @@ func (validator *Validator) JwtClaims() *Validator {
 // If claims are supplied, this step is skipped. This is so this function can
 // be nested in other call backs that may have already extracted the claims
 // without having to repeat this part.
-func (validator *Validator) AuthUserFromUuid() *Validator {
-	validator.JwtClaims()
+func (validator *Validator) LoadAuthUserFromToken() *Validator {
+	validator.LoadTokeClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -185,8 +187,8 @@ func (validator *Validator) AuthUserFromUuid() *Validator {
 	return validator
 }
 
-func (validator *Validator) IsValidRefreshToken() *Validator {
-	validator.JwtClaims()
+func (validator *Validator) CheckIsValidRefreshToken() *Validator {
+	validator.LoadTokeClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -200,8 +202,8 @@ func (validator *Validator) IsValidRefreshToken() *Validator {
 
 }
 
-func (validator *Validator) IsValidAccessToken() *Validator {
-	validator.JwtClaims()
+func (validator *Validator) CheckIsValidAccessToken() *Validator {
+	validator.LoadTokeClaims()
 
 	if validator.Err != nil {
 		return validator

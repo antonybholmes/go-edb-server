@@ -1,8 +1,6 @@
 package authroutes
 
 import (
-	"net/mail"
-
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
@@ -21,22 +19,10 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 		return PasswordlessEmailRoute(c, validator)
 	}
 
-	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
+	authUser, err := userdb.FindUserById(validator.Req.Username)
 
 	if err != nil {
-		email, err := mail.ParseAddress(validator.Req.Username)
-
-		if err != nil {
-			return routes.InvalidEmailReq()
-		}
-
-		// also check if username is valid email and try to login
-		// with that
-		authUser, err = userdb.FindUserByEmail(email)
-
-		if err != nil {
-			return routes.UserDoesNotExistReq()
-		}
+		return routes.UserDoesNotExistReq()
 	}
 
 	if !authUser.EmailVerified {
@@ -74,7 +60,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		validator = routes.NewValidator(c)
 	}
 
-	validator, err := validator.AuthUserFromUsername().VerifiedEmail().Ok()
+	validator, err := validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Ok()
 
 	if err != nil {
 		return err
@@ -109,7 +95,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 }
 
 func PasswordlessSignInRoute(c echo.Context) error {
-	return routes.NewValidator(c).AuthUserFromUuid().VerifiedEmail().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
 			return routes.WrongTokentTypeReq()
