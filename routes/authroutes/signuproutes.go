@@ -57,7 +57,7 @@ func SignupRoute(c echo.Context) error {
 	return routes.MakeOkResp(c, "check your email for a verification link") //c.JSON(http.StatusOK, JWTResp{t})
 }
 
-func EmailVerificationRoute(c echo.Context) error {
+func EmailAddressWasVerifiedRoute(c echo.Context) error {
 	validator, err := routes.NewValidator(c).LoadAuthUserFromToken().Ok()
 
 	if err != nil {
@@ -90,5 +90,5 @@ func EmailVerificationRoute(c echo.Context) error {
 	//	return routes.ErrorReq(err)
 	//}
 
-	return routes.MakeOkResp(c, "") //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkResp(c, "email address verified") //c.JSON(http.StatusOK, JWTResp{t})
 }

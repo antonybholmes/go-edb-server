@@ -5,11 +5,20 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
+
 	"github.com/labstack/echo/v4"
 )
 
+func UserSignedInResp(c echo.Context) error {
+	return routes.MakeOkResp(c, "user signed in")
+}
+
+func PasswordlessEmailSentResp(c echo.Context) error {
+	return routes.MakeOkResp(c, "passwordless email sent")
+}
+
 func UsernamePasswordSignInRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).ReqBind().Ok()
+	validator, err := routes.NewValidator(c).ParseLoginRequestBody().Ok()
 
 	if err != nil {
 		return err

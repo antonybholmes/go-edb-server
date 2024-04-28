@@ -9,6 +9,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+func PasswordUpdatedResp(c echo.Context) error {
+	return routes.MakeOkResp(c, "password updated")
+}
+
 // Start passwordless login by sending an email
 func ResetPasswordFromUsernameRoute(c echo.Context) error {
 	return routes.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
@@ -45,7 +49,7 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
-	return routes.NewValidator(c).ReqBind().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
 			return routes.WrongTokentTypeReq()
@@ -88,6 +92,6 @@ func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string)
 	//	return routes.ErrorReq(err)
 	//}
 
-	return routes.PasswordUpdatedResp(c)
+	return PasswordUpdatedResp(c)
 
 }

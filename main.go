@@ -16,6 +16,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/authroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes"
 	"github.com/antonybholmes/go-genes/genedbcache"
+	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -48,6 +49,7 @@ func initCache() {
 
 	dnadbcache.InitCache("data/dna")
 	genedbcache.InitCache("data/genes")
+	mailer.InitMailer()
 }
 
 func main() {
@@ -230,7 +232,7 @@ func main() {
 	})
 
 	authGroup.POST("/verify", func(c echo.Context) error {
-		return authroutes.EmailVerificationRoute(c)
+		return authroutes.EmailAddressWasVerifiedRoute(c)
 	}, jwtMiddleWare)
 
 	passwordGroup := authGroup.Group("/passwords")
@@ -287,12 +289,12 @@ func main() {
 		return authroutes.SessionUpdateAccountRoute(c)
 	})
 
-	sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
-	sessionPasswordGroup.Use(SessionIsValidMiddleware)
+	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
+	// sessionPasswordGroup.Use(SessionIsValidMiddleware)
 
-	sessionPasswordGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.SessionUpdatePasswordRoute(c)
-	})
+	// sessionPasswordGroup.POST("/update", func(c echo.Context) error {
+	// 	return authroutes.SessionUpdatePasswordRoute(c)
+	// })
 
 	//
 	// sessions: end

@@ -54,7 +54,7 @@ func init() {
 }
 
 func SessionUsernamePasswordSignInRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).ReqBind().Ok()
+	validator, err := routes.NewValidator(c).ParseLoginRequestBody().Ok()
 
 	if err != nil {
 		return err
@@ -113,7 +113,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 	sess.Save(c.Request(), c.Response())
 
-	return routes.UserSignedInResp(c)
+	return UserSignedInResp(c)
 	//return c.NoContent(http.StatusOK)
 }
 
@@ -200,44 +200,44 @@ func SessionUpdateAccountRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		return routes.MakeOkResp(c, "account updated")
+		return SendAccountUpdatedEmail(c, authUser)
 	})
 }
 
-func SessionUpdatePasswordRoute(c echo.Context) error {
-	sess, _ := session.Get(SESSION_NAME, c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
+// func SessionUpdatePasswordRoute(c echo.Context) error {
+// 	sess, _ := session.Get(SESSION_NAME, c)
+// 	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	req := new(auth.NewPasswordReq)
+// 	req := new(auth.NewPasswordReq)
 
-	err := c.Bind(req)
+// 	err := c.Bind(req)
 
-	if err != nil {
-		return routes.ErrorReq("login parameters missing")
-	}
+// 	if err != nil {
+// 		return routes.ErrorReq("login parameters missing")
+// 	}
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+// 	authUser, err := userdb.FindUserByUuid(uuid)
 
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
+// 	if err != nil {
+// 		return routes.UserDoesNotExistReq()
+// 	}
 
-	log.Debug().Msgf("up %d", authUser.Updated)
+// 	log.Debug().Msgf("up %d", authUser.Updated)
 
-	err = authUser.CheckPasswordsMatch(req.Password)
+// 	err = authUser.CheckPasswordsMatch(req.Password)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+// 	if err != nil {
+// 		return routes.ErrorReq(err)
+// 	}
 
-	err = userdb.SetPassword(authUser.Uuid, req.NewPassword)
+// 	err = userdb.SetPassword(authUser.Uuid, req.NewPassword)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+// 	if err != nil {
+// 		return routes.ErrorReq(err)
+// 	}
 
-	return SendPasswordEmail(c, authUser, req.NewPassword)
-}
+// 	return SendPasswordEmail(c, authUser, req.NewPassword)
+// }
 
 func SessionPasswordlessSignInRoute(c echo.Context) error {
 
@@ -262,6 +262,6 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		sess.Save(c.Request(), c.Response())
 
-		return routes.UserSignedInResp(c)
+		return UserSignedInResp(c)
 	})
 }

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"net/mail"
 	"net/url"
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/antonybholmes/go-mailer/email"
+	"github.com/antonybholmes/go-mailer/mailer"
 )
 
 const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
@@ -42,12 +43,18 @@ func SendEmailWithToken(subject string,
 		return routes.ErrorReq(err)
 	}
 
+	address, err := mail.ParseAddress(authUser.Email)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
 	var firstName string = ""
 
 	if len(authUser.FirstName) > 0 {
 		firstName = authUser.FirstName
 	} else {
-		firstName = authUser.Email.Address
+		firstName = strings.Split(address.Address, "@")[0]
 	}
 
 	firstName = strings.Split(firstName, " ")[0]
@@ -102,7 +109,7 @@ func SendEmailWithToken(subject string,
 		}
 	}
 
-	err = email.SendHtmlEmail(authUser.Email, subject, body.String())
+	err = mailer.SendHtmlEmail(address, subject, body.String())
 
 	if err != nil {
 		return err

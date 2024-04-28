@@ -36,6 +36,9 @@ func (validator *Validator) Ok() (*Validator, error) {
 	}
 }
 
+// If the validator does not encounter errors, it will run the success function
+// allowing you to extract data from the validator, otherwise it returns an error
+// without running the function
 func (validator *Validator) Success(success func(validator *Validator) error) error {
 
 	if validator.Err != nil {
@@ -45,7 +48,7 @@ func (validator *Validator) Success(success func(validator *Validator) error) er
 	return success(validator)
 }
 
-func (validator *Validator) ReqBind() *Validator {
+func (validator *Validator) ParseLoginRequestBody() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -66,13 +69,13 @@ func (validator *Validator) ReqBind() *Validator {
 }
 
 func (validator *Validator) ValidateEmail() *Validator {
-	validator.ReqBind()
+	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	address, err := auth.CheckEmail(validator.Req.Username)
+	address, err := auth.CheckEmailIsWellFormed(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = ErrorReq(err)
@@ -103,7 +106,7 @@ func (validator *Validator) LoadAuthUserFromEmail() *Validator {
 }
 
 func (validator *Validator) LoadAuthUserFromUsername() *Validator {
-	validator.ReqBind()
+	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
