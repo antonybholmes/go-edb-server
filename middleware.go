@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/antonybholmes/go-edb-api/routes/authroutes"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
@@ -65,14 +64,14 @@ func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		sess, err := session.Get(authroutes.SESSION_NAME, c)
+		sess, err := session.Get(routes.SESSION_NAME, c)
 		if err != nil {
 			return err
 		}
 
 		//log.Debug().Msgf("validate session %s", sess.ID)
 
-		_, ok := sess.Values[authroutes.SESSION_UUID].(string)
+		_, ok := sess.Values[routes.SESSION_UUID].(string)
 
 		if !ok {
 			return fmt.Errorf("cannot get user id from session")

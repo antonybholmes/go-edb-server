@@ -95,7 +95,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	sess, err := session.Get(SESSION_NAME, c)
+	sess, err := session.Get(routes.SESSION_NAME, c)
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
@@ -106,7 +106,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		sess.Options = SESSION_OPT_MAX_AGE_ZERO
 	}
 
-	sess.Values[SESSION_UUID] = authUser.Uuid
+	sess.Values[routes.SESSION_UUID] = authUser.Uuid
 
 	sess.Save(c.Request(), c.Response())
 
@@ -129,8 +129,8 @@ func SessionSignOutRoute(c echo.Context) error {
 }
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
-	sess, _ := session.Get(SESSION_NAME, c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
+	sess, _ := session.Get(routes.SESSION_NAME, c)
+	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
 
 	log.Debug().Msgf("session tokens %s", uuid)
 
@@ -150,8 +150,8 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 }
 
 func SessionUserInfoRoute(c echo.Context) error {
-	sess, _ := session.Get(SESSION_NAME, c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
+	sess, _ := session.Get(routes.SESSION_NAME, c)
+	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
 
 	authUser, err := userdb.FindUserByUuid(uuid)
 
@@ -163,8 +163,8 @@ func SessionUserInfoRoute(c echo.Context) error {
 }
 
 func SessionUpdateUserInfoRoute(c echo.Context) error {
-	sess, _ := session.Get(SESSION_NAME, c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
+	sess, _ := session.Get(routes.SESSION_NAME, c)
+	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
 
 	authUser, err := userdb.FindUserByUuid(uuid)
 
@@ -259,10 +259,8 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 // Start passwordless login by sending an email
 func SessionSendResetPasswordRoute(c echo.Context) error {
-	sess, _ := session.Get(routes.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
 
-	return routes.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
