@@ -1,6 +1,8 @@
 package authroutes
 
 import (
+	"net/mail"
+
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
@@ -9,17 +11,23 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func PasswordUpdatedResp(c echo.Context) error {
-	return routes.MakeOkResp(c, "password updated")
+func EmailUpdatedResp(c echo.Context) error {
+	return routes.MakeOkResp(c, "email updated")
 }
 
 // Start passwordless login by sending an email
-func ResetPasswordFromUsernameRoute(c echo.Context) error {
-	return routes.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+func SendChangeEmailRoute(c echo.Context) error {
+	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_SECRET)
+		email, err := mail.ParseAddress(req.Email)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		otpJwt, err := auth.ChangeEmailToken(c, authUser, email, consts.JWT_SECRET)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -28,12 +36,12 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 		var file string
 
 		if req.CallbackUrl != "" {
-			file = "templates/email/password/reset/web.html"
+			file = "templates/email/email/change/web.html"
 		} else {
-			file = "templates/email/password/reset/api.html"
+			file = "templates/email/email/change/api.html"
 		}
 
-		go SendEmailWithToken("Password Reset",
+		go SendEmailWithToken("Update Email",
 			authUser,
 			file,
 			otpJwt,
@@ -44,14 +52,14 @@ func ResetPasswordFromUsernameRoute(c echo.Context) error {
 		//	return routes.ErrorReq(err)
 		//}
 
-		return routes.MakeOkResp(c, "check your email for a password reset link")
+		return routes.MakeOkResp(c, "check your email for a change email link")
 	})
 }
 
-func UpdatePasswordRoute(c echo.Context) error {
+func ChangePasswordRoute(c echo.Context) error {
 	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
-		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
+		if validator.Claims.Type != auth.TOKEN_TYPE_CHANGE_EMAIL {
 			return routes.WrongTokentTypeReq()
 		}
 
@@ -61,7 +69,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+		err = userdb.SetEmail(validator.AuthUser.Uuid, validator.Claims.Data)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -71,17 +79,11 @@ func UpdatePasswordRoute(c echo.Context) error {
 	})
 }
 
-func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string) error {
+func SendEmailChangedEmail(c echo.Context, authUser *auth.AuthUser, password string) error {
 
-	var file string
+	file := "templates/email/email/updated.html"
 
-	if password == "" {
-		file = "templates/email/password/switch-to-passwordless.html"
-	} else {
-		file = "templates/email/password/updated.html"
-	}
-
-	go SendEmailWithToken("Password Updated",
+	go SendEmailWithToken("Email Address Changed",
 		authUser,
 		file,
 		"",
@@ -92,6 +94,6 @@ func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string)
 	//	return routes.ErrorReq(err)
 	//}
 
-	return PasswordUpdatedResp(c)
+	return EmailUpdatedResp(c)
 
 }

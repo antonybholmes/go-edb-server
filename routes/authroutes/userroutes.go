@@ -36,7 +36,7 @@ func UpdateAccountRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		return SendAccountUpdatedEmail(c, authUser)
+		return SendUserInfoUpdatedEmail(c, authUser)
 	})
 
 	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
@@ -81,7 +81,7 @@ func UserInfoRoute(c echo.Context) error {
 		})
 }
 
-func SendAccountUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
+func SendUserInfoUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
 
 	var file = "templates/email/account/updated.html"
 

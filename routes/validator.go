@@ -68,7 +68,7 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 	return validator
 }
 
-func (validator *Validator) ValidateEmail() *Validator {
+func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
@@ -87,7 +87,7 @@ func (validator *Validator) ValidateEmail() *Validator {
 }
 
 func (validator *Validator) LoadAuthUserFromEmail() *Validator {
-	validator.ValidateEmail()
+	validator.CheckEmailIsWellFormed()
 
 	if validator.Err != nil {
 		return validator
@@ -152,7 +152,7 @@ func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
 
 // If using jwt middleware, token is put into user variable
 // and we can extract data from the jwt
-func (validator *Validator) LoadTokeClaims() *Validator {
+func (validator *Validator) LoadTokenClaims() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -171,7 +171,7 @@ func (validator *Validator) LoadTokeClaims() *Validator {
 // be nested in other call backs that may have already extracted the claims
 // without having to repeat this part.
 func (validator *Validator) LoadAuthUserFromToken() *Validator {
-	validator.LoadTokeClaims()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -191,7 +191,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidRefreshToken() *Validator {
-	validator.LoadTokeClaims()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -206,7 +206,7 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidAccessToken() *Validator {
-	validator.LoadTokeClaims()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator

@@ -238,11 +238,11 @@ func main() {
 	passwordGroup := authGroup.Group("/passwords")
 
 	passwordGroup.POST("/reset", func(c echo.Context) error {
-		return authroutes.ResetPasswordFromUsernameRoute(c)
+		return authroutes.SendChangeEmailRoute(c)
 	})
 
 	passwordGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.UpdatePasswordRoute(c)
+		return authroutes.ChangePasswordRoute(c)
 	}, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
@@ -286,7 +286,7 @@ func main() {
 	})
 
 	sessionUsersGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.SessionUpdateAccountRoute(c)
+		return authroutes.SessionUpdateUserInfoRoute(c)
 	})
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
@@ -317,7 +317,7 @@ func main() {
 	})
 
 	usersGroup.POST("/passwords/update", func(c echo.Context) error {
-		return authroutes.UpdatePasswordRoute(c)
+		return authroutes.ChangePasswordRoute(c)
 	})
 
 	//

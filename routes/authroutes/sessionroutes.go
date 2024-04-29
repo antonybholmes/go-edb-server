@@ -165,42 +165,36 @@ func SessionUserInfoRoute(c echo.Context) error {
 	return routes.MakeDataResp(c, "", *authUser)
 }
 
-func SessionUpdateAccountRoute(c echo.Context) error {
+func SessionUpdateUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(SESSION_NAME, c)
 	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	return routes.NewValidator(c).ValidateEmail().Success(func(validator *routes.Validator) error {
+	authUser, err := userdb.FindUserByUuid(uuid)
 
-		authUser, err := userdb.FindUserByUuid(uuid)
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+	}
 
-		if err != nil {
-			return routes.UserDoesNotExistReq()
-		}
+	return routes.NewValidator(c).CheckEmailIsWellFormed().Success(func(validator *routes.Validator) error {
 
 		// if !authUser.CheckPasswords(req.Password) {
 		// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())
 		// 	return routes.InvalidPasswordReq()
 		// }
 
-		err = userdb.SetUsername(authUser.Uuid, validator.Req.Username)
+		err = userdb.SetUserInfo(authUser.Uuid, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetName(authUser.Uuid, validator.Req.FirstName, validator.Req.LastName)
+		// err = userdb.SetEmailAddress(authUser.Uuid, validator.Address)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+		// if err != nil {
+		// 	return routes.ErrorReq(err)
+		// }
 
-		err = userdb.SetEmailAddress(authUser.Uuid, validator.Address)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		return SendAccountUpdatedEmail(c, authUser)
+		return SendUserInfoUpdatedEmail(c, authUser)
 	})
 }
 
@@ -263,5 +257,70 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 		sess.Save(c.Request(), c.Response())
 
 		return UserSignedInResp(c)
+	})
+}
+
+func SessionUpdatePasswordRoute(c echo.Context) error {
+	sess, _ := session.Get(SESSION_NAME, c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	return routes.NewValidator(c).ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+
+		err := userdb.SetPassword(uuid, validator.Req.Password)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		return SendEmailChangedEmail(c, validator.AuthUser, validator.Req.Password)
+	})
+}
+
+func SessionSendChangeEmailRoute(c echo.Context) error {
+	sess, _ := session.Get(SESSION_NAME, c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	authUser, err := userdb.FindUserByUuid(uuid)
+
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+	}
+
+	return routes.NewValidator(c).ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+
+		req := validator.Req
+
+		email, err := mail.ParseAddress(req.Email)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		otpJwt, err := auth.ChangeEmailToken(c, authUser, email, consts.JWT_SECRET)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		var file string
+
+		if req.CallbackUrl != "" {
+			file = "templates/email/email/change/web.html"
+		} else {
+			file = "templates/email/email/change/api.html"
+		}
+
+		go SendEmailWithToken("Update Email",
+			authUser,
+			file,
+			otpJwt,
+			req.CallbackUrl,
+			req.Url)
+
+		//if err != nil {
+		//	return routes.ErrorReq(err)
+		//}
+
+		return routes.MakeOkResp(c, "check your email for a change email link")
 	})
 }
