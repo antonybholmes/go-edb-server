@@ -12,8 +12,6 @@ replace github.com/antonybholmes/go-microarray => ../go-microarray
 
 replace github.com/antonybholmes/go-math => ../go-math
 
-
-
 replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mailer => ../go-mailer

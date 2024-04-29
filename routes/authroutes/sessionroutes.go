@@ -14,9 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const SESSION_NAME string = "session"
-const SESSION_UUID string = "uuid"
-
 var SESSION_OPT_MAX_AGE_ZERO *sessions.Options
 var SESSION_OPT_24H *sessions.Options
 var SESSION_OPT_MAX_AGE_30D *sessions.Options
@@ -245,14 +242,14 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		sess, err := session.Get(SESSION_NAME, c)
+		sess, err := session.Get(routes.SESSION_NAME, c)
 
 		if err != nil {
 			return routes.ErrorReq("error creating session")
 		}
 
 		sess.Options = SESSION_OPT_MAX_AGE_30D
-		sess.Values[SESSION_UUID] = validator.AuthUser.Uuid
+		sess.Values[routes.SESSION_UUID] = validator.AuthUser.Uuid
 
 		sess.Save(c.Request(), c.Response())
 
@@ -260,13 +257,49 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 	})
 }
 
+// Start passwordless login by sending an email
+func SessionSendResetPasswordRoute(c echo.Context) error {
+	sess, _ := session.Get(routes.SESSION_NAME, c)
+	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
+
+	return routes.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+		authUser := validator.AuthUser
+		req := validator.Req
+
+		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_SECRET)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		var file string
+
+		if req.CallbackUrl != "" {
+			file = "templates/email/password/reset/web.html"
+		} else {
+			file = "templates/email/password/reset/api.html"
+		}
+
+		go SendEmailWithToken("Password Reset",
+			authUser,
+			file,
+			otpJwt,
+			req.CallbackUrl,
+			req.Url)
+
+		//if err != nil {
+		//	return routes.ErrorReq(err)
+		//}
+
+		return routes.MakeOkResp(c, "check your email for a password reset link")
+	})
+}
+
 func SessionUpdatePasswordRoute(c echo.Context) error {
-	sess, _ := session.Get(SESSION_NAME, c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	return routes.NewValidator(c).ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
-		err := userdb.SetPassword(uuid, validator.Req.Password)
+		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -277,16 +310,8 @@ func SessionUpdatePasswordRoute(c echo.Context) error {
 }
 
 func SessionSendChangeEmailRoute(c echo.Context) error {
-	sess, _ := session.Get(SESSION_NAME, c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
 
-	authUser, err := userdb.FindUserByUuid(uuid)
-
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
-
-	return routes.NewValidator(c).ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
 		req := validator.Req
 
@@ -296,22 +321,16 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, authUser, email, consts.JWT_SECRET)
+		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, email, consts.JWT_SECRET)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		var file string
-
-		if req.CallbackUrl != "" {
-			file = "templates/email/email/change/web.html"
-		} else {
-			file = "templates/email/email/change/api.html"
-		}
+		file := "templates/email/email/change/web.html"
 
 		go SendEmailWithToken("Update Email",
-			authUser,
+			validator.AuthUser,
 			file,
 			otpJwt,
 			req.CallbackUrl,

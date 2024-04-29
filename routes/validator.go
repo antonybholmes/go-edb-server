@@ -6,8 +6,12 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
+
+const SESSION_NAME string = "session"
+const SESSION_UUID string = "uuid"
 
 //
 // Standardized data checkers for checking header and body contain
@@ -122,6 +126,25 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 
 	return validator
 
+}
+
+func (validator *Validator) LoadAuthUserFromSession() *Validator {
+	sess, _ := session.Get(SESSION_NAME, validator.c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	authUser, err := userdb.FindUserByUuid(uuid)
+
+	if err != nil {
+		validator.Err = UserDoesNotExistReq()
+	} else {
+		validator.AuthUser = authUser
+	}
+
+	return validator
 }
 
 func (validator *Validator) CheckAuthUserIsLoaded() *Validator {
