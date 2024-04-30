@@ -48,7 +48,7 @@ func SendResetPasswordFromUsernameRoute(c echo.Context) error {
 	})
 }
 
-func ChangePasswordRoute(c echo.Context) error {
+func UpdatePasswordRoute(c echo.Context) error {
 	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {

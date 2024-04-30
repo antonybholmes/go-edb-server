@@ -26,10 +26,28 @@ type EmailBody struct {
 	DoNotReply string
 }
 
-// Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites
-// it can craft a callback url with the token added as a parameter so that the web app can deal with the response.
 func SendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
+
+	file string,
+	token string,
+	callbackUrl string,
+	vistUrl string) error {
+
+	address, err := mail.ParseAddress(authUser.Email)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return BaseSendEmailWithToken(subject, authUser, address, file, token, callbackUrl, vistUrl)
+}
+
+// Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites
+// it can craft a callback url with the token added as a parameter so that the web app can deal with the response.
+func BaseSendEmailWithToken(subject string,
+	authUser *auth.AuthUser,
+	address *mail.Address,
 	file string,
 	token string,
 	callbackUrl string,
@@ -38,12 +56,6 @@ func SendEmailWithToken(subject string,
 	var body bytes.Buffer
 
 	t, err := template.ParseFiles(file)
-
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
-
-	address, err := mail.ParseAddress(authUser.Email)
 
 	if err != nil {
 		return routes.ErrorReq(err)

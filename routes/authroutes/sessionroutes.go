@@ -115,7 +115,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 }
 
 func SessionSignOutRoute(c echo.Context) error {
-	sess, err := session.Get(SESSION_NAME, c)
+	sess, err := session.Get(routes.SESSION_NAME, c)
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
@@ -293,19 +293,19 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 	})
 }
 
-func SessionUpdatePasswordRoute(c echo.Context) error {
+// func SessionUpdatePasswordRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+// 	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
-		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+// 		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+// 		if err != nil {
+// 			return routes.ErrorReq(err)
+// 		}
 
-		return SendEmailChangedEmail(c, validator.AuthUser, validator.Req.Password)
-	})
-}
+// 		return SendEmailChangedEmail(c, validator.AuthUser, validator.Req.Password)
+// 	})
+// }
 
 func SessionSendChangeEmailRoute(c echo.Context) error {
 
@@ -313,13 +313,13 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 
 		req := validator.Req
 
-		email, err := mail.ParseAddress(req.Email)
+		newEmail, err := mail.ParseAddress(req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, email, consts.JWT_SECRET)
+		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, newEmail, consts.JWT_SECRET)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -327,8 +327,9 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 
 		file := "templates/email/email/change/web.html"
 
-		go SendEmailWithToken("Update Email",
+		go BaseSendEmailWithToken("Change Your Email Address",
 			validator.AuthUser,
+			newEmail,
 			file,
 			otpJwt,
 			req.CallbackUrl,

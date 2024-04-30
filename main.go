@@ -242,7 +242,13 @@ func main() {
 	})
 
 	passwordGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.ChangePasswordRoute(c)
+		return authroutes.UpdatePasswordRoute(c)
+	}, jwtMiddleWare)
+
+	emailGroup := authGroup.Group("/email")
+
+	emailGroup.POST("/update", func(c echo.Context) error {
+		return authroutes.UpdateEmailRoute(c)
 	}, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
@@ -270,6 +276,14 @@ func main() {
 
 	sessionAuthGroup.POST("/signin", func(c echo.Context) error {
 		return authroutes.SessionUsernamePasswordSignInRoute(c)
+	})
+
+	sessionAuthGroup.POST("/email/change", func(c echo.Context) error {
+		return authroutes.SessionSendChangeEmailRoute(c)
+	})
+
+	sessionAuthGroup.POST("/password/reset", func(c echo.Context) error {
+		return authroutes.SessionSendResetPasswordRoute(c)
 	})
 
 	sessionAuthGroup.POST("/passwordless/signin", func(c echo.Context) error {
@@ -317,7 +331,7 @@ func main() {
 	})
 
 	usersGroup.POST("/passwords/update", func(c echo.Context) error {
-		return authroutes.ChangePasswordRoute(c)
+		return authroutes.UpdatePasswordRoute(c)
 	})
 
 	//

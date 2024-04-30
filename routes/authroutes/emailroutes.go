@@ -7,6 +7,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -21,13 +22,13 @@ func SendChangeEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		email, err := mail.ParseAddress(req.Email)
+		newEmail, err := mail.ParseAddress(req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, authUser, email, consts.JWT_SECRET)
+		otpJwt, err := auth.ChangeEmailToken(c, authUser, newEmail, consts.JWT_SECRET)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -41,8 +42,9 @@ func SendChangeEmailRoute(c echo.Context) error {
 			file = "templates/email/email/change/api.html"
 		}
 
-		go SendEmailWithToken("Update Email",
+		go BaseSendEmailWithToken("Update Email",
 			authUser,
+			newEmail,
 			file,
 			otpJwt,
 			req.CallbackUrl,
@@ -56,7 +58,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 	})
 }
 
-func ChangeEmailRoute(c echo.Context) error {
+func UpdateEmailRoute(c echo.Context) error {
 	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_CHANGE_EMAIL {
@@ -69,17 +71,28 @@ func ChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetEmail(validator.AuthUser.Uuid, validator.Claims.Data)
+		authUser := validator.AuthUser
+		uuid := authUser.Uuid
+
+		log.Debug().Msgf("change email %s", validator.Req.Email)
+
+		err = userdb.SetEmail(validator.AuthUser.Uuid, validator.Req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		return SendEmailChangedEmail(c, validator.AuthUser, validator.Req.Password)
+		authUser, err = userdb.FindUserByUuid(uuid)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		return SendEmailChangedEmail(c, authUser)
 	})
 }
 
-func SendEmailChangedEmail(c echo.Context, authUser *auth.AuthUser, password string) error {
+func SendEmailChangedEmail(c echo.Context, authUser *auth.AuthUser) error {
 
 	file := "templates/email/email/updated.html"
 
