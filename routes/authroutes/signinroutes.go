@@ -18,49 +18,46 @@ func PasswordlessEmailSentResp(c echo.Context) error {
 }
 
 func UsernamePasswordSignInRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).ParseLoginRequestBody().Ok()
+	return routes.NewValidator(c).ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
-	if err != nil {
-		return err
-	}
+		if validator.Req.Password == "" {
+			return PasswordlessEmailRoute(c, validator)
+		}
 
-	if validator.Req.Password == "" {
-		return PasswordlessEmailRoute(c, validator)
-	}
+		authUser, err := userdb.FindUserById(validator.Req.Username)
 
-	authUser, err := userdb.FindUserById(validator.Req.Username)
+		if err != nil {
+			return routes.UserDoesNotExistReq()
+		}
 
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
+		if !authUser.EmailVerified {
+			return routes.EmailNotVerifiedReq()
+		}
 
-	if !authUser.EmailVerified {
-		return routes.EmailNotVerifiedReq()
-	}
+		if !authUser.CanSignIn {
+			return routes.UserNotAllowedToSignIn()
+		}
 
-	if !authUser.CanSignIn {
-		return routes.UserNotAllowedToSignIn()
-	}
+		err = authUser.CheckPasswordsMatch(validator.Req.Password)
 
-	err = authUser.CheckPasswordsMatch(validator.Req.Password)
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
 
-	refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
+		if err != nil {
+			return routes.TokenErrorReq()
+		}
 
-	if err != nil {
-		return routes.TokenErrorReq()
-	}
+		accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
 
-	accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
+		if err != nil {
+			return routes.TokenErrorReq()
+		}
 
-	if err != nil {
-		return routes.TokenErrorReq()
-	}
-
-	return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
+		return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
+	})
 }
 
 // Start passwordless login by sending an email
@@ -69,38 +66,35 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		validator = routes.NewValidator(c)
 	}
 
-	validator, err := validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Ok()
+	return validator.LoadAuthUserFromId().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
-	if err != nil {
-		return err
-	}
+		passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
 
-	passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+		var file string
 
-	var file string
+		if validator.Req.CallbackUrl != "" {
+			file = "templates/email/passwordless/web.html"
+		} else {
+			file = "templates/email/passwordless/api.html"
+		}
 
-	if validator.Req.CallbackUrl != "" {
-		file = "templates/email/passwordless/web.html"
-	} else {
-		file = "templates/email/passwordless/api.html"
-	}
+		go SendEmailWithToken("Passwordless Sign In",
+			validator.AuthUser,
+			file,
+			passwordlessToken,
+			validator.Req.CallbackUrl,
+			validator.Req.Url)
 
-	go SendEmailWithToken("Passwordless Sign In",
-		validator.AuthUser,
-		file,
-		passwordlessToken,
-		validator.Req.CallbackUrl,
-		validator.Req.Url)
+		//if err != nil {
+		//	return routes.ErrorReq(err)
+		//}
 
-	//if err != nil {
-	//	return routes.ErrorReq(err)
-	//}
-
-	return routes.MakeOkResp(c, "check your email for a passwordless sign in link")
+		return routes.MakeOkResp(c, "check your email for a passwordless sign in link")
+	})
 }
 
 func PasswordlessSignInRoute(c echo.Context) error {

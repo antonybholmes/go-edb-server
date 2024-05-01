@@ -109,14 +109,14 @@ func (validator *Validator) LoadAuthUserFromEmail() *Validator {
 
 }
 
-func (validator *Validator) LoadAuthUserFromUsername() *Validator {
+func (validator *Validator) LoadAuthUserFromId() *Validator {
 	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
+	authUser, err := userdb.FindUserById(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()

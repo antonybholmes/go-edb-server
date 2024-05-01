@@ -231,6 +231,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 // }
 
 func SessionPasswordlessSignInRoute(c echo.Context) error {
+	log.Debug().Msgf("cake")
 
 	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
