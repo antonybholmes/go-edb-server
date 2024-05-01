@@ -214,14 +214,14 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidRefreshToken() *Validator {
-	validator.LoadTokenClaims()
+	validator.LoadAuthUserFromToken()
 
 	if validator.Err != nil {
 		return validator
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_REFRESH {
-		validator.Err = ErrorReq("wrong token type")
+		validator.Err = ErrorReq("no refresh token")
 	}
 
 	return validator
@@ -229,14 +229,14 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidAccessToken() *Validator {
-	validator.LoadTokenClaims()
+	validator.LoadAuthUserFromToken()
 
 	if validator.Err != nil {
 		return validator
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_ACCESS {
-		validator.Err = ErrorReq("wrong token type")
+		validator.Err = ErrorReq("no access token")
 	}
 
 	return validator
