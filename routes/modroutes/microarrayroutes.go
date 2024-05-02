@@ -3,16 +3,13 @@ package modroutes
 import (
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-microarray"
+	"github.com/antonybholmes/go-microarray/microarraydb"
 	"github.com/labstack/echo/v4"
 )
 
-type ReqSamples struct {
-	Samples []string `json:"samples"`
-}
-
-func ParseSamplesFromPost(c echo.Context) ([]string, error) {
+func ParseSamplesFromPost(c echo.Context) (*microarray.MicroarraySamplesReq, error) {
 	var err error
-	locs := new(ReqSamples)
+	locs := new(microarray.MicroarraySamplesReq)
 
 	err = c.Bind(locs)
 
@@ -20,7 +17,7 @@ func ParseSamplesFromPost(c echo.Context) ([]string, error) {
 		return nil, err
 	}
 
-	return locs.Samples, nil
+	return locs, nil
 }
 
 func MicroarrayExpressionRoute(c echo.Context) error {
@@ -31,13 +28,7 @@ func MicroarrayExpressionRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		mr, err := microarray.NewMicroarrayDb("./data/microarray/hgu133plus2")
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		data, err := mr.Expression(samples)
+		data, err := microarraydb.Expression(samples)
 
 		if err != nil {
 			return routes.ErrorReq(err)
