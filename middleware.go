@@ -116,7 +116,7 @@ func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		log.Debug().Msgf("JWT token is valid")
-		c.Set("User", token)
+		c.Set("user", token)
 		return next(c)
 
 	}
