@@ -27,7 +27,7 @@ func SignupRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_SECRET)
+	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_PRIVATE_KEY)
 
 	log.Debug().Msgf("%s", otpJwt)
 

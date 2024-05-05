@@ -14,10 +14,12 @@ import (
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes/authroutes"
-	"github.com/antonybholmes/go-edb-api/routes/modroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-microarray/microarraydb"
+	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -43,28 +45,33 @@ var store *sqlitestore.SqliteStore
 
 func initCache() {
 	var err error
+
 	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET))
+
 	if err != nil {
-		panic(err)
+		log.Fatal().Msgf("%s", err)
 	}
 
+	err = userdb.InitDB("data/users.db")
+
+	if err != nil {
+		log.Fatal().Msgf("Error loading user db: %s", err)
+	}
+
+	mailer.InitMailer()
 	dnadbcache.InitCache("data/dna")
 	genedbcache.InitCache("data/genes")
 	microarraydb.InitDB("data/microarray")
-	mailer.InitMailer()
+	mutationdbcache.InitCache("data/mutations")
 }
 
 func main() {
-	err := env.Load()
-
-	initCache()
-
-	if err != nil {
-		log.Error().Msgf("Error loading .env file")
-	}
+	env.Load()
 
 	// list env to see what is loaded
 	env.Ls()
+
+	initCache()
 
 	//buildMode := env.GetStr("BUILD", "dev")
 
@@ -121,12 +128,6 @@ func main() {
 	}))
 
 	//e.Logger.SetLevel(log.DEBUG)
-
-	err = userdb.InitDB("data/users.db")
-
-	if err != nil {
-		log.Fatal().Msgf("Error loading user db: %s", err)
-	}
 
 	// e.GET("/write", func(c echo.Context) error {
 	// 	sess, err := session.Get("session", c)
@@ -215,7 +216,7 @@ func main() {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(auth.JwtCustomClaims)
 		},
-		SigningKey: []byte(consts.JWT_SECRET),
+		SigningKey: []byte(consts.JWT_PRIVATE_KEY),
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
 
@@ -347,21 +348,21 @@ func main() {
 	dnaGroup := moduleGroup.Group("/dna")
 
 	dnaGroup.POST("/:assembly", func(c echo.Context) error {
-		return modroutes.DNARoute(c)
+		return dnaroutes.DNARoute(c)
 	})
 
 	genesGroup := moduleGroup.Group("/genes")
 
 	genesGroup.POST("/within/:assembly", func(c echo.Context) error {
-		return modroutes.WithinGenesRoute(c)
+		return generoutes.WithinGenesRoute(c)
 	})
 
 	genesGroup.POST("/closest/:assembly", func(c echo.Context) error {
-		return modroutes.ClosestGeneRoute(c)
+		return generoutes.ClosestGeneRoute(c)
 	})
 
 	genesGroup.POST("/annotation/:assembly", func(c echo.Context) error {
-		return modroutes.AnnotationRoute(c)
+		return generoutes.AnnotationRoute(c)
 	})
 
 	//

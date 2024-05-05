@@ -140,7 +140,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	t, err := auth.AccessToken(c, uuid, consts.JWT_SECRET)
+	t, err := auth.AccessToken(c, uuid, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -265,7 +265,7 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_SECRET)
+		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -320,7 +320,7 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, newEmail, consts.JWT_SECRET)
+		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, newEmail, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)

@@ -10,6 +10,8 @@ replace github.com/antonybholmes/go-genes => ../go-genes
 
 replace github.com/antonybholmes/go-microarray => ../go-microarray
 
+replace github.com/antonybholmes/go-mutations => ../go-mutations
+
 replace github.com/antonybholmes/go-math => ../go-math
 
 replace github.com/antonybholmes/go-sys => ../go-sys
@@ -40,6 +42,8 @@ require (
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
+
+require github.com/antonybholmes/go-mutations v0.0.0-20240505003604-87e9d6ee2b76
 
 require (
 	github.com/antonybholmes/go-microarray v0.0.0-20240427030957-bc54c3ed99de

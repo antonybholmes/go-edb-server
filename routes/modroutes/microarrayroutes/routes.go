@@ -1,4 +1,4 @@
-package modroutes
+package microarrayroutes
 
 import (
 	"github.com/antonybholmes/go-edb-api/routes"

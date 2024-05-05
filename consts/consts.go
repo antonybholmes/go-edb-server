@@ -9,7 +9,8 @@ import (
 var NAME string
 var VERSION string
 var COPYRIGHT string
-var JWT_SECRET string
+var JWT_PRIVATE_KEY []byte
+var JWT_PUBLIC_KEY []byte
 var SESSION_SECRET string
 
 func init() {
@@ -18,6 +19,7 @@ func init() {
 	NAME = os.Getenv("NAME")
 	VERSION = os.Getenv("VERSION")
 	COPYRIGHT = os.Getenv("COPYRIGHT")
-	JWT_SECRET = os.Getenv("JWT_SECRET")
+	JWT_PRIVATE_KEY = []byte(os.Getenv("JWT_SECRET"))
+	JWT_PUBLIC_KEY = []byte(os.Getenv("JWT_SECRET"))
 	SESSION_SECRET = os.Getenv("SESSION_SECRET")
 }

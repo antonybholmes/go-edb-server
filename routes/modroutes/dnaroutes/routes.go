@@ -1,4 +1,4 @@
-package modroutes
+package dnaroutes
 
 import (
 	"fmt"

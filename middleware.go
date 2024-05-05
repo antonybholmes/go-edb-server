@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 // func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
@@ -79,4 +84,54 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		return next(c)
 	}
+}
+
+func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		authorizationHeader := c.Request().Header.Get("authorization")
+
+		if len(authorizationHeader) == 0 {
+			return routes.ErrorReq("missing Authentication header")
+
+		}
+
+		log.Debug().Msgf("parsing authentication header")
+		authPair := strings.SplitN(authorizationHeader, " ", 2)
+		if len(authPair) != 2 {
+			return routes.ErrorReq("wrong Authentication header definiton")
+		}
+
+		headerAuthScheme := authPair[0]
+		headerAuthToken := authPair[1]
+
+		if headerAuthScheme != "Bearer" {
+			return routes.ErrorReq("wrong Authentication header definiton")
+		}
+
+		log.Debug().Msgf("validating JWT token")
+		token, err := validateJwtToken(headerAuthToken)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		log.Debug().Msgf("JWT token is valid")
+		c.Set("User", token)
+		return next(c)
+
+	}
+}
+
+// you can add your implementation here.
+func validateJwtToken(tokenString string) (*jwt.Token, error) {
+
+	token, err := jwt.ParseWithClaims(tokenString, &auth.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return consts.JWT_PUBLIC_KEY, nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, err
+	}
+
+	return token, nil
 }

@@ -1,4 +1,4 @@
-package modroutes
+package generoutes
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-genes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-math"
@@ -47,7 +48,7 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 		level = genes.ParseLevel(v)
 	}
 
-	db, err := genedbcache.Db(assembly)
+	db, err := genedbcache.GeneDB(assembly)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
@@ -57,7 +58,7 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 }
 
 func WithinGenesRoute(c echo.Context) error {
-	locations, err := ParseLocationsFromPost(c)
+	locations, err := dnaroutes.ParseLocationsFromPost(c) // dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -85,7 +86,7 @@ func WithinGenesRoute(c echo.Context) error {
 }
 
 func ClosestGeneRoute(c echo.Context) error {
-	locations, err := ParseLocationsFromPost(c)
+	locations, err := dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -140,7 +141,7 @@ func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
 }
 
 func AnnotationRoute(c echo.Context) error {
-	locations, err := ParseLocationsFromPost(c)
+	locations, err := dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
