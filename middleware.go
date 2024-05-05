@@ -1,27 +1,80 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
-func JWTCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+
+// 		user := c.Get("user").(*jwt.Token)
+// 		claims := user.Claims.(*auth.JwtOtpCustomClaims)
+
+// 		IpAddr := c.RealIP()
+
+// 		//log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+
+// 		//t := claims.ExpiresAt.Unix()
+// 		//expired := t != 0 && t < time.Now().Unix()
+
+// 		if IpAddr != claims.IpAddr {
+// 			return routes.ErrorReq("ip address invalid")
+// 		}
+
+// 		return next(c)
+// 	}
+// }
+
+// func JwtCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+
+// 		user := c.Get("user").(*jwt.Token)
+// 		claims := user.Claims.(*auth.JwtCustomClaims)
+
+// 		IpAddr := c.RealIP()
+
+// 		log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+
+// 		//t := claims.ExpiresAt.Unix()
+// 		//expired := t != 0 && t < time.Now().Unix()
+
+// 		if IpAddr != claims.IpAddr {
+// 			return routes.ErrorReq("ip address invalid")
+// 		}
+
+// 		return next(c)
+// 	}
+// }
+
+func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		_, err := routes.NewValidator(c).CheckIsValidAccessToken().Ok()
 
-		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*routes.JwtCustomClaims)
+		if err != nil {
+			return err
+		}
 
-		IpAddr := c.RealIP()
+		return next(c)
+	}
+}
 
-		log.Debug().Msgf("ip: %s, %s", IpAddr, claims.IpAddr)
+func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess, err := session.Get(routes.SESSION_NAME, c)
+		if err != nil {
+			return err
+		}
 
-		//t := claims.ExpiresAt.Unix()
-		//expired := t != 0 && t < time.Now().Unix()
+		//log.Debug().Msgf("validate session %s", sess.ID)
 
-		if IpAddr != claims.IpAddr {
-			return routes.BadReq("ip address invalid")
+		_, ok := sess.Values[routes.SESSION_UUID].(string)
+
+		if !ok {
+			return fmt.Errorf("cannot get user id from session")
 		}
 
 		return next(c)
