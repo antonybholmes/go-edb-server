@@ -216,7 +216,7 @@ func main() {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(auth.JwtCustomClaims)
 		},
-		SigningKey: []byte(consts.JWT_PRIVATE_KEY),
+		SigningKey: consts.JWT_PRIVATE_KEY,
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
 

@@ -91,28 +91,31 @@ func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		authorizationHeader := c.Request().Header.Get("authorization")
 
 		if len(authorizationHeader) == 0 {
-			return routes.ErrorReq("missing Authentication header")
+			return routes.AuthErrorReq("missing Authentication header")
 
 		}
 
 		log.Debug().Msgf("parsing authentication header")
+
 		authPair := strings.SplitN(authorizationHeader, " ", 2)
+
 		if len(authPair) != 2 {
-			return routes.ErrorReq("wrong Authentication header definiton")
+			return routes.AuthErrorReq("wrong Authentication header definiton")
 		}
 
 		headerAuthScheme := authPair[0]
 		headerAuthToken := authPair[1]
 
 		if headerAuthScheme != "Bearer" {
-			return routes.ErrorReq("wrong Authentication header definiton")
+			return routes.AuthErrorReq("wrong Authentication header definiton")
 		}
 
 		log.Debug().Msgf("validating JWT token")
+
 		token, err := validateJwtToken(headerAuthToken)
 
 		if err != nil {
-			return routes.ErrorReq(err)
+			return routes.AuthErrorReq(err)
 		}
 
 		log.Debug().Msgf("JWT token is valid")

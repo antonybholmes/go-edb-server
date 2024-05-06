@@ -57,6 +57,10 @@ func ErrorReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
+func AuthErrorReq(message interface{}) *echo.HTTPError {
+	return echo.NewHTTPError(http.StatusUnauthorized, message)
+}
+
 // parsedLocation takes an echo context and attempts to extract parameters
 // from the query string and return the location to check, the assembly
 // (e.g. grch38) to search, the level of detail (1=gene,2=transcript,3=exon).
