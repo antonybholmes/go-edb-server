@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
@@ -79,7 +79,7 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		_, ok := sess.Values[routes.SESSION_UUID].(string)
 
 		if !ok {
-			return fmt.Errorf("cannot get user id from session")
+			return errors.New("cannot get user id from session")
 		}
 
 		return next(c)
