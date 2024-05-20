@@ -377,6 +377,10 @@ func main() {
 		return mutationroutes.MafRoute(c)
 	})
 
+	mutationsGroup.POST("/pileup/:assembly/:name", func(c echo.Context) error {
+		return mutationroutes.PileupRoute(c)
+	})
+
 	//
 	// module groups: end
 	//

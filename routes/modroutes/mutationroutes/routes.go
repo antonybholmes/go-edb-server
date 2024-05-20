@@ -62,13 +62,48 @@ func MafRoute(c echo.Context) error {
 		ret := make([]*mutations.MutationResults, 0, len(locations))
 
 		for _, location := range locations {
-			mutations, err := db.FindMutations(&location)
+			mutations, err := db.FindMutations(location)
 
 			if err != nil {
 				return routes.ErrorReq(err)
 			}
 
 			ret = append(ret, mutations)
+		}
+
+		return routes.MakeDataResp(c, "", ret)
+	})
+
+	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
+}
+
+func PileupRoute(c echo.Context) error {
+	return routes.NewValidator(c).Success(func(validator *routes.Validator) error {
+		locations, err := dnaroutes.ParseLocationsFromPost(c)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		assembly := c.Param("assembly")
+		name := c.Param("name")
+
+		db, err := mutationdbcache.MutationDB(assembly, name)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		ret := make([]*mutations.Pileup, 0, len(locations))
+
+		for _, location := range locations {
+			pileup, err := db.Pileup(location)
+
+			if err != nil {
+				return routes.ErrorReq(err)
+			}
+
+			ret = append(ret, pileup)
 		}
 
 		return routes.MakeDataResp(c, "", ret)

@@ -73,7 +73,7 @@ func WithinGenesRoute(c echo.Context) error {
 	data := []*genes.GenomicFeatures{}
 
 	for _, location := range locations {
-		genes, err := query.Db.WithinGenes(&location, query.Level)
+		genes, err := query.Db.WithinGenes(location, query.Level)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -103,7 +103,7 @@ func ClosestGeneRoute(c echo.Context) error {
 	data := []*genes.GenomicFeatures{}
 
 	for _, location := range locations {
-		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
+		genes, err := query.Db.ClosestGenes(location, n, query.Level)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -168,7 +168,7 @@ func AnnotationRoute(c echo.Context) error {
 
 	for _, location := range locations {
 
-		annotations, err := annotationDb.Annotate(&location)
+		annotations, err := annotationDb.Annotate(location)
 
 		if err != nil {
 			return routes.ErrorReq(err)
