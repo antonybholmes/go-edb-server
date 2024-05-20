@@ -16,9 +16,9 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/authroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
-	"github.com/antonybholmes/go-microarray/microarraydb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
@@ -49,7 +49,7 @@ func initCache() {
 	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET))
 
 	if err != nil {
-		log.Fatal().Msgf("%s", err)
+		log.Fatal().Msgf("error opening %s", "./data/users.db")
 	}
 
 	err = userdb.InitDB("data/users.db")
@@ -59,10 +59,12 @@ func initCache() {
 	}
 
 	mailer.InitMailer()
-	dnadbcache.InitCache("data/dna")
-	genedbcache.InitCache("data/genes")
-	microarraydb.InitDB("data/microarray")
-	mutationdbcache.InitCache("data/mutations")
+
+	dnadbcache.InitCache("data/modules/dna")
+	genedbcache.InitCache("data/modules/genes")
+	//microarraydb.InitDB("data/microarray")
+
+	mutationdbcache.InitCache("data/modules/mutations")
 }
 
 func main() {
@@ -342,8 +344,8 @@ func main() {
 	//
 
 	moduleGroup := e.Group("/modules")
-	moduleGroup.Use(jwtMiddleWare)
-	moduleGroup.Use(JwtIsAccessTokenMiddleware)
+	//moduleGroup.Use(jwtMiddleWare)
+	//moduleGroup.Use(JwtIsAccessTokenMiddleware)
 
 	dnaGroup := moduleGroup.Group("/dna")
 
@@ -363,6 +365,16 @@ func main() {
 
 	genesGroup.POST("/annotation/:assembly", func(c echo.Context) error {
 		return generoutes.AnnotationRoute(c)
+	})
+
+	mutationsGroup := moduleGroup.Group("/mutations")
+
+	mutationsGroup.POST("/databases", func(c echo.Context) error {
+		return mutationroutes.MutationDatabaseRoutes(c)
+	})
+
+	mutationsGroup.POST("/maf/:assembly/:name", func(c echo.Context) error {
+		return mutationroutes.MafRoute(c)
 	})
 
 	//
