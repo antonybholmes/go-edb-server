@@ -24,7 +24,7 @@ type ReqLocs struct {
 
 type DNA struct {
 	Location *dna.Location `json:"location"`
-	DNA      string        `json:"dna"`
+	Seq      string        `json:"seq"`
 }
 
 type DNAResp struct {
@@ -188,13 +188,13 @@ func DNARoute(c echo.Context) error {
 	seqs := []*DNA{}
 
 	for _, location := range locations {
-		dna, err := dnadb.DNA(location, query.Rev, query.Comp)
+		seq, err := dnadb.DNA(location, query.Rev, query.Comp)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		seqs = append(seqs, &DNA{Location: location, DNA: dna})
+		seqs = append(seqs, &DNA{Location: location, Seq: seq})
 	}
 
 	return routes.MakeDataResp(c, "", &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
