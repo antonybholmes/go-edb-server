@@ -1,25 +1,43 @@
 package mutationroutes
 
 import (
+	"sort"
+
+	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-api/routes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
-	"github.com/antonybholmes/go-microarray"
 	"github.com/antonybholmes/go-mutations"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/labstack/echo/v4"
 )
 
-func ParseSamplesFromPost(c echo.Context) (*microarray.MicroarraySamplesReq, error) {
-	var err error
-	locs := new(microarray.MicroarraySamplesReq)
+type MutationParams struct {
+	Locations []*dna.Location
+	DBs       []string
+}
 
-	err = c.Bind(locs)
+type ReqMutationParams struct {
+	Locations []string `json:"locations"`
+	DBs       []string `json:"databases"`
+}
+
+func ParseParamsFromPost(c echo.Context) (*MutationParams, error) {
+
+	locs := new(ReqMutationParams)
+
+	err := c.Bind(locs)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return locs, nil
+	locations, err := dna.ParseLocations(locs.Locations)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &MutationParams{locations, locs.DBs}, nil
 }
 
 func MutationDatabaseRoutes(c echo.Context) error {
@@ -77,33 +95,76 @@ func MafRoute(c echo.Context) error {
 	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
 }
 
+type PileupResp struct {
+	Location *dna.Location                   `json:"location"`
+	Metadata []*mutations.MutationDBMetaData `json:"metadata"`
+	//Samples   uint                  `json:"samples"`
+	Mutations [][]*mutations.Mutation `json:"mutations"`
+}
+
 func PileupRoute(c echo.Context) error {
 	return routes.NewValidator(c).Success(func(validator *routes.Validator) error {
-		locations, err := dnaroutes.ParseLocationsFromPost(c)
+
+		params, err := ParseParamsFromPost(c)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		assembly := c.Param("assembly")
-		name := c.Param("name")
+		location := params.Locations[0]
 
-		db, err := mutationdbcache.MutationDB(assembly, name)
+		//assembly := c.Param("assembly")
+		//name := c.Param("name")
 
-		if err != nil {
-			return routes.ErrorReq(err)
+		ret := PileupResp{Location: location,
+			Metadata:  make([]*mutations.MutationDBMetaData, len(params.DBs)),
+			Mutations: make([][]*mutations.Mutation, location.Len())}
+
+		for i := range location.Len() {
+			ret.Mutations[i] = make([]*mutations.Mutation, 0)
 		}
 
-		ret := make([]*mutations.Pileup, 0, len(locations))
+		for dbi, id := range params.DBs {
 
-		for _, location := range locations {
+			db, err := mutationdbcache.MutationDBFromId(id)
+
+			if err != nil {
+				return routes.ErrorReq(err)
+			}
+
 			pileup, err := db.Pileup(location)
 
 			if err != nil {
 				return routes.ErrorReq(err)
 			}
 
-			ret = append(ret, pileup)
+			for ci := range location.Len() {
+				ret.Mutations[ci] = append(ret.Mutations[ci], pileup.Mutations[ci]...)
+			}
+
+			ret.Metadata[dbi] = pileup.Metadata
+
+			// for _, location := range locations {
+			// 	pileup, err := db.Pileup(location)
+
+			// 	if err != nil {
+			// 		return routes.ErrorReq(err)
+			// 	}
+
+			// 	ret = append(ret, pileup)
+			// }
+		}
+
+		// resort pileups
+
+		for ci := range location.Len() {
+			sort.Slice(ret.Mutations[ci], func(i, j int) bool {
+				if ret.Mutations[ci][i].VariantType < ret.Mutations[ci][j].VariantType {
+					return true
+				}
+
+				return ret.Mutations[ci][i].Tum < ret.Mutations[ci][j].Tum
+			})
 		}
 
 		return routes.MakeDataResp(c, "", ret)

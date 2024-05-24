@@ -96,16 +96,10 @@ func ParseLocationsFromPost(c echo.Context) ([]*dna.Location, error) {
 		return nil, err
 	}
 
-	ret := make([]*dna.Location, 0, len(locs.Locations))
+	ret, err := dna.ParseLocations(locs.Locations)
 
-	for _, l := range locs.Locations {
-		loc, err := dna.ParseLocation(l)
-
-		if err != nil {
-			return nil, err
-		}
-
-		ret = append(ret, loc)
+	if err != nil {
+		return nil, err
 	}
 
 	return ret, nil
