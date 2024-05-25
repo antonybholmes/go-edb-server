@@ -373,11 +373,15 @@ func main() {
 		return mutationroutes.MutationDatabaseRoutes(c)
 	})
 
-	mutationsGroup.POST("/maf/:assembly/:name", func(c echo.Context) error {
-		return mutationroutes.MafRoute(c)
+	mutationsGroup.POST("/:assembly/:name", func(c echo.Context) error {
+		return mutationroutes.MutationsRoute(c)
 	})
 
-	mutationsGroup.POST("/pileup/:assembly/:name", func(c echo.Context) error {
+	mutationsGroup.POST("/maf", func(c echo.Context) error {
+		return mutationroutes.PileupRoute(c)
+	})
+
+	mutationsGroup.POST("/pileup", func(c echo.Context) error {
 		return mutationroutes.PileupRoute(c)
 	})
 
