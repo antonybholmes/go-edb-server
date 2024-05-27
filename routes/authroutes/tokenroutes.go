@@ -73,7 +73,7 @@ func NewAccessTokenRoute(c echo.Context) error {
 	return routes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *routes.Validator) error {
 
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(c, validator.Claims.Uuid, consts.JWT_PRIVATE_KEY)
+		t, err := auth.AccessToken(c, validator.Claims.Uuid, validator.Claims.Scope, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")

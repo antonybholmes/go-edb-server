@@ -13,12 +13,12 @@ import (
 
 type MutationParams struct {
 	Locations []*dna.Location
-	DBs       []string
+	Databases []string
 }
 
 type ReqMutationParams struct {
 	Locations []string `json:"locations"`
-	DBs       []string `json:"databases"`
+	Databases []string `json:"databases"`
 }
 
 func ParseParamsFromPost(c echo.Context) (*MutationParams, error) {
@@ -37,7 +37,7 @@ func ParseParamsFromPost(c echo.Context) (*MutationParams, error) {
 		return nil, err
 	}
 
-	return &MutationParams{locations, locs.DBs}, nil
+	return &MutationParams{locations, locs.Databases}, nil
 }
 
 func MutationDatabaseRoutes(c echo.Context) error {
@@ -117,7 +117,7 @@ func MafRoute(c echo.Context) error {
 		//name := c.Param("name")
 
 		ret := MafResp{Location: location,
-			Metadata:  make([]*mutations.MutationDBMetadata, len(params.DBs)),
+			Metadata:  make([]*mutations.MutationDBMetadata, len(params.Databases)),
 			Mutations: make([][]string, location.Len())}
 
 		for i := range location.Len() {
@@ -130,7 +130,7 @@ func MafRoute(c echo.Context) error {
 			sampleMap[i] = make(map[string]struct{})
 		}
 
-		for dbi, id := range params.DBs {
+		for dbi, id := range params.Databases {
 			db, err := mutationdbcache.MutationDBFromId(id)
 
 			if err != nil {
@@ -206,14 +206,14 @@ func PileupRoute(c echo.Context) error {
 		//name := c.Param("name")
 
 		ret := PileupResp{Location: location,
-			Metadata:  make([]*mutations.MutationDBMetadata, len(params.DBs)),
+			Metadata:  make([]*mutations.MutationDBMetadata, len(params.Databases)),
 			Mutations: make([][]*mutations.Mutation, location.Len())}
 
 		for i := range location.Len() {
 			ret.Mutations[i] = make([]*mutations.Mutation, 0, 10)
 		}
 
-		for dbi, id := range params.DBs {
+		for dbi, id := range params.Databases {
 			db, err := mutationdbcache.MutationDBFromId(id)
 
 			if err != nil {

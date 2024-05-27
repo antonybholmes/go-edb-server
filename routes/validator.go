@@ -12,6 +12,7 @@ import (
 
 const SESSION_NAME string = "session"
 const SESSION_UUID string = "uuid"
+const SESSION_SCOPE string = "scope"
 
 //
 // Standardized data checkers for checking header and body contain

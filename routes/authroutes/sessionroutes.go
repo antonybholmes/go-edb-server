@@ -131,6 +131,7 @@ func SessionSignOutRoute(c echo.Context) error {
 func SessionNewAccessTokenRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
 	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
+	scope, _ := sess.Values[routes.SESSION_SCOPE].(string)
 
 	log.Debug().Msgf("session tokens %s", uuid)
 
@@ -140,7 +141,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	t, err := auth.AccessToken(c, uuid, consts.JWT_PRIVATE_KEY)
+	t, err := auth.AccessToken(c, uuid, scope, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -251,6 +252,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		sess.Options = SESSION_OPT_MAX_AGE_30D
 		sess.Values[routes.SESSION_UUID] = validator.AuthUser.Uuid
+		sess.Values[routes.SESSION_SCOPE] = validator.AuthUser.Scope
 
 		sess.Save(c.Request(), c.Response())
 
