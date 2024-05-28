@@ -19,7 +19,7 @@ func SignupRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.CreateUser(req)
+	authUser, err := userdb.CreateStandardUser(req)
 
 	log.Debug().Msgf("%s ss", err)
 

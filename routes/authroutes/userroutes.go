@@ -77,7 +77,7 @@ func UserInfoRoute(c echo.Context) error {
 		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {
 
-			return routes.MakeDataResp(c, "", *validator.AuthUser)
+			return routes.MakeDataResp(c, "", validator.AuthUser)
 		})
 }
 

@@ -54,7 +54,7 @@ func TokenInfoRoute(c echo.Context) error {
 	claims := auth.JwtCustomClaims{}
 
 	_, err = jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(consts.JWT_PRIVATE_KEY), nil
+		return consts.JWT_PRIVATE_KEY, nil
 	})
 
 	if err != nil {
@@ -73,7 +73,7 @@ func NewAccessTokenRoute(c echo.Context) error {
 	return routes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *routes.Validator) error {
 
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(c, validator.Claims.Uuid, validator.Claims.Scope, consts.JWT_PRIVATE_KEY)
+		t, err := auth.AccessToken(c, validator.Claims.Uuid, validator.Claims.Roles, validator.Claims.Permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")

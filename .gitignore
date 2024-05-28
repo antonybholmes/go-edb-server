@@ -31,3 +31,6 @@ deployments/*
 go-edb-api
 
 tests.sh
+
+jwtRS256.key
+jwtRS256.key.pub

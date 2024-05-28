@@ -65,6 +65,7 @@ func initCache() {
 	//microarraydb.InitDB("data/microarray")
 
 	mutationdbcache.InitCache("data/modules/mutations")
+
 }
 
 func main() {
@@ -216,9 +217,14 @@ func main() {
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+
 			return new(auth.JwtCustomClaims)
 		},
 		SigningKey: consts.JWT_PRIVATE_KEY,
+		// Have to tell it to use the public key for verification
+		KeyFunc: func(token *jwt.Token) (interface{}, error) {
+			return consts.JWT_PUBLIC_KEY, nil
+		},
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
 
