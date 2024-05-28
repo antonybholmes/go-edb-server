@@ -9,6 +9,7 @@ import (
 	"github.com/antonybholmes/go-mutations"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type MutationParams struct {
@@ -199,6 +200,8 @@ func PileupRoute(c echo.Context) error {
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
+
+		log.Debug().Msgf("maf: %v", params)
 
 		location := params.Locations[0]
 

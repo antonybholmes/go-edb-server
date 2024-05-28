@@ -25,8 +25,8 @@ CREATE TABLE permissions (
 CREATE INDEX permissions_name_idx ON permissions (name);
 
 INSERT INTO permissions (uuid, name) VALUES('5d224abe-bf22-4661-9ead-85cdc91746a5', 'All');
-INSERT INTO permissions (uuid, name) VALUES('4a0730a9-211f-48b9-bb65-803abeca9e31', 'DNA');
-INSERT INTO permissions (uuid, name) VALUES('7df054ba-ef7b-4240-9b40-ff537904990b', 'Mutations');
+INSERT INTO permissions (uuid, name) VALUES('4a0730a9-211f-48b9-bb65-803abeca9e31', 'GetDNA');
+INSERT INTO permissions (uuid, name) VALUES('7df054ba-ef7b-4240-9b40-ff537904990b', 'GetMutations');
 
 DROP TABLE IF EXISTS role_permissions;
 CREATE TABLE role_permissions (

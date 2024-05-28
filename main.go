@@ -69,7 +69,9 @@ func initCache() {
 }
 
 func main() {
-	env.Load()
+	consts.LoadConsts()
+
+	//env.Load()
 
 	// list env to see what is loaded
 	env.Ls()
@@ -126,7 +128,7 @@ func main() {
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
-		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost},
 		AllowCredentials: true,
 	}))
 
@@ -217,7 +219,6 @@ func main() {
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-
 			return new(auth.JwtCustomClaims)
 		},
 		SigningKey: consts.JWT_PRIVATE_KEY,
@@ -227,6 +228,10 @@ func main() {
 		},
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
+
+	//
+	// Routes
+	//
 
 	e.POST("/signup", func(c echo.Context) error {
 		return authroutes.SignupRoute(c)
@@ -373,7 +378,10 @@ func main() {
 		return generoutes.AnnotationRoute(c)
 	})
 
-	mutationsGroup := moduleGroup.Group("/mutations")
+	mutationsGroup := moduleGroup.Group("/mutations",
+		jwtMiddleWare,
+		JwtIsAccessTokenMiddleware,
+		NewJwtPermissionsMiddleware("GetMutations"))
 
 	mutationsGroup.POST("/databases", func(c echo.Context) error {
 		return mutationroutes.MutationDatabaseRoutes(c)

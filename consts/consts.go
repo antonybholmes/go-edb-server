@@ -18,7 +18,7 @@ var JWT_PRIVATE_KEY *rsa.PrivateKey //[]byte
 var JWT_PUBLIC_KEY *rsa.PublicKey   //[]byte
 var SESSION_SECRET string
 
-func init() {
+func LoadConsts() {
 	env.Load()
 
 	NAME = os.Getenv("NAME")
@@ -28,22 +28,22 @@ func init() {
 	//JWT_PUBLIC_KEY = []byte(os.Getenv("JWT_SECRET"))
 	SESSION_SECRET = os.Getenv("SESSION_SECRET")
 
-	signBytes, err := os.ReadFile("jwtRS256.key")
+	bytes, err := os.ReadFile("jwtRS256.key")
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	JWT_PRIVATE_KEY, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
+	JWT_PRIVATE_KEY, err = jwt.ParseRSAPrivateKeyFromPEM(bytes)
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	verifyBytes, err := os.ReadFile("jwtRS256.key.pub")
+	bytes, err = os.ReadFile("jwtRS256.key.pub")
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	JWT_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
+	JWT_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(bytes)
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
