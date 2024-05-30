@@ -1,6 +1,8 @@
 package authroutes
 
 import (
+	"strings"
+
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes"
@@ -72,8 +74,10 @@ func TokenInfoRoute(c echo.Context) error {
 func NewAccessTokenRoute(c echo.Context) error {
 	return routes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *routes.Validator) error {
 
+		roles := strings.Split(validator.Claims.Scope, " ")
+
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(c, validator.Claims.Uuid, &validator.Claims.Roles, consts.JWT_PRIVATE_KEY)
+		t, err := auth.AccessToken(c, validator.Claims.Uuid, &roles, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")

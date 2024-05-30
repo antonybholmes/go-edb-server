@@ -44,7 +44,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		roles, err := userdb.PublicUserRolePermissionsList(authUser)
+		roles, err := userdb.RoleList(authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -114,7 +114,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		roles, err := userdb.PublicUserRolePermissionsList(validator.AuthUser)
+		roles, err := userdb.RoleList(validator.AuthUser) //PublicUserRolePermissionsList(validator.AuthUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)

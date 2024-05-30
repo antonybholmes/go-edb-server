@@ -140,7 +140,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	roles, err := userdb.PublicUserRolePermissionsList(authUser)
+	roles, err := userdb.RoleList(authUser)
 
 	if err != nil {
 		return routes.ErrorReq(err)

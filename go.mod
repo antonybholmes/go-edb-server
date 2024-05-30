@@ -47,7 +47,7 @@ require github.com/antonybholmes/go-mutations v0.0.0-20240505003604-87e9d6ee2b76
 
 require (
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4
-	github.com/aws/aws-sdk-go v1.53.10 // indirect
+	github.com/aws/aws-sdk-go v1.53.12 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
