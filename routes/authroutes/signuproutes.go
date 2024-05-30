@@ -21,8 +21,6 @@ func SignupRoute(c echo.Context) error {
 
 	authUser, err := userdb.CreateStandardUser(req)
 
-	log.Debug().Msgf("%s ss", err)
-
 	if err != nil {
 		return routes.ErrorReq(err)
 	}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"fmt"
+
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
@@ -143,40 +143,31 @@ func validateJwtToken(tokenString string) (*jwt.Token, error) {
 // Create a permissions middleware to verify jwt permissions on a token
 func NewJwtPermissionsMiddleware(validPermissions ...string) echo.MiddlewareFunc {
 
-	permissionSet := make(map[string]struct{})
-
-	for _, permission := range validPermissions {
-		_, ok := permissionSet[permission]
-
-		if !ok {
-			permissionSet[permission] = struct{}{}
-		}
-	}
-
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
 			user := c.Get("user").(*jwt.Token)
 
 			if user == nil {
-				return fmt.Errorf("no jwt available")
+				return routes.AuthErrorReq("no jwt available")
 			}
 
 			claims := user.Claims.(*auth.JwtCustomClaims)
 
-			permissions := auth.RolesToPermissions(&claims.Roles)
+			// shortcut for admin, as we allow this for everything
+			if strings.Contains(claims.Scope, "Admin") {
+				return next(c)
+			}
 
-			for _, permission := range permissions {
-				_, ok := permissionSet[permission]
+			for _, permission := range validPermissions {
 
-				if ok {
+				// if we find a permission, stop and move on
+				if strings.Contains(claims.Scope, permission) {
 					return next(c)
-
 				}
 			}
 
-			return fmt.Errorf("permissions not found")
-
+			return routes.AuthErrorReq("permissions not found")
 		}
 	}
 }

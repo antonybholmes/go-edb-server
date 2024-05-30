@@ -140,13 +140,13 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	roles, err := userdb.RoleList(authUser)
+	permissions, err := userdb.PermissionList(authUser)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	t, err := auth.AccessToken(c, uuid, roles, consts.JWT_PRIVATE_KEY)
+	t, err := auth.AccessToken(c, uuid, permissions, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
