@@ -18,6 +18,8 @@ replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mailer => ../go-mailer
 
+replace github.com/antonybholmes/go-gene-conversion => ../go-gene-conversion
+
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240503021126-08c3c39059f5
 	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
@@ -43,7 +45,10 @@ require (
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
 
-require github.com/antonybholmes/go-mutations v0.0.0-20240505003604-87e9d6ee2b76
+require (
+	github.com/antonybholmes/go-gene-conversion v0.0.0-00010101000000-000000000000
+	github.com/antonybholmes/go-mutations v0.0.0-20240505003604-87e9d6ee2b76
+)
 
 require (
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4

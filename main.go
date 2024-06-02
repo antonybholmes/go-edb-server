@@ -15,8 +15,10 @@ import (
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes/authroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/geneconroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
+	"github.com/antonybholmes/go-gene-conversion/genecondb"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
@@ -65,6 +67,8 @@ func initCache() {
 	//microarraydb.InitDB("data/microarray")
 
 	mutationdbcache.InitCache("data/modules/mutations")
+
+	genecondb.InitCache("data/modules/conversion/conversion.db")
 
 }
 
@@ -397,6 +401,16 @@ func main() {
 
 	mutationsGroup.POST("/pileup", func(c echo.Context) error {
 		return mutationroutes.PileupRoute(c)
+	})
+
+	conversionGroup := moduleGroup.Group("/genecon")
+
+	conversionGroup.POST("/convert/:species", func(c echo.Context) error {
+		return geneconroutes.ConvertRoute(c)
+	})
+
+	conversionGroup.POST("/genes/:species", func(c echo.Context) error {
+		return geneconroutes.GenesRoute(c)
 	})
 
 	//
