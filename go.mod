@@ -46,13 +46,13 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-gene-conversion v0.0.0-00010101000000-000000000000
+	github.com/antonybholmes/go-gene-conversion v0.0.0-20240601171451-8624e6ee9dcb
 	github.com/antonybholmes/go-mutations v0.0.0-20240505003604-87e9d6ee2b76
 )
 
 require (
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4
-	github.com/aws/aws-sdk-go v1.53.12 // indirect
+	github.com/aws/aws-sdk-go v1.53.15 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
