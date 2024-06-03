@@ -27,7 +27,7 @@ func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 	return params, nil
 }
 
-func GenesRoute(c echo.Context) error {
+func GeneInfoRoute(c echo.Context) error {
 	species := c.Param("species")
 
 	params, err := ParseParamsFromPost(c)
@@ -40,7 +40,7 @@ func GenesRoute(c echo.Context) error {
 
 	for ni, search := range params.Searches {
 
-		genes, _ := geneconvdb.Gene(search, species, params.Exact)
+		genes, _ := geneconvdb.GeneInfo(search, species, params.Exact)
 
 		ret[ni] = geneconv.Conversion{Search: search, Genes: genes}
 	}
@@ -65,15 +65,11 @@ func ConvertRoute(c echo.Context) error {
 	fromSpecies = strings.ToLower(fromSpecies)
 
 	if fromSpecies == geneconv.HUMAN_SPECIES {
-		ret.From.TaxId = geneconv.HUMAN_TAXONOMY_ID
-		ret.From.Species = geneconv.HUMAN_SPECIES
-		ret.To.TaxId = geneconv.MOUSE_TAXONOMY_ID
-		ret.To.Species = geneconv.MOUSE_SPECIES
+		ret.From = geneconv.HUMAN_TAX
+		ret.To = geneconv.MOUSE_TAX
 	} else {
-		ret.From.TaxId = geneconv.MOUSE_TAXONOMY_ID
-		ret.From.Species = geneconv.MOUSE_SPECIES
-		ret.To.TaxId = geneconv.HUMAN_TAXONOMY_ID
-		ret.To.Species = geneconv.HUMAN_SPECIES
+		ret.From = geneconv.MOUSE_TAX
+		ret.To = geneconv.HUMAN_TAX
 	}
 
 	//ret.Conversions = make([]geneconv.Conversion, len(params.Searches))
