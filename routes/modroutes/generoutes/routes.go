@@ -1,4 +1,4 @@
-package modules
+package generoutes
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-genes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-math"
@@ -23,7 +24,7 @@ const DEFAULT_CLOSEST_N uint16 = 5
 // A GeneQuery contains info from query params.
 type GeneQuery struct {
 	Level    genes.Level
-	Db       *genes.GeneDb
+	Db       *genes.GeneDB
 	Assembly string
 }
 
@@ -47,7 +48,7 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 		level = genes.ParseLevel(v)
 	}
 
-	db, err := genedbcache.Db(assembly)
+	db, err := genedbcache.GeneDB(assembly)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
@@ -57,7 +58,7 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 }
 
 func WithinGenesRoute(c echo.Context) error {
-	locations, err := ParseLocationsFromPost(c)
+	locations, err := dnaroutes.ParseLocationsFromPost(c) // dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -72,7 +73,7 @@ func WithinGenesRoute(c echo.Context) error {
 	data := []*genes.GenomicFeatures{}
 
 	for _, location := range locations {
-		genes, err := query.Db.WithinGenes(&location, query.Level)
+		genes, err := query.Db.WithinGenes(location, query.Level)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -85,7 +86,7 @@ func WithinGenesRoute(c echo.Context) error {
 }
 
 func ClosestGeneRoute(c echo.Context) error {
-	locations, err := ParseLocationsFromPost(c)
+	locations, err := dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -102,7 +103,7 @@ func ClosestGeneRoute(c echo.Context) error {
 	data := []*genes.GenomicFeatures{}
 
 	for _, location := range locations {
-		genes, err := query.Db.ClosestGenes(&location, n, query.Level)
+		genes, err := query.Db.ClosestGenes(location, n, query.Level)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -140,7 +141,7 @@ func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
 }
 
 func AnnotationRoute(c echo.Context) error {
-	locations, err := ParseLocationsFromPost(c)
+	locations, err := dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -167,7 +168,7 @@ func AnnotationRoute(c echo.Context) error {
 
 	for _, location := range locations {
 
-		annotations, err := annotationDb.Annotate(&location)
+		annotations, err := annotationDb.Annotate(location)
 
 		if err != nil {
 			return routes.ErrorReq(err)

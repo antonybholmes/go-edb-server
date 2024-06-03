@@ -54,7 +54,15 @@ func JsonResp[V any](c echo.Context, status int, data V) error {
 // }
 
 func MakeDataResp[V any](c echo.Context, message string, data V) error {
-	return JsonResp(c, http.StatusOK, DataResp{StatusMessageResp: StatusMessageResp{Status: http.StatusOK, Message: message}, Data: data})
+	return JsonResp(c,
+		http.StatusOK,
+		DataResp{
+			StatusMessageResp: StatusMessageResp{
+				Status:  http.StatusOK,
+				Message: message,
+			},
+			Data: data,
+		})
 }
 
 // func MakeValidResp(c echo.Context, message string, valid bool) error {
@@ -67,16 +75,4 @@ func MakeOkResp(c echo.Context, message string) error {
 
 func MakeSuccessResp(c echo.Context, message string, success bool) error {
 	return MakeDataResp(c, message, &SuccessResp{Success: success})
-}
-
-func PasswordUpdatedResp(c echo.Context) error {
-	return MakeOkResp(c, "password updated")
-}
-
-func UserSignedInResp(c echo.Context) error {
-	return MakeOkResp(c, "user signed in")
-}
-
-func PasswordlessEmailSentResp(c echo.Context) error {
-	return MakeOkResp(c, "passwordless email sent")
 }

@@ -1,6 +1,7 @@
-package auth
+package authroutes
 
 import (
+	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/antonybholmes/go-edb-api/routes"
 
@@ -11,22 +12,31 @@ type NameReq struct {
 	Name string `json:"name"`
 }
 
+func AccountUpdatedResp(c echo.Context) error {
+	return routes.MakeOkResp(c, "account updated")
+}
+
 func UpdateAccountRoute(c echo.Context) error {
-	return routes.NewValidator(c).AuthUserFromUuid().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
-		err := userdb.SetUsername(validator.AuthUser.Uuid, validator.Req.Username)
+		authUser := validator.AuthUser
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		err = userdb.SetName(validator.AuthUser.Uuid, validator.Req.FirstName, validator.Req.LastName)
+		err := userdb.SetUsername(authUser.Uuid,
+			validator.Req.Username)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		return routes.MakeOkResp(c, "account updated")
+		err = userdb.SetName(authUser.Uuid,
+			validator.Req.FirstName,
+			validator.Req.LastName)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		return SendUserInfoUpdatedEmail(c, authUser)
 	})
 
 	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
@@ -64,9 +74,28 @@ func UpdateAccountRoute(c echo.Context) error {
 
 func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
-		AuthUserFromUuid().
+		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {
 
-			return routes.MakeDataResp(c, "", *validator.AuthUser.ToPublicUser())
+			return routes.MakeDataResp(c, "", validator.AuthUser)
 		})
+}
+
+func SendUserInfoUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
+
+	var file = "templates/email/account/updated.html"
+
+	go SendEmailWithToken("Account Updated",
+		authUser,
+		file,
+		"",
+		"",
+		"")
+
+	//if err != nil {
+	//	return routes.ErrorReq(err)
+	//}
+
+	return AccountUpdatedResp(c)
+
 }

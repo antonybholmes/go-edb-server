@@ -6,8 +6,12 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
+
+const SESSION_NAME string = "session"
+const SESSION_UUID string = "uuid"
 
 //
 // Standardized data checkers for checking header and body contain
@@ -36,6 +40,9 @@ func (validator *Validator) Ok() (*Validator, error) {
 	}
 }
 
+// If the validator does not encounter errors, it will run the success function
+// allowing you to extract data from the validator, otherwise it returns an error
+// without running the function
 func (validator *Validator) Success(success func(validator *Validator) error) error {
 
 	if validator.Err != nil {
@@ -45,7 +52,7 @@ func (validator *Validator) Success(success func(validator *Validator) error) er
 	return success(validator)
 }
 
-func (validator *Validator) ReqBind() *Validator {
+func (validator *Validator) ParseLoginRequestBody() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -65,14 +72,14 @@ func (validator *Validator) ReqBind() *Validator {
 	return validator
 }
 
-func (validator *Validator) ValidEmail() *Validator {
-	validator.ReqBind()
+func (validator *Validator) CheckEmailIsWellFormed() *Validator {
+	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	address, err := auth.CheckEmail(validator.Req.Email)
+	address, err := auth.CheckEmailIsWellFormed(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = ErrorReq(err)
@@ -83,8 +90,8 @@ func (validator *Validator) ValidEmail() *Validator {
 	return validator
 }
 
-func (validator *Validator) AuthUserFromEmail() *Validator {
-	validator.ValidEmail()
+func (validator *Validator) LoadAuthUserFromEmail() *Validator {
+	validator.CheckEmailIsWellFormed()
 
 	if validator.Err != nil {
 		return validator
@@ -102,14 +109,14 @@ func (validator *Validator) AuthUserFromEmail() *Validator {
 
 }
 
-func (validator *Validator) AuthUserFromUsername() *Validator {
-	validator.ReqBind()
+func (validator *Validator) LoadAuthUserFromId() *Validator {
+	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
+	authUser, err := userdb.FindUserById(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -121,7 +128,26 @@ func (validator *Validator) AuthUserFromUsername() *Validator {
 
 }
 
-func (validator *Validator) IsAuthUser() *Validator {
+func (validator *Validator) LoadAuthUserFromSession() *Validator {
+	sess, _ := session.Get(SESSION_NAME, validator.c)
+	uuid, _ := sess.Values[SESSION_UUID].(string)
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	authUser, err := userdb.FindUserByUuid(uuid)
+
+	if err != nil {
+		validator.Err = UserDoesNotExistReq()
+	} else {
+		validator.AuthUser = authUser
+	}
+
+	return validator
+}
+
+func (validator *Validator) CheckAuthUserIsLoaded() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -133,8 +159,8 @@ func (validator *Validator) IsAuthUser() *Validator {
 	return validator
 }
 
-func (validator *Validator) VerifiedEmail() *Validator {
-	validator.IsAuthUser()
+func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
+	validator.CheckAuthUserIsLoaded()
 
 	if validator.Err != nil {
 		return validator
@@ -147,7 +173,9 @@ func (validator *Validator) VerifiedEmail() *Validator {
 	return validator
 }
 
-func (validator *Validator) JwtClaims() *Validator {
+// If using jwt middleware, token is put into user variable
+// and we can extract data from the jwt
+func (validator *Validator) LoadTokenClaims() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
@@ -165,8 +193,8 @@ func (validator *Validator) JwtClaims() *Validator {
 // If claims are supplied, this step is skipped. This is so this function can
 // be nested in other call backs that may have already extracted the claims
 // without having to repeat this part.
-func (validator *Validator) AuthUserFromUuid() *Validator {
-	validator.JwtClaims()
+func (validator *Validator) LoadAuthUserFromToken() *Validator {
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -185,30 +213,30 @@ func (validator *Validator) AuthUserFromUuid() *Validator {
 	return validator
 }
 
-func (validator *Validator) IsValidRefreshToken() *Validator {
-	validator.JwtClaims()
+func (validator *Validator) CheckIsValidRefreshToken() *Validator {
+	validator.LoadAuthUserFromToken()
 
 	if validator.Err != nil {
 		return validator
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_REFRESH {
-		validator.Err = ErrorReq("wrong token type")
+		validator.Err = ErrorReq("no refresh token")
 	}
 
 	return validator
 
 }
 
-func (validator *Validator) IsValidAccessToken() *Validator {
-	validator.JwtClaims()
+func (validator *Validator) CheckIsValidAccessToken() *Validator {
+	validator.LoadAuthUserFromToken()
 
 	if validator.Err != nil {
 		return validator
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_ACCESS {
-		validator.Err = ErrorReq("wrong token type")
+		validator.Err = ErrorReq("no access token")
 	}
 
 	return validator

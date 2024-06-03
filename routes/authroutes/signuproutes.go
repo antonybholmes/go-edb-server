@@ -1,4 +1,4 @@
-package auth
+package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
@@ -19,15 +19,13 @@ func SignupRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.CreateUser(req)
-
-	log.Debug().Msgf("%s ss", err)
+	authUser, err := userdb.CreateStandardUser(req)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_SECRET)
+	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_PRIVATE_KEY)
 
 	log.Debug().Msgf("%s", otpJwt)
 
@@ -57,8 +55,8 @@ func SignupRoute(c echo.Context) error {
 	return routes.MakeOkResp(c, "check your email for a verification link") //c.JSON(http.StatusOK, JWTResp{t})
 }
 
-func EmailVerificationRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).AuthUserFromUuid().Ok()
+func EmailAddressWasVerifiedRoute(c echo.Context) error {
+	validator, err := routes.NewValidator(c).LoadAuthUserFromToken().Ok()
 
 	if err != nil {
 		return err
@@ -90,5 +88,5 @@ func EmailVerificationRoute(c echo.Context) error {
 	//	return routes.ErrorReq(err)
 	//}
 
-	return routes.MakeOkResp(c, "") //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkResp(c, "email address verified") //c.JSON(http.StatusOK, JWTResp{t})
 }
