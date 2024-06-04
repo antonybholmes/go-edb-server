@@ -21,15 +21,15 @@ replace github.com/antonybholmes/go-mailer => ../go-mailer
 replace github.com/antonybholmes/go-gene-conversion => ../go-gene-conversion
 
 require (
-	github.com/antonybholmes/go-dna v0.0.0-20240503021126-08c3c39059f5
+	github.com/antonybholmes/go-dna v0.0.0-20240528182114-dd434dbd0c49
 	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240502232413-63b01c2be949
-	github.com/antonybholmes/go-genes v0.0.0-20240505003605-c7f9b24cc7f3
+	github.com/antonybholmes/go-auth v0.0.0-20240530140737-c4b1f23784aa
+	github.com/antonybholmes/go-genes v0.0.0-20240602031405-449f6df4226b
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
@@ -38,16 +38,16 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240504032634-6b3ed4b8d58f
-	github.com/antonybholmes/go-sys v0.0.0-20240501232923-152b6e4cc204
+	github.com/antonybholmes/go-mailer v0.0.0-20240603221758-2f95021dab54
+	github.com/antonybholmes/go-sys v0.0.0-20240505052557-9f8864ac77aa
 	github.com/gorilla/sessions v1.2.2
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
 
 require (
-	github.com/antonybholmes/go-gene-conversion v0.0.0-20240601171451-8624e6ee9dcb
-	github.com/antonybholmes/go-mutations v0.0.0-20240505003604-87e9d6ee2b76
+	github.com/antonybholmes/go-gene-conversion v0.0.0-20240603221758-b706b9fdec7d
+	github.com/antonybholmes/go-mutations v0.0.0-20240528222303-5e2a2f15ff47
 )
 
 require (
