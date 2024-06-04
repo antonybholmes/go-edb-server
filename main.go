@@ -409,7 +409,7 @@ func main() {
 	})
 
 	conversionGroup.POST("/:species", func(c echo.Context) error {
-		return geneconvroutes.GenesRoute(c)
+		return geneconvroutes.GeneInfoRoute(c)
 	})
 
 	//
