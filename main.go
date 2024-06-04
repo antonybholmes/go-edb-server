@@ -402,14 +402,14 @@ func main() {
 		return mutationroutes.PileupRoute(c)
 	})
 
-	conversionGroup := moduleGroup.Group("/geneconv")
+	geneConvGroup := moduleGroup.Group("/geneconv")
 
-	conversionGroup.POST("/convert/:from/:to", func(c echo.Context) error {
+	geneConvGroup.POST("/convert/:from/:to", func(c echo.Context) error {
 		return geneconvroutes.ConvertRoute(c)
 	})
 
-	conversionGroup.POST("/:species", func(c echo.Context) error {
-		return geneconvroutes.GeneInfoRoute(c)
+	geneConvGroup.POST("/:species", func(c echo.Context) error {
+		return geneconvroutes.GeneInfoRoute(c, "")
 	})
 
 	//
