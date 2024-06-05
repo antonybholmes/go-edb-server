@@ -8,6 +8,7 @@ import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -154,11 +155,15 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 	return &DNAQuery{Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
 }
 
+func AssembliesRoute(c echo.Context) error {
+	return routes.MakeDataResp(c, "", dnadbcache.GetInstance().List())
+}
+
 func DNARoute(c echo.Context) error {
 
 	locations, err := ParseLocationsFromPost(c)
 
-	//log.Debug().Msgf("%s cake", locations)
+	log.Debug().Msgf("%s cake", locations)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -172,16 +177,20 @@ func DNARoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
+	dnadb, err := dnadbcache.Db(assembly)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	seqs := []*DNA{}
+	seqs := make([]*DNA, 0, len(locations))
 
 	for _, location := range locations {
-		seq, err := dnadb.DNA(location, query.Rev, query.Comp)
+		log.Debug().Msgf("%s cake", location)
+
+		seq, err := dnadb.DNA(location, query.Format, query.RepeatMask, query.Rev, query.Comp)
+
+		log.Debug().Msgf("%s se", seq)
 
 		if err != nil {
 			return routes.ErrorReq(err)

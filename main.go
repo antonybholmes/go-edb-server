@@ -367,6 +367,10 @@ func main() {
 		return dnaroutes.DNARoute(c)
 	})
 
+	dnaGroup.POST("/assemblies", func(c echo.Context) error {
+		return dnaroutes.AssembliesRoute(c)
+	})
+
 	genesGroup := moduleGroup.Group("/genes")
 
 	genesGroup.POST("/assemblies", func(c echo.Context) error {
