@@ -8,7 +8,6 @@ import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -159,7 +158,7 @@ func DNARoute(c echo.Context) error {
 
 	locations, err := ParseLocationsFromPost(c)
 
-	log.Debug().Msgf("%s cake", locations)
+	//log.Debug().Msgf("%s cake", locations)
 
 	if err != nil {
 		return routes.ErrorReq(err)

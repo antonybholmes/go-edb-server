@@ -369,6 +369,10 @@ func main() {
 
 	genesGroup := moduleGroup.Group("/genes")
 
+	genesGroup.POST("/assemblies", func(c echo.Context) error {
+		return generoutes.AssembliesRoute(c)
+	})
+
 	genesGroup.POST("/within/:assembly", func(c echo.Context) error {
 		return generoutes.WithinGenesRoute(c)
 	})
@@ -377,8 +381,8 @@ func main() {
 		return generoutes.ClosestGeneRoute(c)
 	})
 
-	genesGroup.POST("/annotation/:assembly", func(c echo.Context) error {
-		return generoutes.AnnotationRoute(c)
+	genesGroup.POST("/annotate/:assembly", func(c echo.Context) error {
+		return generoutes.AnnotateRoute(c)
 	})
 
 	mutationsGroup := moduleGroup.Group("/mutations",
@@ -387,7 +391,7 @@ func main() {
 		NewJwtPermissionsMiddleware("GetMutations"))
 
 	mutationsGroup.POST("/databases", func(c echo.Context) error {
-		return mutationroutes.MutationDatabaseRoutes(c)
+		return mutationroutes.MutationDatabasesRoute(c)
 	})
 
 	mutationsGroup.POST("/:assembly/:name", func(c echo.Context) error {
