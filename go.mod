@@ -28,8 +28,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240530140737-c4b1f23784aa
-	github.com/antonybholmes/go-genes v0.0.0-20240602031405-449f6df4226b
+	github.com/antonybholmes/go-auth v0.0.0-20240604033739-7068bb278fb0
+	github.com/antonybholmes/go-genes v0.0.0-20240604033740-7a140d97cfdd
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
@@ -46,13 +46,13 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-gene-conversion v0.0.0-20240603221758-b706b9fdec7d
-	github.com/antonybholmes/go-mutations v0.0.0-20240528222303-5e2a2f15ff47
+	github.com/antonybholmes/go-gene-conversion v0.0.0-20240604180412-159f13b8d8da
+	github.com/antonybholmes/go-mutations v0.0.0-20240604033738-9a3814392967
 )
 
 require (
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4
-	github.com/aws/aws-sdk-go v1.53.15 // indirect
+	github.com/aws/aws-sdk-go v1.53.16 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
@@ -63,9 +63,9 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xyproto/randomstring v1.0.5 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )

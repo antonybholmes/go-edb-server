@@ -15,9 +15,10 @@ import (
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-math"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
-const DEFAULT_LEVEL = genes.Gene
+const DEFAULT_LEVEL = genes.LEVEL_GENE
 
 const DEFAULT_CLOSEST_N uint16 = 5
 
@@ -40,13 +41,15 @@ type AnnotationResponse struct {
 }
 
 func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
-	level := genes.Gene
+	level := genes.LEVEL_GENE
 
 	v := c.QueryParam("level")
 
 	if v != "" {
 		level = genes.ParseLevel(v)
 	}
+
+	log.Debug().Msgf("genes level:%s", level)
 
 	db, err := genedbcache.GeneDB(assembly)
 
@@ -55,6 +58,10 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 	}
 
 	return &GeneQuery{Assembly: assembly, Db: db, Level: level}, nil
+}
+
+func AssembliesRoute(c echo.Context) error {
+	return routes.MakeDataResp(c, "", genedbcache.GetInstance().List())
 }
 
 func WithinGenesRoute(c echo.Context) error {
@@ -140,7 +147,7 @@ func ParseTSSRegion(c echo.Context) *dna.TSSRegion {
 	return dna.NewTSSRegion(uint(s), uint(e))
 }
 
-func AnnotationRoute(c echo.Context) error {
+func AnnotateRoute(c echo.Context) error {
 	locations, err := dnaroutes.ParseLocationsFromPost(c)
 
 	if err != nil {
@@ -229,15 +236,15 @@ func MakeGeneTable(
 			annotation.GeneIds,
 			annotation.GeneSymbols,
 			annotation.PromLabels,
-			annotation.Dists,
+			annotation.TSSDists,
 			annotation.Locations}
 
 		for _, closestGene := range annotation.ClosestGenes {
-			row = append(row, closestGene.Feature.GeneId)
-			row = append(row, genes.GeneStrandLabel(closestGene.Feature.GeneSymbol, closestGene.Feature.Strand))
+			row = append(row, closestGene.GeneId)
+			row = append(row, genes.GeneWithStrandLabel(closestGene.GeneSymbol, closestGene.Strand))
 			row = append(row, closestGene.PromLabel)
 			row = append(row, strconv.Itoa(closestGene.TssDist))
-			row = append(row, closestGene.Feature.ToLocation().String())
+			row = append(row, closestGene.Location.String())
 		}
 
 		err := wtr.Write(row)

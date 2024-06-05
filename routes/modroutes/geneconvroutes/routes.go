@@ -27,8 +27,17 @@ func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 	return params, nil
 }
 
-func GeneInfoRoute(c echo.Context) error {
-	species := c.Param("species")
+// If species is the empty string, species will be determined
+// from the url parameters
+func GeneInfoRoute(c echo.Context, species string) error {
+	if species == "" {
+		species = c.Param("species")
+	}
+
+	// default to human if not specified
+	// if species == "" {
+	// 	species = geneconv.HUMAN_SPECIES
+	// }
 
 	params, err := ParseParamsFromPost(c)
 
@@ -53,6 +62,11 @@ func GeneInfoRoute(c echo.Context) error {
 func ConvertRoute(c echo.Context) error {
 	fromSpecies := c.Param("from")
 	toSpecies := c.Param("to")
+
+	// if there is no conversion, just use the regular gene info
+	if fromSpecies == toSpecies {
+		return GeneInfoRoute(c, fromSpecies)
+	}
 
 	params, err := ParseParamsFromPost(c)
 

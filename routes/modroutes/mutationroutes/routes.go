@@ -41,22 +41,7 @@ func ParseParamsFromPost(c echo.Context) (*MutationParams, error) {
 	return &MutationParams{locations, locs.Databases}, nil
 }
 
-func MutationDatabaseRoutes(c echo.Context) error {
-	// return routes.NewValidator(c).CheckIsValidAccessToken().Success(func(validator *routes.Validator) error {
-	// 	samples, err := ParseSamplesFromPost(c)
-
-	// 	if err != nil {
-	// 		return routes.ErrorReq(err)
-	// 	}
-
-	// 	data, err := microarraydb.Expression(samples)
-
-	// 	if err != nil {
-	// 		return routes.ErrorReq(err)
-	// 	}
-
-	// 	return routes.MakeDataResp(c, "", data)
-	// })
+func MutationDatabasesRoute(c echo.Context) error {
 
 	return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
 }
