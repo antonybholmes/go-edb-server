@@ -77,16 +77,16 @@ func WithinGenesRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	data := []*genes.GenomicFeatures{}
+	data := make([]*genes.GenomicFeatures, len(locations))
 
-	for _, location := range locations {
+	for li, location := range locations {
 		genes, err := query.Db.WithinGenes(location, query.Level)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		data = append(data, genes)
+		data[li] = genes
 	}
 
 	return routes.MakeDataResp(c, "", &data)
@@ -107,16 +107,16 @@ func ClosestGeneRoute(c echo.Context) error {
 
 	n := routes.ParseN(c, DEFAULT_CLOSEST_N)
 
-	data := []*genes.GenomicFeatures{}
+	data := make([]*genes.GenomicFeatures, len(locations))
 
-	for _, location := range locations {
+	for li, location := range locations {
 		genes, err := query.Db.ClosestGenes(location, n, query.Level)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		data = append(data, genes)
+		data[li] = genes
 	}
 
 	return routes.MakeDataResp(c, "", &data)
@@ -171,9 +171,9 @@ func AnnotateRoute(c echo.Context) error {
 
 	annotationDb := genes.NewAnnotateDb(query.Db, tssRegion, n)
 
-	data := []*genes.GeneAnnotation{}
+	data := make([]*genes.GeneAnnotation, len(locations))
 
-	for _, location := range locations {
+	for li, location := range locations {
 
 		annotations, err := annotationDb.Annotate(location)
 
@@ -181,7 +181,7 @@ func AnnotateRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		data = append(data, annotations)
+		data[li] = annotations
 	}
 
 	if output == "text" {
@@ -208,21 +208,29 @@ func MakeGeneTable(
 
 	closestN := len(data[0].ClosestGenes)
 
-	headers := []string{"Location", "ID", "Gene Symbol", fmt.Sprintf(
+	headers := make([]string, 6+5*closestN)
+
+	headers[0] = "Location"
+	headers[1] = "ID"
+	headers[2] = "Gene Symbol"
+	headers[3] = fmt.Sprintf(
 		"Relative To Gene (prom=-%d/+%dkb)",
 		ts.Offset5P()/1000,
-		ts.Offset3P()/1000), "TSS Distance", "Gene Location"}
+		ts.Offset3P()/1000)
+	headers[4] = "TSS Distance"
+	headers[5] = "Gene Location"
 
+	idx := 6
 	for i := 1; i <= closestN; i++ {
-		headers = append(headers, fmt.Sprintf("#%d Closest ID", i))
-		headers = append(headers, fmt.Sprintf("#%d Closest Gene Symbols", i))
-		headers = append(headers, fmt.Sprintf(
+		headers[idx] = fmt.Sprintf("#%d Closest ID", i)
+		headers[idx] = fmt.Sprintf("#%d Closest Gene Symbols", i)
+		headers[idx] = fmt.Sprintf(
 			"#%d Relative To Closet Gene (prom=-%d/+%dkb)",
 			i,
 			ts.Offset5P()/1000,
-			ts.Offset3P()/1000))
-		headers = append(headers, fmt.Sprintf("#%d TSS Closest Distance", i))
-		headers = append(headers, fmt.Sprintf("#%d Gene Location", i))
+			ts.Offset3P()/1000)
+		headers[idx] = fmt.Sprintf("#%d TSS Closest Distance", i)
+		headers[idx] = fmt.Sprintf("#%d Gene Location", i)
 	}
 
 	err := wtr.Write(headers)
