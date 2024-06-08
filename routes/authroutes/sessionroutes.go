@@ -134,13 +134,19 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 
 	log.Debug().Msgf("session tokens %s", uuid)
 
-	_, err := userdb.FindUserByUuid(uuid)
+	authUser, err := userdb.FindUserByUuid(uuid)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
 	}
 
-	t, err := auth.AccessToken(c, uuid, consts.JWT_SECRET)
+	permissions, err := userdb.PermissionList(authUser)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	t, err := auth.AccessToken(c, uuid, permissions, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -231,7 +237,6 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 // }
 
 func SessionPasswordlessSignInRoute(c echo.Context) error {
-	log.Debug().Msgf("cake")
 
 	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
@@ -265,7 +270,7 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_SECRET)
+		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -320,7 +325,7 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, newEmail, consts.JWT_SECRET)
+		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, newEmail, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)

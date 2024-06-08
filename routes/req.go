@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,6 +57,10 @@ func ErrorReq(message interface{}) *echo.HTTPError {
 	return echo.NewHTTPError(http.StatusBadRequest, message)
 }
 
+func AuthErrorReq(message interface{}) *echo.HTTPError {
+	return echo.NewHTTPError(http.StatusUnauthorized, message)
+}
+
 // parsedLocation takes an echo context and attempts to extract parameters
 // from the query string and return the location to check, the assembly
 // (e.g. grch38) to search, the level of detail (1=gene,2=transcript,3=exon).
@@ -109,17 +113,17 @@ func HeaderAuthToken(c echo.Context) (string, error) {
 	h := c.Request().Header.Get("Authorization")
 
 	if h == "" {
-		return "", fmt.Errorf("authorization header not present")
+		return "", errors.New("authorization header not present")
 	}
 
 	if !strings.Contains(h, "Bearer") {
-		return "", fmt.Errorf("bearer not present")
+		return "", errors.New("bearer not present")
 	}
 
 	tokens := strings.Split(h, " ")
 
 	if len(tokens) < 2 {
-		return "", fmt.Errorf("jwt not present")
+		return "", errors.New("jwt not present")
 	}
 
 	return tokens[1], nil

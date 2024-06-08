@@ -14,10 +14,14 @@ import (
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-api/consts"
 	"github.com/antonybholmes/go-edb-api/routes/authroutes"
-	"github.com/antonybholmes/go-edb-api/routes/modroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/geneconvroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
+	"github.com/antonybholmes/go-gene-conversion/geneconvdb"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
-	"github.com/antonybholmes/go-microarray/microarraydb"
+	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -43,28 +47,39 @@ var store *sqlitestore.SqliteStore
 
 func initCache() {
 	var err error
+
 	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET))
+
 	if err != nil {
-		panic(err)
+		log.Fatal().Msgf("error opening %s", "./data/users.db")
 	}
 
-	dnadbcache.InitCache("data/dna")
-	genedbcache.InitCache("data/genes")
-	microarraydb.InitDB("data/microarray")
+	err = userdb.InitDB("data/users.db")
+
+	if err != nil {
+		log.Fatal().Msgf("Error loading user db: %s", err)
+	}
+
 	mailer.InitMailer()
+
+	dnadbcache.InitCache("data/modules/dna")
+	genedbcache.InitCache("data/modules/genes")
+	//microarraydb.InitDB("data/microarray")
+
+	mutationdbcache.InitCache("data/modules/mutations")
+
+	geneconvdb.InitCache("data/modules/geneconv/geneconv.db")
 }
 
 func main() {
-	err := env.Load()
+	consts.LoadConsts()
 
-	initCache()
-
-	if err != nil {
-		log.Error().Msgf("Error loading .env file")
-	}
+	//env.Load()
 
 	// list env to see what is loaded
 	env.Ls()
+
+	initCache()
 
 	//buildMode := env.GetStr("BUILD", "dev")
 
@@ -116,17 +131,11 @@ func main() {
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
-		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost},
 		AllowCredentials: true,
 	}))
 
 	//e.Logger.SetLevel(log.DEBUG)
-
-	err = userdb.InitDB("data/users.db")
-
-	if err != nil {
-		log.Fatal().Msgf("Error loading user db: %s", err)
-	}
 
 	// e.GET("/write", func(c echo.Context) error {
 	// 	sess, err := session.Get("session", c)
@@ -215,9 +224,17 @@ func main() {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(auth.JwtCustomClaims)
 		},
-		SigningKey: []byte(consts.JWT_SECRET),
+		SigningKey: consts.JWT_PRIVATE_KEY,
+		// Have to tell it to use the public key for verification
+		KeyFunc: func(token *jwt.Token) (interface{}, error) {
+			return consts.JWT_PUBLIC_KEY, nil
+		},
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
+
+	//
+	// Routes
+	//
 
 	e.POST("/signup", func(c echo.Context) error {
 		return authroutes.SignupRoute(c)
@@ -341,27 +358,66 @@ func main() {
 	//
 
 	moduleGroup := e.Group("/modules")
-	moduleGroup.Use(jwtMiddleWare)
-	moduleGroup.Use(JwtIsAccessTokenMiddleware)
+	//moduleGroup.Use(jwtMiddleWare)
+	//moduleGroup.Use(JwtIsAccessTokenMiddleware)
 
 	dnaGroup := moduleGroup.Group("/dna")
 
 	dnaGroup.POST("/:assembly", func(c echo.Context) error {
-		return modroutes.DNARoute(c)
+		return dnaroutes.DNARoute(c)
+	})
+
+	dnaGroup.POST("/assemblies", func(c echo.Context) error {
+		return dnaroutes.AssembliesRoute(c)
 	})
 
 	genesGroup := moduleGroup.Group("/genes")
 
+	genesGroup.POST("/assemblies", func(c echo.Context) error {
+		return generoutes.AssembliesRoute(c)
+	})
+
 	genesGroup.POST("/within/:assembly", func(c echo.Context) error {
-		return modroutes.WithinGenesRoute(c)
+		return generoutes.WithinGenesRoute(c)
 	})
 
 	genesGroup.POST("/closest/:assembly", func(c echo.Context) error {
-		return modroutes.ClosestGeneRoute(c)
+		return generoutes.ClosestGeneRoute(c)
 	})
 
-	genesGroup.POST("/annotation/:assembly", func(c echo.Context) error {
-		return modroutes.AnnotationRoute(c)
+	genesGroup.POST("/annotate/:assembly", func(c echo.Context) error {
+		return generoutes.AnnotateRoute(c)
+	})
+
+	mutationsGroup := moduleGroup.Group("/mutations",
+		jwtMiddleWare,
+		JwtIsAccessTokenMiddleware,
+		NewJwtPermissionsMiddleware("GetMutations"))
+
+	mutationsGroup.POST("/databases", func(c echo.Context) error {
+		return mutationroutes.MutationDatabasesRoute(c)
+	})
+
+	mutationsGroup.POST("/:assembly/:name", func(c echo.Context) error {
+		return mutationroutes.MutationsRoute(c)
+	})
+
+	mutationsGroup.POST("/maf", func(c echo.Context) error {
+		return mutationroutes.PileupRoute(c)
+	})
+
+	mutationsGroup.POST("/pileup", func(c echo.Context) error {
+		return mutationroutes.PileupRoute(c)
+	})
+
+	geneConvGroup := moduleGroup.Group("/geneconv")
+
+	geneConvGroup.POST("/convert/:from/:to", func(c echo.Context) error {
+		return geneconvroutes.ConvertRoute(c)
+	})
+
+	geneConvGroup.POST("/:species", func(c echo.Context) error {
+		return geneconvroutes.GeneInfoRoute(c, "")
 	})
 
 	//

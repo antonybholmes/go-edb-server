@@ -44,13 +44,19 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, consts.JWT_SECRET)
+		permissions, err := userdb.PermissionList(authUser)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := auth.AccessToken(c, authUser.Uuid, consts.JWT_SECRET)
+		accessToken, err := auth.AccessToken(c, authUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -68,7 +74,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 
 	return validator.LoadAuthUserFromId().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
-		passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
+		passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -108,7 +114,13 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, consts.JWT_SECRET)
+		permissions, err := userdb.PermissionList(validator.AuthUser) //PublicUserRolePermissionsList(validator.AuthUser)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()

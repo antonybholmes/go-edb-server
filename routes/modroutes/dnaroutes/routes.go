@@ -1,4 +1,4 @@
-package modroutes
+package dnaroutes
 
 import (
 	"fmt"
@@ -18,12 +18,12 @@ const DEFAULT_START uint = 100000 //187728170
 const DEFAULT_END uint = 100100   //187752257
 
 type ReqLocs struct {
-	Locations []dna.Location `json:"locations"`
+	Locations []string `json:"locations"`
 }
 
 type DNA struct {
 	Location *dna.Location `json:"location"`
-	DNA      string        `json:"dna"`
+	Seq      string        `json:"seq"`
 }
 
 type DNAResp struct {
@@ -85,17 +85,23 @@ func ParseLocation(c echo.Context) (*dna.Location, error) {
 	return loc, nil
 }
 
-func ParseLocationsFromPost(c echo.Context) ([]dna.Location, error) {
-	var err error
+func ParseLocationsFromPost(c echo.Context) ([]*dna.Location, error) {
+
 	locs := new(ReqLocs)
 
-	err = c.Bind(locs)
+	err := c.Bind(locs)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return locs.Locations, nil
+	ret, err := dna.ParseLocations(locs.Locations)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }
 
 func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
@@ -148,9 +154,11 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 	return &DNAQuery{Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
 }
 
-func DNARoute(c echo.Context) error {
-	c.Logger().Debugf("%s cake")
+func AssembliesRoute(c echo.Context) error {
+	return routes.MakeDataResp(c, "", dnadbcache.GetInstance().List())
+}
 
+func DNARoute(c echo.Context) error {
 	locations, err := ParseLocationsFromPost(c)
 
 	if err != nil {
@@ -165,22 +173,22 @@ func DNARoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	dnadb, err := dnadbcache.Db(assembly, query.Format, query.RepeatMask)
+	dnadb, err := dnadbcache.Db(assembly)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	seqs := []*DNA{}
+	seqs := make([]*DNA, 0, len(locations))
 
 	for _, location := range locations {
-		dna, err := dnadb.DNA(&location, query.Rev, query.Comp)
+		seq, err := dnadb.DNA(location, query.Format, query.RepeatMask, query.Rev, query.Comp)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		seqs = append(seqs, &DNA{Location: &location, DNA: dna})
+		seqs = append(seqs, &DNA{Location: location, Seq: seq})
 	}
 
 	return routes.MakeDataResp(c, "", &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})

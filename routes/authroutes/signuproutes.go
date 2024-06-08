@@ -19,15 +19,13 @@ func SignupRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.CreateUser(req)
-
-	log.Debug().Msgf("%s ss", err)
+	authUser, err := userdb.CreateStandardUser(req)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_SECRET)
+	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_PRIVATE_KEY)
 
 	log.Debug().Msgf("%s", otpJwt)
 

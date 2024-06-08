@@ -28,7 +28,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, authUser, newEmail, consts.JWT_SECRET)
+		otpJwt, err := auth.ChangeEmailToken(c, authUser, newEmail, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)
