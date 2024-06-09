@@ -20,6 +20,8 @@ replace github.com/antonybholmes/go-mailer => ../go-mailer
 
 replace github.com/antonybholmes/go-gene-conversion => ../go-gene-conversion
 
+replace github.com/antonybholmes/go-motiftogene => ../go-motiftogene
+
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240605205725-809f357d0cf3
 	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
@@ -47,6 +49,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-gene-conversion v0.0.0-20240605205720-0d576b511f46
+	github.com/antonybholmes/go-motiftogene v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-mutations v0.0.0-20240605205723-b0e8c06972d4
 )
 

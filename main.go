@@ -17,10 +17,12 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/geneconvroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/motiftogeneroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
 	"github.com/antonybholmes/go-gene-conversion/geneconvdb"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
+	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
@@ -69,6 +71,8 @@ func initCache() {
 	mutationdbcache.InitCache("data/modules/mutations")
 
 	geneconvdb.InitCache("data/modules/geneconv/geneconv.db")
+
+	motiftogenedb.InitCache("data/modules/motiftogene/motiftogene.json")
 }
 
 func main() {
@@ -418,6 +422,12 @@ func main() {
 
 	geneConvGroup.POST("/:species", func(c echo.Context) error {
 		return geneconvroutes.GeneInfoRoute(c, "")
+	})
+
+	motifToGeneGroup := moduleGroup.Group("/motiftogene")
+
+	motifToGeneGroup.POST("/convert", func(c echo.Context) error {
+		return motiftogeneroutes.ConvertRoute(c)
 	})
 
 	//

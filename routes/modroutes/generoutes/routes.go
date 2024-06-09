@@ -29,7 +29,7 @@ type GeneQuery struct {
 	Assembly string
 }
 
-type GenesResponse struct {
+type GenesRes struct {
 	Genes []*genes.GenomicFeatures `json:"genes"`
 }
 
