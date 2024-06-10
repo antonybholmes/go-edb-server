@@ -77,6 +77,7 @@ func ConvertRoute(c echo.Context) error {
 	var ret geneconv.ConversionResults
 
 	fromSpecies = strings.ToLower(fromSpecies)
+	//toSpecies = strings.ToLower(toSpecies)
 
 	if fromSpecies == geneconv.HUMAN_SPECIES {
 		ret.From = geneconv.HUMAN_TAX
