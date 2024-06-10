@@ -72,7 +72,7 @@ func initCache() {
 
 	geneconvdb.InitCache("data/modules/geneconv/geneconv.db")
 
-	motiftogenedb.InitCache("data/modules/motiftogene/motiftogene.json")
+	motiftogenedb.InitCache("data/modules/motiftogene/motiftogene.db")
 }
 
 func main() {
