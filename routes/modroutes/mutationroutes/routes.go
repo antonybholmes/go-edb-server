@@ -171,10 +171,10 @@ func MafRoute(c echo.Context) error {
 }
 
 type PileupResp struct {
-	Location  *dna.Location               `json:"location"`
-	Info      []*mutations.MutationDBInfo `json:"info"`
-	Samples   int                         `json:"samples"`
-	Mutations [][]*mutations.Mutation     `json:"mutations"`
+	Location *dna.Location `json:"location"`
+	//Info      []*mutations.MutationDBInfo `json:"info"`
+	Samples   int                     `json:"samples"`
+	Mutations [][]*mutations.Mutation `json:"mutations"`
 }
 
 func PileupRoute(c echo.Context) error {
@@ -195,14 +195,14 @@ func PileupRoute(c echo.Context) error {
 
 		ret := PileupResp{Location: location,
 			// one metadata file for each database requested
-			Info:      make([]*mutations.MutationDBInfo, len(params.Databases)),
+			//Info:      make([]*mutations.MutationDBInfo, len(params.Databases)),
 			Mutations: make([][]*mutations.Mutation, location.Len())}
 
 		for i := range location.Len() {
 			ret.Mutations[i] = make([]*mutations.Mutation, 0, 10)
 		}
 
-		for dbi, id := range params.Databases {
+		for _, id := range params.Databases {
 			db, err := mutationdbcache.MutationDBFromId(id)
 
 			if err != nil {
@@ -222,14 +222,14 @@ func PileupRoute(c echo.Context) error {
 				ret.Mutations[ci] = append(ret.Mutations[ci], pileup.Mutations[ci]...)
 			}
 
-			ret.Info[dbi] = db.Info
+			//ret.Info[dbi] = db.Info
 		}
 
 		// sort each pileup
 		for ci := range location.Len() {
 			sort.Slice(ret.Mutations[ci], func(i, j int) bool {
 				// sort by variant type and then tumor
-				if ret.Mutations[ci][i].VariantType < ret.Mutations[ci][j].VariantType {
+				if ret.Mutations[ci][i].Type < ret.Mutations[ci][j].Type {
 					return true
 				}
 
