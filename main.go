@@ -393,10 +393,12 @@ func main() {
 		return generoutes.AnnotateRoute(c)
 	})
 
-	mutationsGroup := moduleGroup.Group("/mutations",
-		jwtMiddleWare,
-		JwtIsAccessTokenMiddleware,
-		NewJwtPermissionsMiddleware("GetMutations"))
+	// mutationsGroup := moduleGroup.Group("/mutations",
+	// 	jwtMiddleWare,
+	// 	JwtIsAccessTokenMiddleware,
+	// 	NewJwtPermissionsMiddleware("GetMutations"))
+
+	mutationsGroup := moduleGroup.Group("/mutations")
 
 	mutationsGroup.POST("/databases", func(c echo.Context) error {
 		return mutationroutes.MutationDatabasesRoute(c)
