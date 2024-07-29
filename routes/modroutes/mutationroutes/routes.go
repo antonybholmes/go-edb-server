@@ -82,10 +82,10 @@ func MutationsRoute(c echo.Context) error {
 }
 
 type MafResp struct {
-	Location  *dna.Location               `json:"location"`
-	Info      []*mutations.MutationDBInfo `json:"info"`
-	Samples   int                         `json:"samples"`
-	Mutations [][]string                  `json:"mutations"`
+	Location *dna.Location `json:"location"`
+	//Info      []*mutations.MutationDB `json:"info"`
+	Samples   int        `json:"samples"`
+	Mutations [][]string `json:"mutations"`
 }
 
 func MafRoute(c echo.Context) error {
@@ -103,7 +103,7 @@ func MafRoute(c echo.Context) error {
 		//name := c.Param("name")
 
 		ret := MafResp{Location: location,
-			Info:      make([]*mutations.MutationDBInfo, len(params.Databases)),
+			//Info:      make([]*mutations.MutationDBInfo, len(params.Databases)),
 			Mutations: make([][]string, location.Len())}
 
 		for i := range location.Len() {
@@ -116,7 +116,7 @@ func MafRoute(c echo.Context) error {
 			sampleMap[i] = make(map[string]struct{})
 		}
 
-		for dbi, id := range params.Databases {
+		for _, id := range params.Databases {
 			db, err := mutationdbcache.MutationDBFromId(id)
 
 			if err != nil {
@@ -130,7 +130,7 @@ func MafRoute(c echo.Context) error {
 			}
 
 			// sum the total number of samples involved
-			ret.Samples += len(db.Info.Samples)
+			ret.Samples += len(db.Samples)
 
 			for _, mutation := range results.Mutations {
 				offset := mutation.Start - location.Start
@@ -144,7 +144,7 @@ func MafRoute(c echo.Context) error {
 
 			}
 
-			ret.Info[dbi] = db.Info
+			//ret.Info[dbi] = db.Info
 		}
 
 		// sort each pileup
@@ -216,7 +216,7 @@ func PileupRoute(c echo.Context) error {
 			}
 
 			// sum the total number of samples involved
-			ret.Samples += len(db.Info.Samples)
+			ret.Samples += len(db.Samples)
 
 			for ci := range location.Len() {
 				ret.Mutations[ci] = append(ret.Mutations[ci], pileup.Mutations[ci]...)
