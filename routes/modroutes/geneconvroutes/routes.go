@@ -7,6 +7,7 @@ import (
 	geneconv "github.com/antonybholmes/go-gene-conversion"
 	geneconvdb "github.com/antonybholmes/go-gene-conversion/geneconvdb"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type ReqParams struct {
@@ -63,10 +64,12 @@ func ConvertRoute(c echo.Context) error {
 	fromSpecies := c.Param("from")
 	toSpecies := c.Param("to")
 
+	log.Debug().Msgf("%s %s", fromSpecies, toSpecies)
+
 	// if there is no conversion, just use the regular gene info
-	if fromSpecies == toSpecies {
-		return GeneInfoRoute(c, fromSpecies)
-	}
+	// if fromSpecies == toSpecies {
+	// 	return GeneInfoRoute(c, fromSpecies)
+	// }
 
 	params, err := ParseParamsFromPost(c)
 
