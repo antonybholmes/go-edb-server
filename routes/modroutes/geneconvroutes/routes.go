@@ -67,9 +67,9 @@ func ConvertRoute(c echo.Context) error {
 	log.Debug().Msgf("%s %s", fromSpecies, toSpecies)
 
 	// if there is no conversion, just use the regular gene info
-	if fromSpecies == toSpecies {
-		return GeneInfoRoute(c, fromSpecies)
-	}
+	// if fromSpecies == toSpecies {
+	// 	return GeneInfoRoute(c, fromSpecies)
+	// }
 
 	params, err := ParseParamsFromPost(c)
 
