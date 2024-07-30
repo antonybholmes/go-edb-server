@@ -18,9 +18,11 @@ replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mailer => ../go-mailer
 
-replace github.com/antonybholmes/go-gene-conversion => ../go-gene-conversion
+replace github.com/antonybholmes/go-gene-conv => ../go-gene-conv
 
 replace github.com/antonybholmes/go-motiftogene => ../go-motiftogene
+
+replace github.com/antonybholmes/go-pathway => ../go-pathway
 
 require (
 	github.com/antonybholmes/go-dna v0.0.0-20240605222456-64515d092f41
@@ -48,9 +50,10 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-gene-conversion v0.0.0-20240610023222-10ce787a80f6
+	github.com/antonybholmes/go-gene-conv v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-motiftogene v0.0.0-20240610174236-4ad4f3210a63
 	github.com/antonybholmes/go-mutations v0.0.0-20240610174235-2b10874865b4
+	github.com/antonybholmes/go-pathway v0.0.0-00010101000000-000000000000
 )
 
 require (

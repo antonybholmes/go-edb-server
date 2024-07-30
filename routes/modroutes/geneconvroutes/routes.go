@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-edb-api/routes"
-	geneconv "github.com/antonybholmes/go-gene-conversion"
-	geneconvdb "github.com/antonybholmes/go-gene-conversion/geneconvdb"
+	geneconv "github.com/antonybholmes/go-gene-conv"
+	geneconvdbcache "github.com/antonybholmes/go-gene-conv/geneconvdbcache"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -88,7 +88,7 @@ func ConvertRoute(c echo.Context) error {
 	for _, search := range params.Searches {
 
 		// Don't care about the errors, just plug empty list into failures
-		conversion, _ := geneconvdb.Convert(search, fromSpecies, toSpecies, params.Exact)
+		conversion, _ := geneconvdbcache.Convert(search, fromSpecies, toSpecies, params.Exact)
 
 		ret.Conversions = append(ret.Conversions, conversion)
 	}

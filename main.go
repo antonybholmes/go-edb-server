@@ -19,11 +19,12 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/motiftogeneroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
-	"github.com/antonybholmes/go-gene-conversion/geneconvdb"
+	"github.com/antonybholmes/go-gene-conv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
+	"github.com/antonybholmes/go-pathway/pathwaydbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -70,9 +71,11 @@ func initCache() {
 
 	mutationdbcache.InitCache("data/modules/mutations")
 
-	geneconvdb.InitCache("data/modules/geneconv/geneconv.db")
+	geneconvdbcache.InitCache("data/modules/geneconv/geneconv.db")
 
 	motiftogenedb.InitCache("data/modules/motiftogene/motiftogene.db")
+
+	pathwaydbcache.InitCache("data/modules/pathways/")
 }
 
 func main() {
