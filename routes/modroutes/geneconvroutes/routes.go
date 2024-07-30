@@ -30,35 +30,28 @@ func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 
 // If species is the empty string, species will be determined
 // from the url parameters
-func GeneInfoRoute(c echo.Context, species string) error {
-	if species == "" {
-		species = c.Param("species")
-	}
+// func GeneInfoRoute(c echo.Context, species string) error {
+// 	if species == "" {
+// 		species = c.Param("species")
+// 	}
 
-	// default to human if not specified
-	// if species == "" {
-	// 	species = geneconv.HUMAN_SPECIES
-	// }
+// 	params, err := ParseParamsFromPost(c)
 
-	params, err := ParseParamsFromPost(c)
+// 	if err != nil {
+// 		return routes.ErrorReq(err)
+// 	}
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+// 	ret := make([]geneconv.Conversion, len(params.Searches))
 
-	ret := make([]geneconv.Conversion, len(params.Searches))
+// 	for ni, search := range params.Searches {
 
-	for ni, search := range params.Searches {
+// 		genes, _ := geneconvdb.GeneInfo(search, species, params.Exact)
 
-		genes, _ := geneconvdb.GeneInfo(search, species, params.Exact)
+// 		ret[ni] = geneconv.Conversion{Search: search, Genes: genes}
+// 	}
 
-		ret[ni] = geneconv.Conversion{Search: search, Genes: genes}
-	}
-
-	return routes.MakeDataResp(c, "", ret)
-
-	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
-}
+// 	return routes.MakeDataResp(c, "", ret)
+// }
 
 func ConvertRoute(c echo.Context) error {
 	fromSpecies := c.Param("from")
