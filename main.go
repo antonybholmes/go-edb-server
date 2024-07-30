@@ -422,9 +422,9 @@ func main() {
 		return geneconvroutes.ConvertRoute(c)
 	})
 
-	geneConvGroup.POST("/:species", func(c echo.Context) error {
-		return geneconvroutes.GeneInfoRoute(c, "")
-	})
+	// geneConvGroup.POST("/:species", func(c echo.Context) error {
+	// 	return geneconvroutes.GeneInfoRoute(c, "")
+	// })
 
 	motifToGeneGroup := moduleGroup.Group("/motiftogene")
 
