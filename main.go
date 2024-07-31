@@ -19,7 +19,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/motiftogeneroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
-	"github.com/antonybholmes/go-gene-conv/geneconvdbcache"
+	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"

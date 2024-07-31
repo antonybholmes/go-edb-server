@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-edb-api/routes"
-	geneconv "github.com/antonybholmes/go-gene-conv"
-	geneconvdbcache "github.com/antonybholmes/go-gene-conv/geneconvdbcache"
+	geneconv "github.com/antonybholmes/go-geneconv"
+	geneconvdbcache "github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
