@@ -1,6 +1,6 @@
 module github.com/antonybholmes/go-edb-api
 
-go 1.22.2
+go 1.22.5
 
 replace github.com/antonybholmes/go-auth => ../go-auth
 
@@ -56,6 +56,8 @@ require (
 	github.com/antonybholmes/go-mutations v0.0.0-20240729221756-c178efc34ef4
 	github.com/antonybholmes/go-pathway v0.0.0-20240730215511-6e8c2752be79
 )
+
+require gopkg.in/yaml.v2 v2.4.0 // indirect
 
 require (
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4

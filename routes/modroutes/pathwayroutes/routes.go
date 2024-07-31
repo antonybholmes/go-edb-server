@@ -1,8 +1,6 @@
 package pathwayroutes
 
 import (
-	"strings"
-
 	"github.com/antonybholmes/go-edb-api/routes"
 	geneconv "github.com/antonybholmes/go-geneconv"
 	"github.com/labstack/echo/v4"
@@ -64,17 +62,6 @@ func PathwayRoute(c echo.Context) error {
 	}
 
 	var ret geneconv.ConversionResults
-
-	fromSpecies = strings.ToLower(fromSpecies)
-	//toSpecies = strings.ToLower(toSpecies)
-
-	if fromSpecies == geneconv.HUMAN_SPECIES {
-		ret.From = geneconv.HUMAN_TAX
-		ret.To = geneconv.MOUSE_TAX
-	} else {
-		ret.From = geneconv.MOUSE_TAX
-		ret.To = geneconv.HUMAN_TAX
-	}
 
 	//ret.Conversions = make([]geneconv.Conversion, len(params.Searches))
 
