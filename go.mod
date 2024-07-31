@@ -12,7 +12,7 @@ replace github.com/antonybholmes/go-microarray => ../go-microarray
 
 replace github.com/antonybholmes/go-mutations => ../go-mutations
 
-replace github.com/antonybholmes/go-math => ../go-math
+replace github.com/antonybholmes/go-basemath => ../go-basemath
 
 replace github.com/antonybholmes/go-sys => ../go-sys
 
@@ -25,8 +25,8 @@ replace github.com/antonybholmes/go-motiftogene => ../go-motiftogene
 replace github.com/antonybholmes/go-pathway => ../go-pathway
 
 require (
+	github.com/antonybholmes/go-basemath v0.0.0-20240215163921-12bb7e52185c // indirect
 	github.com/antonybholmes/go-dna v0.0.0-20240726180729-b94c3b7b50fa
-	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 )
@@ -51,6 +51,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-geneconv v0.0.0-20240730163808-1df20b6d110b
+	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
 	github.com/antonybholmes/go-motiftogene v0.0.0-20240610174236-4ad4f3210a63
 	github.com/antonybholmes/go-mutations v0.0.0-20240729221756-c178efc34ef4
 	github.com/antonybholmes/go-pathway v0.0.0-20240730215511-6e8c2752be79
