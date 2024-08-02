@@ -63,7 +63,7 @@ func TokenInfoRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	return routes.MakeDataResp(c, "", &routes.JwtInfo{
+	return routes.MakeDataPrettyResp(c, "", &routes.JwtInfo{
 		Uuid: claims.Uuid,
 		Type: claims.Type, //.TokenTypeString(claims.Type),
 		//IpAddr:  claims.IpAddr,
@@ -83,7 +83,7 @@ func NewAccessTokenRoute(c echo.Context) error {
 			return routes.ErrorReq("error creating access token")
 		}
 
-		return routes.MakeDataResp(c, "", &routes.AccessTokenResp{AccessToken: t})
+		return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
 	})
 
 }

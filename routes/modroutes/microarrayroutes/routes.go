@@ -34,6 +34,6 @@ func MicroarrayExpressionRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		return routes.MakeDataResp(c, "", data)
+		return routes.MakeDataPrettyResp(c, "", data)
 	})
 }

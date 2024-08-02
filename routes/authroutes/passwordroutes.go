@@ -10,7 +10,7 @@ import (
 )
 
 func PasswordUpdatedResp(c echo.Context) error {
-	return routes.MakeOkResp(c, "password updated")
+	return routes.MakeOkPrettyResp(c, "password updated")
 }
 
 // Start passwordless login by sending an email
@@ -44,7 +44,7 @@ func SendResetPasswordFromUsernameRoute(c echo.Context) error {
 		//	return routes.ErrorReq(err)
 		//}
 
-		return routes.MakeOkResp(c, "check your email for a password reset link")
+		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
 	})
 }
 

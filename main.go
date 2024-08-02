@@ -103,6 +103,8 @@ func main() {
 
 	e := echo.New()
 
+	e.Use(middleware.BodyLimit("2M"))
+
 	//e.Use(middleware.Logger())
 
 	e.Use(session.Middleware(store))

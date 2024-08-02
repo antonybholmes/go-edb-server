@@ -43,7 +43,7 @@ func ParseParamsFromPost(c echo.Context) (*MutationParams, error) {
 
 func MutationDatabasesRoute(c echo.Context) error {
 
-	return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
+	return routes.MakeDataPrettyResp(c, "", mutationdbcache.GetInstance().List())
 }
 
 func MutationsRoute(c echo.Context) error {
@@ -75,7 +75,7 @@ func MutationsRoute(c echo.Context) error {
 			ret[i] = mutations
 		}
 
-		return routes.MakeDataResp(c, "", ret)
+		return routes.MakeDataPrettyResp(c, "", ret)
 	})
 
 	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
@@ -164,7 +164,7 @@ func MafRoute(c echo.Context) error {
 
 		}
 
-		return routes.MakeDataResp(c, "", ret)
+		return routes.MakeDataPrettyResp(c, "", ret)
 	})
 
 	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
@@ -237,7 +237,7 @@ func PileupRoute(c echo.Context) error {
 			})
 		}
 
-		return routes.MakeDataResp(c, "", ret)
+		return routes.MakeDataPrettyResp(c, "", ret)
 	})
 
 	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())

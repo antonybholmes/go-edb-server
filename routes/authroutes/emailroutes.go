@@ -13,7 +13,7 @@ import (
 )
 
 func EmailUpdatedResp(c echo.Context) error {
-	return routes.MakeOkResp(c, "email updated")
+	return routes.MakeOkPrettyResp(c, "email updated")
 }
 
 // Start passwordless login by sending an email
@@ -54,7 +54,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 		//	return routes.ErrorReq(err)
 		//}
 
-		return routes.MakeOkResp(c, "check your email for a change email link")
+		return routes.MakeOkPrettyResp(c, "check your email for a change email link")
 	})
 }
 

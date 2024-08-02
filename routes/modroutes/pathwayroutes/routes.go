@@ -59,7 +59,7 @@ func DatasetsRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	return routes.MakeDataResp(c, "", datasets)
+	return routes.MakeDataPrettyResp(c, "", datasets)
 
 }
 
@@ -92,7 +92,7 @@ func PathwayTestRoute(c echo.Context) error {
 	// 	ret.Conversions = append(ret.Conversions, conversion)
 	// }
 
-	return routes.MakeDataResp(c, "", tests)
+	return routes.MakeDataResp(c, "", tests, false)
 
-	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
+	// return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
 }

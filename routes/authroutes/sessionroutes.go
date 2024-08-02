@@ -125,7 +125,7 @@ func SessionSignOutRoute(c echo.Context) error {
 
 	sess.Save(c.Request(), c.Response())
 
-	return routes.MakeOkResp(c, "user was signed out")
+	return routes.MakeOkPrettyResp(c, "user was signed out")
 }
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
@@ -152,7 +152,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 		return routes.TokenErrorReq()
 	}
 
-	return routes.MakeDataResp(c, "", &routes.AccessTokenResp{AccessToken: t})
+	return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
 }
 
 func SessionUserInfoRoute(c echo.Context) error {
@@ -165,7 +165,7 @@ func SessionUserInfoRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	return routes.MakeDataResp(c, "", *authUser)
+	return routes.MakeDataPrettyResp(c, "", *authUser)
 }
 
 func SessionUpdateUserInfoRoute(c echo.Context) error {
@@ -295,7 +295,7 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 		//	return routes.ErrorReq(err)
 		//}
 
-		return routes.MakeOkResp(c, "check your email for a password reset link")
+		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
 	})
 }
 
@@ -345,6 +345,6 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 		//	return routes.ErrorReq(err)
 		//}
 
-		return routes.MakeOkResp(c, "check your email for a change email link")
+		return routes.MakeOkPrettyResp(c, "check your email for a change email link")
 	})
 }

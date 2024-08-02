@@ -13,7 +13,7 @@ type NameReq struct {
 }
 
 func AccountUpdatedResp(c echo.Context) error {
-	return routes.MakeOkResp(c, "account updated")
+	return routes.MakeOkPrettyResp(c, "account updated")
 }
 
 func UpdateAccountRoute(c echo.Context) error {
@@ -77,7 +77,7 @@ func UserInfoRoute(c echo.Context) error {
 		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {
 
-			return routes.MakeDataResp(c, "", validator.AuthUser)
+			return routes.MakeDataPrettyResp(c, "", validator.AuthUser)
 		})
 }
 

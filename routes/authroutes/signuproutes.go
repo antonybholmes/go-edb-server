@@ -52,7 +52,7 @@ func SignupRoute(c echo.Context) error {
 	//	return routes.ErrorReq(err)
 	//}
 
-	return routes.MakeOkResp(c, "check your email for a verification link") //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkPrettyResp(c, "check your email for a verification link") //c.JSON(http.StatusOK, JWTResp{t})
 }
 
 func EmailAddressWasVerifiedRoute(c echo.Context) error {
@@ -66,13 +66,13 @@ func EmailAddressWasVerifiedRoute(c echo.Context) error {
 
 	// if verified, stop and just return true
 	if authUser.EmailVerified {
-		return routes.MakeOkResp(c, "")
+		return routes.MakeOkPrettyResp(c, "")
 	}
 
 	err = userdb.SetIsVerified(authUser.Uuid)
 
 	if err != nil {
-		return routes.MakeSuccessResp(c, "unable to verify user", false)
+		return routes.MakeSuccessPrettyResp(c, "unable to verify user", false)
 	}
 
 	file := "templates/email/verify/verified.html"
@@ -88,5 +88,5 @@ func EmailAddressWasVerifiedRoute(c echo.Context) error {
 	//	return routes.ErrorReq(err)
 	//}
 
-	return routes.MakeOkResp(c, "email address verified") //c.JSON(http.StatusOK, JWTResp{t})
+	return routes.MakeOkPrettyResp(c, "email address verified") //c.JSON(http.StatusOK, JWTResp{t})
 }
