@@ -5,7 +5,6 @@ import (
 	pathway "github.com/antonybholmes/go-pathway"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type ReqParams struct {
@@ -60,7 +59,6 @@ func DatasetsRoute(c echo.Context) error {
 	}
 
 	return routes.MakeDataPrettyResp(c, "", datasets)
-
 }
 
 func PathwayTestRoute(c echo.Context) error {
@@ -76,7 +74,6 @@ func PathwayTestRoute(c echo.Context) error {
 	tests, err := pathwaydbcache.Test(testPathway, params.Datasets)
 
 	if err != nil {
-		log.Debug().Msgf("%s", err)
 		return routes.ErrorReq(err)
 	}
 
