@@ -19,6 +19,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/motiftogeneroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/pathwayroutes"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
@@ -75,7 +76,7 @@ func initCache() {
 
 	motiftogenedb.InitCache("data/modules/motiftogene/motiftogene.db")
 
-	pathwaydbcache.InitCache("data/modules/pathways/")
+	pathwaydbcache.InitCache("data/modules/pathway/pathway.db")
 }
 
 func main() {
@@ -433,6 +434,16 @@ func main() {
 
 	motifToGeneGroup.POST("/convert", func(c echo.Context) error {
 		return motiftogeneroutes.ConvertRoute(c)
+	})
+
+	pathwayGroup := moduleGroup.Group("/pathway")
+
+	pathwayGroup.POST("/datasets", func(c echo.Context) error {
+		return pathwayroutes.DatasetsRoute(c)
+	})
+
+	pathwayGroup.POST("/test", func(c echo.Context) error {
+		return pathwayroutes.PathwayTestRoute(c)
 	})
 
 	//
