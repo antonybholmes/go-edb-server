@@ -25,7 +25,7 @@ replace github.com/antonybholmes/go-motiftogene => ../go-motiftogene
 replace github.com/antonybholmes/go-pathway => ../go-pathway
 
 require (
-	github.com/antonybholmes/go-basemath v0.0.0-20240215163921-12bb7e52185c // indirect
+	github.com/antonybholmes/go-basemath v0.0.0-20240802221548-7773050a8f2f // indirect
 	github.com/antonybholmes/go-dna v0.0.0-20240726180729-b94c3b7b50fa
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
@@ -42,18 +42,18 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240727060857-33c837ac9768
-	github.com/antonybholmes/go-sys v0.0.0-20240505052557-9f8864ac77aa
+	github.com/antonybholmes/go-mailer v0.0.0-20240731184014-69982846cd1f
+	github.com/antonybholmes/go-sys v0.0.0-20240801224521-3bed2c519a83
 	github.com/gorilla/sessions v1.3.0
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
 
 require (
-	github.com/antonybholmes/go-geneconv v0.0.0-20240730163808-1df20b6d110b
-	github.com/antonybholmes/go-math v0.0.0-20240215163921-12bb7e52185c
+	github.com/antonybholmes/go-geneconv v0.0.0-20240802180141-c71561f5f49a
+	github.com/antonybholmes/go-math v0.0.0-20240802221548-7773050a8f2f
 	github.com/antonybholmes/go-motiftogene v0.0.0-20240610174236-4ad4f3210a63
-	github.com/antonybholmes/go-mutations v0.0.0-20240729221756-c178efc34ef4
+	github.com/antonybholmes/go-mutations v0.0.0-20240802180144-af00d02577c8
 	github.com/antonybholmes/go-pathway v0.0.0-20240730215511-6e8c2752be79
 )
 
@@ -74,7 +74,7 @@ require (
 	github.com/xyproto/randomstring v1.0.5 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/time v0.6.0 // indirect
 )

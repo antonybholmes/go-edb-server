@@ -13,7 +13,7 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-genes"
 	"github.com/antonybholmes/go-genes/genedbcache"
-	"github.com/antonybholmes/go-math"
+	basemath "github.com/antonybholmes/go-math"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -155,7 +155,7 @@ func AnnotateRoute(c echo.Context) error {
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
-	locations = locations[0:math.IntMin(len(locations), MAX_ANNOTATIONS)]
+	locations = locations[0:basemath.IntMin(len(locations), MAX_ANNOTATIONS)]
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 

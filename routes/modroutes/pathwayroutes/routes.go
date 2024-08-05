@@ -61,7 +61,7 @@ func DatasetsRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", datasets)
 }
 
-func PathwayTestRoute(c echo.Context) error {
+func PathwayOverlapRoute(c echo.Context) error {
 
 	params, err := ParseParamsFromPost(c)
 
@@ -71,7 +71,7 @@ func PathwayTestRoute(c echo.Context) error {
 
 	testPathway := params.Geneset.ToPathway()
 
-	tests, err := pathwaydbcache.Test(testPathway, params.Datasets)
+	tests, err := pathwaydbcache.Overlap(testPathway, params.Datasets)
 
 	if err != nil {
 		return routes.ErrorReq(err)
