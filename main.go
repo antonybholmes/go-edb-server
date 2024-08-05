@@ -444,8 +444,8 @@ func main() {
 		return pathwayroutes.DatasetsRoute(c)
 	})
 
-	pathwayGroup.POST("/test", func(c echo.Context) error {
-		return pathwayroutes.PathwayTestRoute(c)
+	pathwayGroup.POST("/overlap", func(c echo.Context) error {
+		return pathwayroutes.PathwayOverlapRoute(c)
 	})
 
 	//
