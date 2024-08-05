@@ -57,7 +57,7 @@ func ConvertRoute(c echo.Context) error {
 		ret = append(ret, &c)
 	}
 
-	return routes.MakeDataResp(c, "", ret)
+	return routes.MakeDataPrettyResp(c, "", ret)
 
 	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
 }

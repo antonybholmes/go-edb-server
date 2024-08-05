@@ -10,11 +10,11 @@ import (
 )
 
 func UserSignedInResp(c echo.Context) error {
-	return routes.MakeOkResp(c, "user signed in")
+	return routes.MakeOkPrettyResp(c, "user signed in")
 }
 
 func PasswordlessEmailSentResp(c echo.Context) error {
-	return routes.MakeOkResp(c, "passwordless email sent")
+	return routes.MakeOkPrettyResp(c, "passwordless email sent")
 }
 
 func UsernamePasswordSignInRoute(c echo.Context) error {
@@ -62,7 +62,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.TokenErrorReq()
 		}
 
-		return routes.MakeDataResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
+		return routes.MakeDataPrettyResp(c, "", &routes.LoginResp{RefreshToken: refreshToken, AccessToken: accessToken})
 	})
 }
 
@@ -99,7 +99,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		//	return routes.ErrorReq(err)
 		//}
 
-		return routes.MakeOkResp(c, "check your email for a passwordless sign in link")
+		return routes.MakeOkPrettyResp(c, "check your email for a passwordless sign in link")
 	})
 }
 
@@ -126,6 +126,6 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.TokenErrorReq()
 		}
 
-		return routes.MakeDataResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
+		return routes.MakeDataPrettyResp(c, "", &routes.RefreshTokenResp{RefreshToken: t})
 	})
 }

@@ -61,7 +61,7 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 }
 
 func AssembliesRoute(c echo.Context) error {
-	return routes.MakeDataResp(c, "", genedbcache.GetInstance().List())
+	return routes.MakeDataPrettyResp(c, "", genedbcache.GetInstance().List())
 }
 
 func WithinGenesRoute(c echo.Context) error {
@@ -89,7 +89,7 @@ func WithinGenesRoute(c echo.Context) error {
 		data[li] = genes
 	}
 
-	return routes.MakeDataResp(c, "", &data)
+	return routes.MakeDataPrettyResp(c, "", &data)
 }
 
 func ClosestGeneRoute(c echo.Context) error {
@@ -119,7 +119,7 @@ func ClosestGeneRoute(c echo.Context) error {
 		data[li] = genes
 	}
 
-	return routes.MakeDataResp(c, "", &data)
+	return routes.MakeDataPrettyResp(c, "", &data)
 }
 
 func ParseTSSRegion(c echo.Context) *dna.TSSRegion {

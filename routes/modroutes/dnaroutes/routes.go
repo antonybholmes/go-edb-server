@@ -155,7 +155,7 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 }
 
 func AssembliesRoute(c echo.Context) error {
-	return routes.MakeDataResp(c, "", dnadbcache.GetInstance().List())
+	return routes.MakeDataPrettyResp(c, "", dnadbcache.GetInstance().List())
 }
 
 func DNARoute(c echo.Context) error {
@@ -191,5 +191,5 @@ func DNARoute(c echo.Context) error {
 		seqs = append(seqs, &DNA{Location: location, Seq: seq})
 	}
 
-	return routes.MakeDataResp(c, "", &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
+	return routes.MakeDataPrettyResp(c, "", &DNAResp{Assembly: assembly, Format: query.Format, IsRev: query.Rev, IsComplement: query.Comp, Seqs: seqs})
 }
