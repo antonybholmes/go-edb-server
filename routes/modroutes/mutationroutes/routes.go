@@ -115,20 +115,20 @@ func MafRoute(c echo.Context) error {
 		}
 
 		for _, id := range params.Datasets {
-			db, err := mutationdbcache.GetDataset(id)
+			dataset, err := mutationdbcache.GetDataset(id)
 
 			if err != nil {
 				return routes.ErrorReq(err)
 			}
 
-			results, err := db.Search(location)
+			results, err := dataset.Search(location)
 
 			if err != nil {
 				return routes.ErrorReq(err)
 			}
 
 			// sum the total number of samples involved
-			ret.Samples += len(db.Samples)
+			ret.Samples += len(dataset.Samples)
 
 			for _, mutation := range results.Mutations {
 				offset := mutation.Start - location.Start
