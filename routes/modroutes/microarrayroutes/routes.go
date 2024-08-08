@@ -9,15 +9,15 @@ import (
 
 func ParseSamplesFromPost(c echo.Context) (*microarray.MicroarraySamplesReq, error) {
 	var err error
-	locs := new(microarray.MicroarraySamplesReq)
+	var locs microarray.MicroarraySamplesReq
 
-	err = c.Bind(locs)
+	err = c.Bind(&locs)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return locs, nil
+	return &locs, nil
 }
 
 func MicroarrayExpressionRoute(c echo.Context) error {

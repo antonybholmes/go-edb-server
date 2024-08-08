@@ -202,8 +202,8 @@ func MakeGeneTable(
 	data []*genes.GeneAnnotation,
 	ts *dna.TSSRegion,
 ) (string, error) {
-	buffer := new(bytes.Buffer)
-	wtr := csv.NewWriter(buffer)
+	var buffer bytes.Buffer
+	wtr := csv.NewWriter(&buffer)
 	wtr.Comma = '\t'
 
 	closestN := len(data[0].ClosestGenes)

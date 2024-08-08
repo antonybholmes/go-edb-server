@@ -19,15 +19,15 @@ type MotifToGeneRes struct {
 
 func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 
-	params := new(ReqParams)
+	var params ReqParams
 
-	err := c.Bind(params)
+	err := c.Bind(&params)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return params, nil
+	return &params, nil
 }
 
 func ConvertRoute(c echo.Context) error {
