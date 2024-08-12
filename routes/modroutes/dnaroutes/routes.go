@@ -87,9 +87,9 @@ func ParseLocation(c echo.Context) (*dna.Location, error) {
 
 func ParseLocationsFromPost(c echo.Context) ([]*dna.Location, error) {
 
-	locs := new(ReqLocs)
+	var locs ReqLocs
 
-	err := c.Bind(locs)
+	err := c.Bind(&locs)
 
 	if err != nil {
 		return nil, err

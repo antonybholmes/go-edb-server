@@ -232,7 +232,7 @@ func main() {
 	// Configure middleware with the custom claims type
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return new(auth.JwtCustomClaims)
+			return &auth.JwtCustomClaims{}
 		},
 		SigningKey: consts.JWT_PRIVATE_KEY,
 		// Have to tell it to use the public key for verification
@@ -406,8 +406,8 @@ func main() {
 
 	mutationsGroup := moduleGroup.Group("/mutations")
 
-	mutationsGroup.POST("/databases", func(c echo.Context) error {
-		return mutationroutes.MutationDatabasesRoute(c)
+	mutationsGroup.POST("/datasets", func(c echo.Context) error {
+		return mutationroutes.MutationDatasetsRoute(c)
 	})
 
 	mutationsGroup.POST("/:assembly/:name", func(c echo.Context) error {

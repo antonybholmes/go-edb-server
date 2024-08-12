@@ -11,15 +11,15 @@ import (
 
 func SignupRoute(c echo.Context) error {
 
-	req := new(auth.SignupReq)
+	var req auth.SignupReq
 
-	err := c.Bind(req)
+	err := c.Bind(&req)
 
 	if err != nil {
 		return err
 	}
 
-	authUser, err := userdb.CreateStandardUser(req)
+	authUser, err := userdb.CreateStandardUser(&req)
 
 	if err != nil {
 		return routes.ErrorReq(err)

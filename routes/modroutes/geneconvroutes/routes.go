@@ -17,15 +17,15 @@ type ReqParams struct {
 
 func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 
-	params := new(ReqParams)
+	var params ReqParams
 
-	err := c.Bind(params)
+	err := c.Bind(&params)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return params, nil
+	return &params, nil
 }
 
 // If species is the empty string, species will be determined

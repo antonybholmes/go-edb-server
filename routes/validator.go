@@ -58,14 +58,14 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 	}
 
 	if validator.Req == nil {
-		req := new(auth.LoginReq)
+		var req auth.LoginReq
 
-		err := validator.c.Bind(req)
+		err := validator.c.Bind(&req)
 
 		if err != nil {
 			validator.Err = ErrorReq(err)
 		} else {
-			validator.Req = req
+			validator.Req = &req
 		}
 	}
 
