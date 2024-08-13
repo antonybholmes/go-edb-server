@@ -406,7 +406,7 @@ func main() {
 
 	mutationsGroup := moduleGroup.Group("/mutations")
 
-	mutationsGroup.POST("/datasets", func(c echo.Context) error {
+	mutationsGroup.POST("/datasets/:assembly", func(c echo.Context) error {
 		return mutationroutes.MutationDatasetsRoute(c)
 	})
 
@@ -414,11 +414,11 @@ func main() {
 		return mutationroutes.MutationsRoute(c)
 	})
 
-	mutationsGroup.POST("/maf", func(c echo.Context) error {
+	mutationsGroup.POST("/maf/:assembly", func(c echo.Context) error {
 		return mutationroutes.PileupRoute(c)
 	})
 
-	mutationsGroup.POST("/pileup", func(c echo.Context) error {
+	mutationsGroup.POST("/pileup/:assembly", func(c echo.Context) error {
 		return mutationroutes.PileupRoute(c)
 	})
 
