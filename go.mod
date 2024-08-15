@@ -62,7 +62,7 @@ require (
 require gopkg.in/yaml.v2 v2.4.0 // indirect
 
 require (
-	github.com/antonybholmes/go-gex v0.0.0-00010101000000-000000000000
+	github.com/antonybholmes/go-gex v0.0.0-20240815020050-6ef7c9b7e484
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
