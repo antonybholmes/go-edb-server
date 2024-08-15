@@ -24,6 +24,8 @@ replace github.com/antonybholmes/go-motiftogene => ../go-motiftogene
 
 replace github.com/antonybholmes/go-pathway => ../go-pathway
 
+replace github.com/antonybholmes/go-gex => ../go-gex
+
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20240802221548-7773050a8f2f // indirect
 	github.com/antonybholmes/go-dna v0.0.0-20240809225302-2f1eeb96b7d9
@@ -60,6 +62,7 @@ require (
 require gopkg.in/yaml.v2 v2.4.0 // indirect
 
 require (
+	github.com/antonybholmes/go-gex v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect

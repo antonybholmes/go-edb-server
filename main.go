@@ -17,11 +17,13 @@ import (
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/geneconvroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/generoutes"
+	"github.com/antonybholmes/go-edb-api/routes/modroutes/gexroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/motiftogeneroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/mutationroutes"
 	"github.com/antonybholmes/go-edb-api/routes/modroutes/pathwayroutes"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
+	"github.com/antonybholmes/go-gex/gexdbcache"
 	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
@@ -69,6 +71,8 @@ func initCache() {
 	dnadbcache.InitCache("data/modules/dna")
 	genedbcache.InitCache("data/modules/genes")
 	//microarraydb.InitDB("data/microarray")
+
+	gexdbcache.InitCache("data/modules/gex")
 
 	mutationdbcache.InitCache("data/modules/mutations")
 
@@ -420,6 +424,20 @@ func main() {
 
 	mutationsGroup.POST("/pileup/:assembly", func(c echo.Context) error {
 		return mutationroutes.PileupRoute(c)
+	})
+
+	gexGroup := moduleGroup.Group("/gex")
+
+	gexGroup.POST("/types", func(c echo.Context) error {
+		return gexroutes.GexTypesRoute(c)
+	})
+
+	gexGroup.POST("/datasets", func(c echo.Context) error {
+		return gexroutes.GexDatasetsRoute(c)
+	})
+
+	gexGroup.POST("/exp", func(c echo.Context) error {
+		return gexroutes.GexGeneExpRoute(c)
 	})
 
 	geneConvGroup := moduleGroup.Group("/geneconv")
