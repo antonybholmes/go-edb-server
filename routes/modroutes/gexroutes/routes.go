@@ -1,18 +1,18 @@
 package gexroutes
 
 import (
-	"strconv"
-
 	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-gex"
 	"github.com/antonybholmes/go-gex/gexdbcache"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
 type GexParams struct {
-	GexType  int      `json:"gexType"`
-	Genes    []string `json:"genes"`
-	Datasets []int    `json:"datasets"`
+	Platform     *gex.Platform     `json:"platform"`
+	GexValueType *gex.GexValueType `json:"gexValueType"`
+	Genes        []string          `json:"genes"`
+	Datasets     []int             `json:"datasets"`
 }
 
 func ParseParamsFromPost(c echo.Context) (*GexParams, error) {
@@ -28,9 +28,9 @@ func ParseParamsFromPost(c echo.Context) (*GexParams, error) {
 	return &params, nil
 }
 
-func GexTypesRoute(c echo.Context) error {
+func PlaformsRoute(c echo.Context) error {
 
-	types, err := gexdbcache.GexTypes()
+	types, err := gexdbcache.Platforms()
 
 	if err != nil {
 		return err
@@ -39,15 +39,32 @@ func GexTypesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", types)
 }
 
-func GexDatasetsRoute(c echo.Context) error {
+func GexValueTypesRoute(c echo.Context) error {
 
-	gexType, err := strconv.Atoi(c.QueryParam("gex_type"))
+	params, err := ParseParamsFromPost(c)
 
 	if err != nil {
 		return err
 	}
 
-	datasets, err := gexdbcache.Datasets(gexType)
+	datasets, err := gexdbcache.GexValueTypes(params.Platform)
+
+	if err != nil {
+		return err
+	}
+
+	return routes.MakeDataPrettyResp(c, "", datasets)
+}
+
+func GexDatasetsRoute(c echo.Context) error {
+
+	params, err := ParseParamsFromPost(c)
+
+	if err != nil {
+		return err
+	}
+
+	datasets, err := gexdbcache.Datasets(params.Platform)
 
 	if err != nil {
 		return err
@@ -71,15 +88,23 @@ func GexGeneExpRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	if params.GexType == 2 {
+	if params.Platform.Id == 2 {
 		// microarray
-		return routes.ErrorReq("microarray not implemented")
-	} else {
-		// default to rna-seq
-		ret, err := gexdbcache.RNASeqValues(gexGenes, params.Datasets)
+
+		ret, err := gexdbcache.MicroarrayValues(gexGenes, params.Platform, params.GexValueType, params.Datasets)
 
 		if err != nil {
-			log.Debug().Msgf("e2 %s", err)
+
+			return routes.ErrorReq(err)
+		}
+
+		return routes.MakeDataPrettyResp(c, "", ret)
+	} else {
+		// default to rna-seq
+		ret, err := gexdbcache.RNASeqValues(gexGenes, params.Platform, params.GexValueType, params.Datasets)
+
+		if err != nil {
+
 			return routes.ErrorReq(err)
 		}
 

@@ -428,11 +428,15 @@ func main() {
 
 	gexGroup := moduleGroup.Group("/gex")
 
-	gexGroup.GET("/types", func(c echo.Context) error {
-		return gexroutes.GexTypesRoute(c)
+	gexGroup.GET("/platforms", func(c echo.Context) error {
+		return gexroutes.PlaformsRoute(c)
 	})
 
-	gexGroup.GET("/datasets", func(c echo.Context) error {
+	gexGroup.POST("/types", func(c echo.Context) error {
+		return gexroutes.GexValueTypesRoute(c)
+	})
+
+	gexGroup.POST("/datasets", func(c echo.Context) error {
 		return gexroutes.GexDatasetsRoute(c)
 	})
 
