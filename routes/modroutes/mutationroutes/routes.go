@@ -2,7 +2,7 @@ package mutationroutes
 
 import (
 	"github.com/antonybholmes/go-dna"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-mutations"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/labstack/echo/v4"

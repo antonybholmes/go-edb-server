@@ -1,7 +1,7 @@
 package motiftogeneroutes
 
 import (
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-motiftogene"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/labstack/echo/v4"

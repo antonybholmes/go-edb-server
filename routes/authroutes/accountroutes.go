@@ -3,7 +3,7 @@ package authroutes
 import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdb"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
 )

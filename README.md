@@ -1,2 +1,2 @@
-# go-edb-api
+# go-edb-server
 API server

@@ -1,4 +1,4 @@
-module github.com/antonybholmes/go-edb-api
+module github.com/antonybholmes/go-edb-server
 
 go 1.22.5
 

@@ -1,7 +1,7 @@
 package gexroutes
 
 import (
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-gex"
 	"github.com/antonybholmes/go-gex/gexdbcache"
 	"github.com/labstack/echo/v4"

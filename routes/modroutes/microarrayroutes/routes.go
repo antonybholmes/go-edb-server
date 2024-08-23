@@ -1,7 +1,7 @@
 package microarrayroutes
 
 import (
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-microarray"
 	"github.com/antonybholmes/go-microarray/microarraydb"
 	"github.com/labstack/echo/v4"

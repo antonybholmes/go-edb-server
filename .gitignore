@@ -28,7 +28,7 @@
 data
 logs
 deployments/*
-go-edb-api
+go-edb-server
 
 tests.sh
 

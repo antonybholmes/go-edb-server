@@ -1,7 +1,7 @@
 package pathwayroutes
 
 import (
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 	pathway "github.com/antonybholmes/go-pathway"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
 	"github.com/labstack/echo/v4"
