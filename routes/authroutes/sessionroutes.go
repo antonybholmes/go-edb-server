@@ -3,6 +3,7 @@ package authroutes
 import (
 	"net/http"
 	"net/mail"
+	"strings"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
@@ -85,7 +86,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		return routes.EmailNotVerifiedReq()
 	}
 
-	if !authUser.CanSignIn {
+	if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
 		return routes.UserNotAllowedToSignIn()
 	}
 
@@ -140,13 +141,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	permissions, err := userdbcache.PermissionList(authUser)
-
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
-
-	t, err := auth.AccessToken(c, uuid, permissions, consts.JWT_PRIVATE_KEY)
+	t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -244,7 +239,9 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		if !validator.AuthUser.CanSignIn {
+		authUser := validator.AuthUser
+
+		if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -255,7 +252,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 		}
 
 		sess.Options = SESSION_OPT_MAX_AGE_30D
-		sess.Values[routes.SESSION_UUID] = validator.AuthUser.Uuid
+		sess.Values[routes.SESSION_UUID] = authUser.Uuid
 
 		sess.Save(c.Request(), c.Response())
 

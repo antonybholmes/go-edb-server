@@ -1,6 +1,8 @@
 package authroutes
 
 import (
+	"strings"
+
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
@@ -34,7 +36,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.EmailNotVerifiedReq()
 		}
 
-		if !authUser.CanSignIn {
+		if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -44,19 +46,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		permissions, err := userdbcache.PermissionList(authUser)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
+		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := auth.AccessToken(c, authUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
+		accessToken, err := auth.AccessToken(c, authUser.Uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -110,17 +106,13 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		if !validator.AuthUser.CanSignIn {
+		authUser := validator.AuthUser
+
+		if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		roles, err := userdbcache.RoleList(validator.AuthUser) //PublicUserRolePermissionsList(validator.AuthUser)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, roles, consts.JWT_PRIVATE_KEY)
+		t, err := auth.RefreshToken(c, authUser.Uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()

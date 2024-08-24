@@ -155,7 +155,7 @@ func NewJwtPermissionsMiddleware(validPermissions ...string) echo.MiddlewareFunc
 			claims := user.Claims.(*auth.JwtCustomClaims)
 
 			// shortcut for admin, as we allow this for everything
-			if strings.Contains(claims.Scope, "Admin") {
+			if strings.Contains(claims.Scope, auth.PERMISSION_SU) || strings.Contains(claims.Scope, auth.PERMISSION_ADMIN) {
 				return next(c)
 			}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
+	"github.com/antonybholmes/go-sys"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -52,19 +53,10 @@ type InfoResp struct {
 var store *sqlitestore.SqliteStore
 
 func initCache() {
-	var err error
 
-	store, err = sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET))
+	store = sys.Must(sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET)))
 
-	if err != nil {
-		log.Fatal().Msgf("error opening %s", "./data/users.db")
-	}
-
-	err = userdbcache.InitDB("data/users.db")
-
-	if err != nil {
-		log.Fatal().Msgf("Error loading user db: %s", err)
-	}
+	userdbcache.InitCache("data/users.db")
 
 	mailer.InitMailer()
 
@@ -406,7 +398,7 @@ func main() {
 	// mutationsGroup := moduleGroup.Group("/mutations",
 	// 	jwtMiddleWare,
 	// 	JwtIsAccessTokenMiddleware,
-	// 	NewJwtPermissionsMiddleware("GetMutations"))
+	// 	NewJwtPermissionsMiddleware("rdf"))
 
 	mutationsGroup := moduleGroup.Group("/mutations")
 
