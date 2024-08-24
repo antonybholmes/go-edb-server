@@ -4,7 +4,7 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -97,7 +97,7 @@ func (validator *Validator) LoadAuthUserFromEmail() *Validator {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserByEmail(validator.Address)
+	authUser, err := userdbcache.FindUserByEmail(validator.Address)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -116,7 +116,7 @@ func (validator *Validator) LoadAuthUserFromId() *Validator {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserById(validator.Req.Username)
+	authUser, err := userdbcache.FindUserById(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -136,7 +136,7 @@ func (validator *Validator) LoadAuthUserFromSession() *Validator {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByUuid(uuid)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -202,7 +202,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 
 	//log.Debug().Msgf("from uuid %s", validator.Claims.Uuid)
 
-	authUser, err := userdb.FindUserByUuid(validator.Claims.Uuid)
+	authUser, err := userdbcache.FindUserByUuid(validator.Claims.Uuid)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()

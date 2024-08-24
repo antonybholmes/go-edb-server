@@ -2,7 +2,7 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/labstack/echo/v4"
@@ -19,7 +19,7 @@ func SignupRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.CreateStandardUser(&req)
+	authUser, err := userdbcache.CreateStandardUser(&req)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -69,7 +69,7 @@ func EmailAddressWasVerifiedRoute(c echo.Context) error {
 		return routes.MakeOkPrettyResp(c, "")
 	}
 
-	err = userdb.SetIsVerified(authUser.Uuid)
+	err = userdbcache.SetIsVerified(authUser.Uuid)
 
 	if err != nil {
 		return routes.MakeSuccessPrettyResp(c, "unable to verify user", false)

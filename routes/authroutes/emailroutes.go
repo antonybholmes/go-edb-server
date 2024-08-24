@@ -4,7 +4,7 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/rs/zerolog/log"
@@ -76,13 +76,13 @@ func UpdateEmailRoute(c echo.Context) error {
 
 		log.Debug().Msgf("change email %s", validator.Req.Email)
 
-		err = userdb.SetEmail(validator.AuthUser.Uuid, validator.Req.Email)
+		err = userdbcache.SetEmail(validator.AuthUser.Uuid, validator.Req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		authUser, err = userdb.FindUserByUuid(uuid)
+		authUser, err = userdbcache.FindUserByUuid(uuid)
 
 		if err != nil {
 			return routes.ErrorReq(err)

@@ -5,7 +5,7 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/gorilla/sessions"
@@ -63,7 +63,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 	user := validator.Req.Username
 
-	authUser, err := userdb.FindUserByUsername(user)
+	authUser, err := userdbcache.FindUserByUsername(user)
 
 	if err != nil {
 		email, err := mail.ParseAddress(user)
@@ -74,7 +74,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 		// also check if username is valid email and try to login
 		// with that
-		authUser, err = userdb.FindUserByEmail(email)
+		authUser, err = userdbcache.FindUserByEmail(email)
 
 		if err != nil {
 			return routes.UserDoesNotExistReq()
@@ -134,13 +134,13 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 
 	log.Debug().Msgf("session tokens %s", uuid)
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByUuid(uuid)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
 	}
 
-	permissions, err := userdb.PermissionList(authUser)
+	permissions, err := userdbcache.PermissionList(authUser)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -159,7 +159,7 @@ func SessionUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
 	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByUuid(uuid)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -172,7 +172,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
 	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByUuid(uuid)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -185,13 +185,13 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 		// 	return routes.InvalidPasswordReq()
 		// }
 
-		err = userdb.SetUserInfo(authUser.Uuid, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
+		err = userdbcache.SetUserInfo(authUser.Uuid, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		// err = userdb.SetEmailAddress(authUser.Uuid, validator.Address)
+		// err = userdbcache.SetEmailAddress(authUser.Uuid, validator.Address)
 
 		// if err != nil {
 		// 	return routes.ErrorReq(err)
@@ -213,7 +213,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 // 		return routes.ErrorReq("login parameters missing")
 // 	}
 
-// 	authUser, err := userdb.FindUserByUuid(uuid)
+// 	authUser, err := userdbcache.FindUserByUuid(uuid)
 
 // 	if err != nil {
 // 		return routes.UserDoesNotExistReq()
@@ -227,7 +227,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 // 		return routes.ErrorReq(err)
 // 	}
 
-// 	err = userdb.SetPassword(authUser.Uuid, req.NewPassword)
+// 	err = userdbcache.SetPassword(authUser.Uuid, req.NewPassword)
 
 // 	if err != nil {
 // 		return routes.ErrorReq(err)
@@ -303,7 +303,7 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 
 // 	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
-// 		err := userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+// 		err := userdbcache.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
 // 		if err != nil {
 // 			return routes.ErrorReq(err)

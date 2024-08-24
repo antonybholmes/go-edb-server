@@ -2,7 +2,7 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 
@@ -61,7 +61,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+		err = userdbcache.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
 
 		if err != nil {
 			return routes.ErrorReq(err)

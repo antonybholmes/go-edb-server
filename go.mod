@@ -28,7 +28,7 @@ replace github.com/antonybholmes/go-gex => ../go-gex
 
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20240802221548-7773050a8f2f // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20240809225302-2f1eeb96b7d9
+	github.com/antonybholmes/go-dna v0.0.0-20240823140021-325275b6abfd
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 )

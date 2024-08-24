@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes/authroutes"
@@ -60,7 +60,7 @@ func initCache() {
 		log.Fatal().Msgf("error opening %s", "./data/users.db")
 	}
 
-	err = userdb.InitDB("data/users.db")
+	err = userdbcache.InitDB("data/users.db")
 
 	if err != nil {
 		log.Fatal().Msgf("Error loading user db: %s", err)
@@ -174,7 +174,7 @@ func main() {
 	// 		return routes.ErrorReq("empty password: use passwordless")
 	// 	}
 
-	// 	authUser, err := userdb.FindUserByUsername(validator.Req.Username)
+	// 	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
 	// 	if err != nil {
 	// 		email, err := mail.ParseAddress(validator.Req.Username)
@@ -185,7 +185,7 @@ func main() {
 
 	// 		// also check if username is valid email and try to login
 	// 		// with that
-	// 		authUser, err = userdb.FindUserByEmail(email)
+	// 		authUser, err = userdbcache.FindUserByEmail(email)
 
 	// 		if err != nil {
 	// 			return routes.UserDoesNotExistReq()

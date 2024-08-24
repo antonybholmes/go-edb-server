@@ -2,7 +2,7 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 
@@ -24,7 +24,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return PasswordlessEmailRoute(c, validator)
 		}
 
-		authUser, err := userdb.FindUserById(validator.Req.Username)
+		authUser, err := userdbcache.FindUserById(validator.Req.Username)
 
 		if err != nil {
 			return routes.UserDoesNotExistReq()
@@ -44,7 +44,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		permissions, err := userdb.PermissionList(authUser)
+		permissions, err := userdbcache.PermissionList(authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -114,13 +114,13 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		permissions, err := userdb.PermissionList(validator.AuthUser) //PublicUserRolePermissionsList(validator.AuthUser)
+		roles, err := userdbcache.RoleList(validator.AuthUser) //PublicUserRolePermissionsList(validator.AuthUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
+		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, roles, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.TokenErrorReq()
