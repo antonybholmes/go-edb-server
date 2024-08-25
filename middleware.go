@@ -104,7 +104,7 @@ func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(*auth.JwtCustomClaims)
 
-		if !auth.IsAdmin((claims.Scope)) {
+		if !auth.IsAdmin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not an admin")
 		}
 
@@ -117,7 +117,7 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(*auth.JwtCustomClaims)
 
-		if !auth.CanLogin((claims.Scope)) {
+		if !auth.CanLogin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not allowed to login")
 		}
 
@@ -134,7 +134,7 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		//log.Debug().Msgf("validate session %s", sess.ID)
 
-		_, ok := sess.Values[routes.SESSION_UUID].(string)
+		_, ok := sess.Values[routes.SESSION_PUBLICID].(string)
 
 		if !ok {
 			return errors.New("cannot get user id from session")
@@ -202,7 +202,7 @@ func validateJwtToken(tokenString string) (*jwt.Token, error) {
 }
 
 // Create a permissions middleware to verify jwt permissions on a token
-func NewJwtPermissionsMiddleware(permissions ...string) echo.MiddlewareFunc {
+func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -216,19 +216,21 @@ func NewJwtPermissionsMiddleware(permissions ...string) echo.MiddlewareFunc {
 			claims := user.Claims.(*auth.JwtCustomClaims)
 
 			// shortcut for admin, as we allow this for everything
-			if auth.IsAdmin(claims.Scope) {
+			if auth.IsAdmin(claims.Roles) {
 				return next(c)
 			}
 
-			for _, permission := range permissions {
+			for _, validRole := range validRoles {
+				for _, role := range claims.Roles {
 
-				// if we find a permission, stop and move on
-				if strings.Contains(claims.Scope, permission) {
-					return next(c)
+					// if we find a permission, stop and move on
+					if strings.Contains(role, validRole) {
+						return next(c)
+					}
 				}
 			}
 
-			return routes.AuthErrorReq("permissions not found")
+			return routes.AuthErrorReq("roles not found")
 		}
 	}
 }

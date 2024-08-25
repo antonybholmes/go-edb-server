@@ -72,17 +72,17 @@ func UpdateEmailRoute(c echo.Context) error {
 		}
 
 		authUser := validator.AuthUser
-		uuid := authUser.Uuid
+		uuid := authUser.PublicId
 
 		log.Debug().Msgf("change email %s", validator.Req.Email)
 
-		err = userdbcache.SetEmail(validator.AuthUser.Uuid, validator.Req.Email)
+		err = userdbcache.SetEmail(validator.AuthUser.PublicId, validator.Req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		authUser, err = userdbcache.FindUserByUuid(uuid)
+		authUser, err = userdbcache.FindUserByPublicId(uuid)
 
 		if err != nil {
 			return routes.ErrorReq(err)

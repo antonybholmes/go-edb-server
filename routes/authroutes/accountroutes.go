@@ -21,14 +21,14 @@ func UpdateAccountRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		err := userdbcache.SetUsername(authUser.Uuid,
+		err := userdbcache.SetUsername(authUser.PublicId,
 			validator.Req.Username)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetName(authUser.Uuid,
+		err = userdbcache.SetName(authUser.PublicId,
 			validator.Req.FirstName,
 			validator.Req.LastName)
 
@@ -42,7 +42,7 @@ func UpdateAccountRoute(c echo.Context) error {
 	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
 	// 	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
 	// 		return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-	// 			err := userdbcache.SetUsername(authUser.Uuid, req.Username)
+	// 			err := userdbcache.SetUsername(authUser.PublicId, req.Username)
 
 	// 			if err != nil {
 	// 				return routes.ErrorReq("error setting password")
@@ -62,7 +62,7 @@ func UpdateAccountRoute(c echo.Context) error {
 // 		ReqBind().
 // 		Success(func(validator *routes.Validator) error {
 
-// 			err := userdbcache.SetName(validator.AuthUser.Uuid, validator.Req.Name)
+// 			err := userdbcache.SetName(validator.AuthUser.PublicId, validator.Req.Name)
 
 // 			if err != nil {
 // 				return routes.ErrorReq("error setting password")

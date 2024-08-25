@@ -8,8 +8,6 @@ replace github.com/antonybholmes/go-dna => ../go-dna
 
 replace github.com/antonybholmes/go-genes => ../go-genes
 
-replace github.com/antonybholmes/go-microarray => ../go-microarray
-
 replace github.com/antonybholmes/go-mutations => ../go-mutations
 
 replace github.com/antonybholmes/go-basemath => ../go-basemath
@@ -66,7 +64,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-gex v0.0.0-20240815020050-6ef7c9b7e484
-	github.com/antonybholmes/go-microarray v0.0.0-20240504032631-9fb6b43a10d4
+ 
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect

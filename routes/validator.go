@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	SESSION_NAME        string = "session"
-	SESSION_UUID        string = "uuid"
-	SESSION_PERMISSIONS string = "permissions"
+	SESSION_NAME     string = "session"
+	SESSION_PUBLICID string = "publicId"
+	SESSION_ROLES    string = "roles"
 )
 
 //
@@ -156,13 +156,13 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 
 func (validator *Validator) LoadAuthUserFromSession() *Validator {
 	sess, _ := session.Get(SESSION_NAME, validator.c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
+	uuid, _ := sess.Values[SESSION_PUBLICID].(string)
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByPublicId(uuid)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -226,9 +226,9 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 		return validator
 	}
 
-	//log.Debug().Msgf("from uuid %s", validator.Claims.Uuid)
+	//log.Debug().Msgf("from uuid %s", validator.Claims.PublicId)
 
-	authUser, err := userdbcache.FindUserByUuid(validator.Claims.Uuid)
+	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()

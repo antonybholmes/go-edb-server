@@ -4,33 +4,33 @@ PRAGMA foreign_keys = ON;
 DROP TABLE IF EXISTS permissions;
 CREATE TABLE permissions (
     id INTEGER PRIMARY KEY ASC, 
-    uuid TEXT NOT NULL UNIQUE,
+    public_id TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT "",
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX roles_name_idx ON permissions (name);
 
-INSERT INTO permissions (uuid, name, description) VALUES('uwkrk2ljj387', 'SU', 'Superuser');
-INSERT INTO permissions (uuid, name, description) VALUES('iz4kbfy3z0a3', 'Admin', 'Administrator');
-INSERT INTO permissions (uuid, name, description) VALUES('loq75e7zqcbl', 'User', 'User');
-INSERT INTO permissions (uuid, name, description) VALUES('kflynb03pxbj', 'Login', 'Can login');
-INSERT INTO permissions (uuid, name, description) VALUES('og1o5d0p0mjy', 'RDF', 'Can view RDF lab data');
+INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'Super', 'Superuser');
+INSERT INTO permissions (public_id, name, description) VALUES('iz4kbfy3z0a3', 'Admin', 'Administrator');
+INSERT INTO permissions (public_id, name, description) VALUES('loq75e7zqcbl', 'User', 'User');
+INSERT INTO permissions (public_id, name, description) VALUES('kflynb03pxbj', 'Login', 'Can login');
+INSERT INTO permissions (public_id, name, description) VALUES('og1o5d0p0mjy', 'RDF', 'Can view RDF lab data');
 
 DROP TABLE IF EXISTS roles;
 CREATE TABLE roles (
     id INTEGER PRIMARY KEY ASC, 
-    uuid TEXT NOT NULL UNIQUE, 
+    public_id TEXT NOT NULL UNIQUE, 
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT "",
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX permissions_name_idx ON permissions (name);
 
-INSERT INTO roles (uuid, name) VALUES('p1gbjods0h90', 'Superuser');
-INSERT INTO roles (uuid, name) VALUES('mk4bgg4w43fp', 'Administrator');
-INSERT INTO roles (uuid, name) VALUES('3xvte0ik4aq4', 'User');
--- INSERT INTO roles (uuid, name) VALUES('UZuAVHDGToa4F786IPTijA==', 'GetDNA');
-INSERT INTO roles (uuid, name) VALUES('x4ewk9papip2', 'Login');
-INSERT INTO roles (uuid, name) VALUES('kh2yynyheqhv', 'RDF');
+INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'Super');
+INSERT INTO roles (public_id, name) VALUES('mk4bgg4w43fp', 'Admin');
+INSERT INTO roles (public_id, name) VALUES('3xvte0ik4aq4', 'User');
+-- INSERT INTO roles (public_id, name) VALUES('UZuAVHDGToa4F786IPTijA==', 'GetDNA');
+INSERT INTO roles (public_id, name) VALUES('x4ewk9papip2', 'Login');
+INSERT INTO roles (public_id, name) VALUES('kh2yynyheqhv', 'RDF');
 
 DROP TABLE IF EXISTS roles_permissions;
 CREATE TABLE roles_permissions (
@@ -61,7 +61,7 @@ INSERT INTO roles_permissions (role_id, permission_id) VALUES(5, 5);
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY ASC, 
-    uuid TEXT NOT NULL UNIQUE, 
+    public_id TEXT NOT NULL UNIQUE, 
     first_name TEXT NOT NULL DEFAULT '',
     last_name TEXT NOT NULL DEFAULT '',
     username TEXT NOT NULL UNIQUE,
@@ -70,7 +70,7 @@ CREATE TABLE users (
     email_verified BOOLEAN NOT NULL DEFAULT 0,
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
-CREATE INDEX users_uuid ON users (uuid);
+CREATE INDEX users_uuid ON users (public_id);
 -- CREATE INDEX name ON users (first_name, last_name);
 CREATE INDEX users_username ON users (username);
 CREATE INDEX users_email ON users (email);
@@ -96,9 +96,9 @@ CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 CREATE TABLE users_sessions(
   id INTEGER PRIMARY KEY ASC,
-  uuid TEXT NOT NULL,
+  public_id TEXT NOT NULL,
   session_id INTEGER NOT NULL UNIQUE,
-  FOREIGN KEY(uuid) REFERENCES users(uuid)
+  FOREIGN KEY(public_id) REFERENCES users(public_id)
 );
-CREATE INDEX users_sessions_uuid ON users_sessions (uuid);
+CREATE INDEX users_sessions_uuid ON users_sessions (public_id);
 CREATE INDEX users_sessions_session_id ON users_sessions (session_id);

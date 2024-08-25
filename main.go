@@ -201,7 +201,7 @@ func main() {
 	// 		return err
 	// 	}
 	// 	sess.Options = authroutes.SESSION_OPT_30D
-	// 	sess.Values["uuid"] = authUser.Uuid
+	// 	sess.Values["uuid"] = authUser.PublicId
 	// 	sess.Save(c.Request(), c.Response())
 
 	// 	return c.NoContent(http.StatusOK)

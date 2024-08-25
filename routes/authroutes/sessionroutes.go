@@ -106,8 +106,8 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		sess.Options = SESSION_OPT_MAX_AGE_ZERO
 	}
 
-	sess.Values[routes.SESSION_UUID] = authUser.Uuid
-	sess.Values[routes.SESSION_PERMISSIONS] = authUser.Permissions
+	sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
+	sess.Values[routes.SESSION_ROLES] = authUser.Roles
 
 	sess.Save(c.Request(), c.Response())
 
@@ -131,8 +131,8 @@ func SessionSignOutRoute(c echo.Context) error {
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
-	permissions, _ := sess.Values[routes.SESSION_PERMISSIONS].(string)
+	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
+	roles, _ := sess.Values[routes.SESSION_ROLES].([]string)
 
 	log.Debug().Msgf("session tokens %s", uuid)
 
@@ -143,7 +143,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	//}
 
 	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
-	t, err := auth.AccessToken(c, uuid, permissions, consts.JWT_PRIVATE_KEY)
+	t, err := auth.AccessToken(c, uuid, roles, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -154,9 +154,9 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 
 func SessionUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
+	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
-	authUser, err := userdbcache.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByPublicId(uuid)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -167,9 +167,9 @@ func SessionUserInfoRoute(c echo.Context) error {
 
 func SessionUpdateUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
+	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
-	authUser, err := userdbcache.FindUserByUuid(uuid)
+	authUser, err := userdbcache.FindUserByPublicId(uuid)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -182,13 +182,13 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 		// 	return routes.InvalidPasswordReq()
 		// }
 
-		err = userdbcache.SetUserInfo(authUser.Uuid, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
+		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		// err = userdbcache.SetEmailAddress(authUser.Uuid, validator.Address)
+		// err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address)
 
 		// if err != nil {
 		// 	return routes.ErrorReq(err)
@@ -224,7 +224,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 // 		return routes.ErrorReq(err)
 // 	}
 
-// 	err = userdbcache.SetPassword(authUser.Uuid, req.NewPassword)
+// 	err = userdbcache.SetPassword(authUser.PublicId, req.NewPassword)
 
 // 	if err != nil {
 // 		return routes.ErrorReq(err)
@@ -259,7 +259,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 		}
 
 		sess.Options = SESSION_OPT_MAX_AGE_30D
-		sess.Values[routes.SESSION_UUID] = authUser.Uuid
+		sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
 
 		sess.Save(c.Request(), c.Response())
 
@@ -307,7 +307,7 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 
 // 	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
-// 		err := userdbcache.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+// 		err := userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password)
 
 // 		if err != nil {
 // 			return routes.ErrorReq(err)
