@@ -13,6 +13,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/routes/adminroutes"
 	"github.com/antonybholmes/go-edb-server/routes/authroutes"
 	"github.com/antonybholmes/go-edb-server/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-edb-server/routes/modroutes/geneconvroutes"
@@ -243,6 +244,22 @@ func main() {
 	// Routes
 	//
 
+	adminGroup := e.Group("/admin")
+	adminGroup.Use(jwtMiddleWare,
+		JwtIsAccessTokenMiddleware,
+		JwtHasAdminPermissionMiddleware)
+
+	adminGroup.GET("/users/stats", func(c echo.Context) error {
+		return adminroutes.UserStatsRoute(c)
+	})
+
+	adminGroup.POST("/users", func(c echo.Context) error {
+		return adminroutes.ListUsersRoute(c)
+	})
+
+	//
+	// Allow users to sign up for an account
+
 	e.POST("/signup", func(c echo.Context) error {
 		return authroutes.SignupRoute(c)
 	})
@@ -343,15 +360,6 @@ func main() {
 	//
 	// passwordless groups: end
 	//
-
-	adminGroup := e.Group("/admin")
-	adminGroup.Use(jwtMiddleWare,
-		JwtIsAccessTokenMiddleware,
-		JwtHasAdminPermissionMiddleware)
-
-	adminGroup.POST("/users", func(c echo.Context) error {
-		return authroutes.UserInfoRoute(c)
-	})
 
 	usersGroup := e.Group("/users")
 	usersGroup.Use(jwtMiddleWare,

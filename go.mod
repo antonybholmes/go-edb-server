@@ -1,6 +1,6 @@
 module github.com/antonybholmes/go-edb-server
 
-go 1.22.5
+go 1.23
 
 replace github.com/antonybholmes/go-auth => ../go-auth
 
@@ -32,8 +32,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240809225301-afbfcb9cfcf6
-	github.com/antonybholmes/go-genes v0.0.0-20240809225258-c1c273be6ae0
+	github.com/antonybholmes/go-auth v0.0.0-20240823140020-de9d92d0a6bf
+	github.com/antonybholmes/go-genes v0.0.0-20240823140016-f18b6da1d275
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
@@ -42,19 +42,19 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240809225255-fbaa01fad298
+	github.com/antonybholmes/go-mailer v0.0.0-20240823140010-a01c78133118
 	github.com/antonybholmes/go-sys v0.0.0-20240801224521-3bed2c519a83
-	github.com/gorilla/sessions v1.3.0
+	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
 
 require (
-	github.com/antonybholmes/go-geneconv v0.0.0-20240809225256-775c11e56095
+	github.com/antonybholmes/go-geneconv v0.0.0-20240823140011-7da62d6322df
 	github.com/antonybholmes/go-math v0.0.0-20240802221548-7773050a8f2f
 	github.com/antonybholmes/go-motiftogene v0.0.0-20240805202904-08e20e1f17c9
-	github.com/antonybholmes/go-mutations v0.0.0-20240809225259-6767a02a240b
-	github.com/antonybholmes/go-pathway v0.0.0-20240809225257-a909190f94e3
+	github.com/antonybholmes/go-mutations v0.0.0-20240823140017-dc25bf48a1df
+	github.com/antonybholmes/go-pathway v0.0.0-20240823140013-771c5524aaff
 )
 
 require (
@@ -63,8 +63,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-gex v0.0.0-20240815020050-6ef7c9b7e484
- 
+	github.com/antonybholmes/go-gex v0.0.0-20240822220523-cc665b971f77
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect

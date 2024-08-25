@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 var SESSION_OPT_MAX_AGE_ZERO *sessions.Options
@@ -48,6 +47,41 @@ func init() {
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
+}
+
+// Validate the passwordless token we generated and create
+// a user session. The session acts as a refresh token and
+// can be used to generate access tokens to use resources
+func SessionPasswordlessSignInRoute(c echo.Context) error {
+
+	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+
+		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+			return routes.WrongTokentTypeReq()
+		}
+
+		authUser := validator.AuthUser
+
+		//log.Debug().Msgf("user %v", authUser)
+
+		if !authUser.CanLogin() {
+			return routes.UserNotAllowedToSignIn()
+		}
+
+		sess, err := session.Get(routes.SESSION_NAME, c)
+
+		if err != nil {
+			return routes.ErrorReq("error creating session")
+		}
+
+		sess.Options = SESSION_OPT_MAX_AGE_30D
+		sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
+		sess.Values[routes.SESSION_ROLES] = authUser.Roles
+
+		sess.Save(c.Request(), c.Response())
+
+		return UserSignedInResp(c)
+	})
 }
 
 func SessionUsernamePasswordSignInRoute(c echo.Context) error {
@@ -131,10 +165,8 @@ func SessionSignOutRoute(c echo.Context) error {
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
+	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[routes.SESSION_ROLES].([]string)
-
-	log.Debug().Msgf("session tokens %s", uuid)
 
 	//authUser, err := userdbcache.FindUserByUuid(uuid)
 
@@ -143,7 +175,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	//}
 
 	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
-	t, err := auth.AccessToken(c, uuid, roles, consts.JWT_PRIVATE_KEY)
+	t, err := auth.AccessToken(c, publicId, roles, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -232,40 +264,6 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 
 // 	return SendPasswordEmail(c, authUser, req.NewPassword)
 // }
-
-// Validate the passwordless token we generated and create
-// a user session. The session acts as a refresh token and
-// can be used to generate access tokens to use resources
-func SessionPasswordlessSignInRoute(c echo.Context) error {
-
-	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
-
-		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-			return routes.WrongTokentTypeReq()
-		}
-
-		authUser := validator.AuthUser
-
-		log.Debug().Msgf("user %v", authUser)
-
-		if !authUser.CanLogin() {
-			return routes.UserNotAllowedToSignIn()
-		}
-
-		sess, err := session.Get(routes.SESSION_NAME, c)
-
-		if err != nil {
-			return routes.ErrorReq("error creating session")
-		}
-
-		sess.Options = SESSION_OPT_MAX_AGE_30D
-		sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
-
-		sess.Save(c.Request(), c.Response())
-
-		return UserSignedInResp(c)
-	})
-}
 
 // Start passwordless login by sending an email
 func SessionSendResetPasswordRoute(c echo.Context) error {

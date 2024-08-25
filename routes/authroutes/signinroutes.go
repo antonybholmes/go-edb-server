@@ -5,7 +5,6 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -67,13 +66,9 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		validator = routes.NewValidator(c)
 	}
 
-	log.Debug().Msgf("passwordless")
-
 	return validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
 		authUser := validator.AuthUser
-
-		log.Debug().Msgf("huhs %v", authUser)
 
 		passwordlessToken, err := auth.PasswordlessToken(c, authUser.PublicId, consts.JWT_PRIVATE_KEY)
 
@@ -82,8 +77,6 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		}
 
 		var file string
-
-		log.Debug().Msgf("huh %v", authUser)
 
 		if validator.Req.CallbackUrl != "" {
 			file = "templates/email/passwordless/web.html"
@@ -115,7 +108,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		log.Debug().Msgf("user %v", authUser)
+		//log.Debug().Msgf("user %v", authUser)
 
 		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()

@@ -5,7 +5,6 @@ import (
 	"github.com/antonybholmes/go-gex"
 	"github.com/antonybholmes/go-gex/gexdbcache"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type GexParams struct {
@@ -84,13 +83,11 @@ func GexGeneExpRoute(c echo.Context) error {
 	gexGenes, err := gexdbcache.GetGenes(params.Genes)
 
 	if err != nil {
-		log.Debug().Msgf("e1 %s", err)
 		return routes.ErrorReq(err)
 	}
 
 	if params.Platform.Id == 2 {
 		// microarray
-
 		ret, err := gexdbcache.MicroarrayValues(gexGenes, params.Platform, params.GexValueType, params.Datasets)
 
 		if err != nil {

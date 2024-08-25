@@ -6,7 +6,6 @@ import (
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 func SignupRoute(c echo.Context) error {
@@ -27,7 +26,7 @@ func SignupRoute(c echo.Context) error {
 
 	otpJwt, err := auth.VerifyEmailToken(c, authUser.PublicId, consts.JWT_PRIVATE_KEY)
 
-	log.Debug().Msgf("%s", otpJwt)
+	//log.Debug().Msgf("%s", otpJwt)
 
 	if err != nil {
 		return routes.ErrorReq(err)

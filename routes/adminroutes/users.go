@@ -11,6 +11,28 @@ type UserListReq struct {
 	Records int
 }
 
+type UserStatResp struct {
+	Users uint `json:"users"`
+}
+
+func UserStatsRoute(c echo.Context) error {
+
+	var req UserListReq
+
+	c.Bind(&req)
+
+	users, err := userdbcache.NumUsers()
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	resp := UserStatResp{Users: users}
+
+	return routes.MakeDataPrettyResp(c, "", resp)
+
+}
+
 func ListUsersRoute(c echo.Context) error {
 
 	var req UserListReq
