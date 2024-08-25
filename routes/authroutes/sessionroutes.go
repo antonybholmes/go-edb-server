@@ -107,6 +107,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	sess.Values[routes.SESSION_UUID] = authUser.Uuid
+	sess.Values[routes.SESSION_PERMISSIONS] = authUser.Permissions
 
 	sess.Save(c.Request(), c.Response())
 
@@ -131,16 +132,18 @@ func SessionSignOutRoute(c echo.Context) error {
 func SessionNewAccessTokenRoute(c echo.Context) error {
 	sess, _ := session.Get(routes.SESSION_NAME, c)
 	uuid, _ := sess.Values[routes.SESSION_UUID].(string)
+	permissions, _ := sess.Values[routes.SESSION_PERMISSIONS].(string)
 
 	log.Debug().Msgf("session tokens %s", uuid)
 
-	authUser, err := userdbcache.FindUserByUuid(uuid)
+	//authUser, err := userdbcache.FindUserByUuid(uuid)
 
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
+	//if err != nil {
+	//	return routes.UserDoesNotExistReq()
+	//}
 
-	t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
+	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
+	t, err := auth.AccessToken(c, uuid, permissions, consts.JWT_PRIVATE_KEY)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -230,6 +233,9 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 // 	return SendPasswordEmail(c, authUser, req.NewPassword)
 // }
 
+// Validate the passwordless token we generated and create
+// a user session. The session acts as a refresh token and
+// can be used to generate access tokens to use resources
 func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {

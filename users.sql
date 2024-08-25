@@ -10,11 +10,11 @@ CREATE TABLE permissions (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX roles_name_idx ON permissions (name);
 
-INSERT INTO permissions (uuid, name, description) VALUES('908e6e2e-e90e-4548-a3a0-67ad356db923', 'SU', 'Superuser');
-INSERT INTO permissions (uuid, name, description) VALUES('d99d8a0d-dd1c-4f9a-9736-fde7904386d8', 'Admin', 'Administrator');
-INSERT INTO permissions (uuid, name, description) VALUES('a2296fab-a06d-4a16-a224-4f95613cf4a4', 'User', 'User');
-INSERT INTO permissions (uuid, name, description) VALUES('0f988db6-810f-4e0a-82f5-2493baf6b49e', 'Login', 'Can login');
-INSERT INTO permissions (uuid, name, description) VALUES('0f02c46e-fea9-4dfc-bebf-88cafda8d712', 'RDF', 'Can view RDF lab data');
+INSERT INTO permissions (uuid, name, description) VALUES('uwkrk2ljj387', 'SU', 'Superuser');
+INSERT INTO permissions (uuid, name, description) VALUES('iz4kbfy3z0a3', 'Admin', 'Administrator');
+INSERT INTO permissions (uuid, name, description) VALUES('loq75e7zqcbl', 'User', 'User');
+INSERT INTO permissions (uuid, name, description) VALUES('kflynb03pxbj', 'Login', 'Can login');
+INSERT INTO permissions (uuid, name, description) VALUES('og1o5d0p0mjy', 'RDF', 'Can view RDF lab data');
 
 DROP TABLE IF EXISTS roles;
 CREATE TABLE roles (
@@ -25,12 +25,12 @@ CREATE TABLE roles (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX permissions_name_idx ON permissions (name);
 
-INSERT INTO roles (uuid, name) VALUES('5d224abe-bf22-4661-9ead-85cdc91746a5', 'Superuser');
-INSERT INTO roles (uuid, name) VALUES('5085ff97-1773-4496-bed5-097d2ca48ac6', 'Administrator');
-INSERT INTO roles (uuid, name) VALUES('286ee0cb-ba0d-4442-ad18-05f585c2b257', 'User');
--- INSERT INTO roles (uuid, name) VALUES('4a0730a9-211f-48b9-bb65-803abeca9e31', 'GetDNA');
-INSERT INTO roles (uuid, name) VALUES('55b43aae-e940-4ed9-97d1-44ae756c3239', 'Login');
-INSERT INTO roles (uuid, name) VALUES('7df054ba-ef7b-4240-9b40-ff537904990b', 'RDF');
+INSERT INTO roles (uuid, name) VALUES('p1gbjods0h90', 'Superuser');
+INSERT INTO roles (uuid, name) VALUES('mk4bgg4w43fp', 'Administrator');
+INSERT INTO roles (uuid, name) VALUES('3xvte0ik4aq4', 'User');
+-- INSERT INTO roles (uuid, name) VALUES('UZuAVHDGToa4F786IPTijA==', 'GetDNA');
+INSERT INTO roles (uuid, name) VALUES('x4ewk9papip2', 'Login');
+INSERT INTO roles (uuid, name) VALUES('kh2yynyheqhv', 'RDF');
 
 DROP TABLE IF EXISTS roles_permissions;
 CREATE TABLE roles_permissions (

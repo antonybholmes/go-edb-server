@@ -202,16 +202,16 @@ func validateJwtToken(tokenString string) (*jwt.Token, error) {
 }
 
 // Create a permissions middleware to verify jwt permissions on a token
-func NewJwtPermissionsMiddleware(validPermissions ...string) echo.MiddlewareFunc {
+func NewJwtPermissionsMiddleware(permissions ...string) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
 			user := c.Get("user").(*jwt.Token)
 
-			if user == nil {
-				return routes.AuthErrorReq("no jwt available")
-			}
+			// if user == nil {
+			// 	return routes.AuthErrorReq("no jwt available")
+			// }
 
 			claims := user.Claims.(*auth.JwtCustomClaims)
 
@@ -220,7 +220,7 @@ func NewJwtPermissionsMiddleware(validPermissions ...string) echo.MiddlewareFunc
 				return next(c)
 			}
 
-			for _, permission := range validPermissions {
+			for _, permission := range permissions {
 
 				// if we find a permission, stop and move on
 				if strings.Contains(claims.Scope, permission) {

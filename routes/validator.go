@@ -11,8 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const SESSION_NAME string = "session"
-const SESSION_UUID string = "uuid"
+const (
+	SESSION_NAME        string = "session"
+	SESSION_UUID        string = "uuid"
+	SESSION_PERMISSIONS string = "permissions"
+)
 
 //
 // Standardized data checkers for checking header and body contain

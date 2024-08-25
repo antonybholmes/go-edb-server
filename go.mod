@@ -59,7 +59,10 @@ require (
 	github.com/antonybholmes/go-pathway v0.0.0-20240809225257-a909190f94e3
 )
 
-require gopkg.in/yaml.v2 v2.4.0 // indirect
+require (
+	github.com/matoous/go-nanoid v1.5.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+)
 
 require (
 	github.com/antonybholmes/go-gex v0.0.0-20240815020050-6ef7c9b7e484
