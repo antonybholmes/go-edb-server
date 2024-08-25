@@ -4,8 +4,8 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
+	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/rs/zerolog/log"
 
@@ -28,7 +28,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, authUser, newEmail, consts.JWT_PRIVATE_KEY)
+		otpJwt, err := jwtgen.ChangeEmailToken(c, authUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -65,7 +65,7 @@ func UpdateEmailRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := auth.CheckOtpValid(validator.AuthUser, validator.Claims.Otp)
+		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.Otp)
 
 		if err != nil {
 			return routes.ErrorReq(err)

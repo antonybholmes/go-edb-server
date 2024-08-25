@@ -2,6 +2,7 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
+	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
@@ -73,7 +74,7 @@ func NewAccessTokenRoute(c echo.Context) error {
 	return routes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *routes.Validator) error {
 
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles, consts.JWT_PRIVATE_KEY)
+		t, err := jwtgen.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")

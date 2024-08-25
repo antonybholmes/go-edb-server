@@ -5,8 +5,8 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -175,7 +175,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	//}
 
 	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
-	t, err := auth.AccessToken(c, publicId, roles, consts.JWT_PRIVATE_KEY)
+	t, err := jwtgen.AccessToken(c, publicId, roles)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -272,7 +272,7 @@ func SessionSendResetPasswordRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_PRIVATE_KEY)
+		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -327,7 +327,7 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, validator.AuthUser, newEmail, consts.JWT_PRIVATE_KEY)
+		otpJwt, err := jwtgen.ChangeEmailToken(c, validator.AuthUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)

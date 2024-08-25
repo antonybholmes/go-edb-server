@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
@@ -77,7 +78,9 @@ func initCache() {
 }
 
 func main() {
-	consts.LoadConsts()
+	consts.Load()
+
+	jwtgen.Init(consts.JWT_PRIVATE_KEY)
 
 	//env.Load()
 

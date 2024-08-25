@@ -18,7 +18,7 @@ var JWT_PRIVATE_KEY *rsa.PrivateKey //[]byte
 var JWT_PUBLIC_KEY *rsa.PublicKey   //[]byte
 var SESSION_SECRET string
 
-func LoadConsts() {
+func Load() {
 	env.Load()
 
 	NAME = os.Getenv("NAME")

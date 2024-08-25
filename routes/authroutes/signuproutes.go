@@ -2,8 +2,8 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/labstack/echo/v4"
 )
@@ -24,7 +24,7 @@ func SignupRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(c, authUser.PublicId, consts.JWT_PRIVATE_KEY)
+	otpJwt, err := jwtgen.VerifyEmailToken(c, authUser.PublicId)
 
 	//log.Debug().Msgf("%s", otpJwt)
 

@@ -2,8 +2,8 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
@@ -44,13 +44,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := auth.RefreshToken(c, authUser.PublicId, authUser.Roles, consts.JWT_PRIVATE_KEY)
+		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, authUser.Roles)
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := auth.AccessToken(c, authUser.PublicId, authUser.Roles, consts.JWT_PRIVATE_KEY)
+		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, authUser.Roles)
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -70,7 +70,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 
 		authUser := validator.AuthUser
 
-		passwordlessToken, err := auth.PasswordlessToken(c, authUser.PublicId, consts.JWT_PRIVATE_KEY)
+		passwordlessToken, err := jwtgen.PasswordlessToken(c, authUser.PublicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -114,7 +114,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := auth.RefreshToken(c, authUser.PublicId, authUser.Roles, consts.JWT_PRIVATE_KEY)
+		t, err := jwtgen.RefreshToken(c, authUser.PublicId, authUser.Roles)
 
 		if err != nil {
 			return routes.TokenErrorReq()

@@ -2,8 +2,8 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
@@ -19,7 +19,7 @@ func SendResetPasswordFromUsernameRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_PRIVATE_KEY)
+		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -55,7 +55,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := auth.CheckOtpValid(validator.AuthUser, validator.Claims.Otp)
+		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.Otp)
 
 		if err != nil {
 			return routes.ErrorReq(err)
