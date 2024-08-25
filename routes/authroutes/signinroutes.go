@@ -5,6 +5,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -105,6 +106,8 @@ func PasswordlessSignInRoute(c echo.Context) error {
 		}
 
 		authUser := validator.AuthUser
+
+		log.Debug().Msgf("user %v", authUser)
 
 		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()

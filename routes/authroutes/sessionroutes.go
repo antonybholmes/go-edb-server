@@ -240,6 +240,8 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
+		log.Debug().Msgf("user %v", authUser)
+
 		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()
 		}
