@@ -25,7 +25,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return PasswordlessEmailRoute(c, validator)
 		}
 
-		authUser, err := userdbcache.FindUserById(validator.Req.Username)
+		authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
 		if err != nil {
 			return routes.UserDoesNotExistReq()
@@ -67,15 +67,23 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		validator = routes.NewValidator(c)
 	}
 
-	return validator.LoadAuthUserFromId().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	log.Debug().Msgf("passwordless")
 
-		passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_PRIVATE_KEY)
+	return validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+
+		authUser := validator.AuthUser
+
+		log.Debug().Msgf("huhs %v", authUser)
+
+		passwordlessToken, err := auth.PasswordlessToken(c, authUser.Uuid, consts.JWT_PRIVATE_KEY)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
 		var file string
+
+		log.Debug().Msgf("huh %v", authUser)
 
 		if validator.Req.CallbackUrl != "" {
 			file = "templates/email/passwordless/web.html"
@@ -84,7 +92,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		}
 
 		go SendEmailWithToken("Passwordless Sign In",
-			validator.AuthUser,
+			authUser,
 			file,
 			passwordlessToken,
 			validator.Req.CallbackUrl,

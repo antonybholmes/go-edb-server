@@ -172,7 +172,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	return routes.NewValidator(c).CheckEmailIsWellFormed().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *routes.Validator) error {
 
 		// if !authUser.CheckPasswords(req.Password) {
 		// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())

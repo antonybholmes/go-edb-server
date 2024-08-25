@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+
 	"net/mail"
 	"net/url"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-mailer/mailer"
+	"github.com/rs/zerolog/log"
 )
 
 const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
@@ -28,17 +30,21 @@ type EmailBody struct {
 
 func SendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
-
 	file string,
 	token string,
 	callbackUrl string,
 	vistUrl string) error {
 
+	log.Debug().Msgf("SendEmailWithToken %v", authUser.Email)
+
 	address, err := mail.ParseAddress(authUser.Email)
 
 	if err != nil {
+		log.Debug().Msgf("asdasd %v %s", authUser.Email, err)
 		return routes.ErrorReq(err)
 	}
+
+	log.Debug().Msgf("asdasd %v %s", authUser, address)
 
 	return BaseSendEmailWithToken(subject, authUser, address, file, token, callbackUrl, vistUrl)
 }

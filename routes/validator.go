@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 const SESSION_NAME string = "session"
@@ -72,6 +73,24 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 	return validator
 }
 
+func (validator *Validator) CheckUsernameIsWellFormed() *Validator {
+	validator.ParseLoginRequestBody()
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
+
+	err := auth.CheckUsername(validator.Req.Username)
+
+	if err != nil {
+		validator.Err = ErrorReq(err)
+	}
+
+	return validator
+}
+
 func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	validator.ParseLoginRequestBody()
 
@@ -79,7 +98,11 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 		return validator
 	}
 
-	address, err := auth.CheckEmailIsWellFormed(validator.Req.Username)
+	log.Debug().Msgf("body %v", validator.Req)
+
+	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
+
+	address, err := mail.ParseAddress(validator.Req.Email)
 
 	if err != nil {
 		validator.Err = ErrorReq(err)
@@ -109,14 +132,14 @@ func (validator *Validator) LoadAuthUserFromEmail() *Validator {
 
 }
 
-func (validator *Validator) LoadAuthUserFromId() *Validator {
+func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserById(validator.Req.Username)
+	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
