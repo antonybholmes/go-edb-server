@@ -3,7 +3,6 @@ package authroutes
 import (
 	"net/http"
 	"net/mail"
-	"strings"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
@@ -82,11 +81,11 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		}
 	}
 
-	if !authUser.EmailVerified {
+	if !authUser.EmailIsVerified {
 		return routes.EmailNotVerifiedReq()
 	}
 
-	if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
+	if !authUser.CanLogin() {
 		return routes.UserNotAllowedToSignIn()
 	}
 
@@ -241,7 +240,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
+		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()
 		}
 

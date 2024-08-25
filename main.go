@@ -225,7 +225,8 @@ func main() {
 		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
-	// Configure middleware with the custom claims type
+	// Configure middleware with the custom claims type which
+	// will parse our jwt with scope etc
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return &auth.JwtCustomClaims{}
@@ -343,9 +344,18 @@ func main() {
 	// passwordless groups: end
 	//
 
+	adminGroup := e.Group("/admin")
+	adminGroup.Use(jwtMiddleWare,
+		JwtIsAccessTokenMiddleware,
+		JwtHasAdminPermissionMiddleware)
+
+	adminGroup.POST("/users", func(c echo.Context) error {
+		return authroutes.UserInfoRoute(c)
+	})
+
 	usersGroup := e.Group("/users")
-	usersGroup.Use(jwtMiddleWare)
-	usersGroup.Use(JwtIsAccessTokenMiddleware)
+	usersGroup.Use(jwtMiddleWare,
+		JwtIsAccessTokenMiddleware)
 
 	usersGroup.POST("/info", func(c echo.Context) error {
 		return authroutes.UserInfoRoute(c)
@@ -364,8 +374,7 @@ func main() {
 	//
 
 	moduleGroup := e.Group("/modules")
-	//moduleGroup.Use(jwtMiddleWare)
-	//moduleGroup.Use(JwtIsAccessTokenMiddleware)
+	//moduleGroup.Use(jwtMiddleWare,JwtIsAccessTokenMiddleware)
 
 	dnaGroup := moduleGroup.Group("/dna")
 

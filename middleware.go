@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 
 	"strings"
 
@@ -56,12 +57,68 @@ import (
 // 	}
 // }
 
+type CustomContext struct {
+	echo.Context
+}
+
+// func JwtLoadTokenClaimsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+// 		_, err := routes.NewValidator(c).CheckIsValidAccessToken().Ok()
+
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		return next(c)
+// 	}
+// }
+
+func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		if claims.Type != auth.TOKEN_TYPE_REFRESH {
+			routes.AuthErrorReq("not a refresh token")
+		}
+
+		return next(c)
+	}
+}
+
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_, err := routes.NewValidator(c).CheckIsValidAccessToken().Ok()
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
 
-		if err != nil {
-			return err
+		if claims.Type != auth.TOKEN_TYPE_ACCESS {
+			routes.AuthErrorReq("not an access token")
+		}
+
+		return next(c)
+	}
+}
+
+func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		if !auth.IsAdmin((claims.Scope)) {
+			return routes.AuthErrorReq("user is not an admin")
+		}
+
+		return next(c)
+	}
+}
+
+func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		if !auth.CanLogin((claims.Scope)) {
+			return routes.AuthErrorReq("user is not allowed to login")
 		}
 
 		return next(c)
@@ -133,8 +190,12 @@ func validateJwtToken(tokenString string) (*jwt.Token, error) {
 		return consts.JWT_PUBLIC_KEY, nil
 	})
 
-	if err != nil || !token.Valid {
+	if err != nil {
 		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
 	}
 
 	return token, nil
@@ -155,7 +216,7 @@ func NewJwtPermissionsMiddleware(validPermissions ...string) echo.MiddlewareFunc
 			claims := user.Claims.(*auth.JwtCustomClaims)
 
 			// shortcut for admin, as we allow this for everything
-			if strings.Contains(claims.Scope, auth.PERMISSION_SU) || strings.Contains(claims.Scope, auth.PERMISSION_ADMIN) {
+			if auth.IsAdmin(claims.Scope) {
 				return next(c)
 			}
 

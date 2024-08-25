@@ -65,7 +65,7 @@ func EmailAddressWasVerifiedRoute(c echo.Context) error {
 	authUser := validator.AuthUser
 
 	// if verified, stop and just return true
-	if authUser.EmailVerified {
+	if authUser.EmailIsVerified {
 		return routes.MakeOkPrettyResp(c, "")
 	}
 

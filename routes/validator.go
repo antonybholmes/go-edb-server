@@ -166,7 +166,7 @@ func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
 		return validator
 	}
 
-	if !validator.AuthUser.EmailVerified {
+	if !validator.AuthUser.EmailIsVerified {
 		validator.Err = ErrorReq("email address not verified")
 	}
 
@@ -214,7 +214,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidRefreshToken() *Validator {
-	validator.LoadAuthUserFromToken()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -229,7 +229,7 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidAccessToken() *Validator {
-	validator.LoadAuthUserFromToken()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator

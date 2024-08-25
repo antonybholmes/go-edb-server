@@ -24,6 +24,7 @@
 
 # vendor/
 
+su.sql
 
 data
 logs
@@ -34,3 +35,4 @@ tests.sh
 
 jwtRS256.key
 jwtRS256.key.pub
+

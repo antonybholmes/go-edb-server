@@ -1,8 +1,6 @@
 package authroutes
 
 import (
-	"strings"
-
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
@@ -32,11 +30,11 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.UserDoesNotExistReq()
 		}
 
-		if !authUser.EmailVerified {
+		if !authUser.EmailIsVerified {
 			return routes.EmailNotVerifiedReq()
 		}
 
-		if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
+		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -108,7 +106,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		if !strings.Contains(authUser.Permissions, auth.PERMISSION_LOGIN) {
+		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()
 		}
 
