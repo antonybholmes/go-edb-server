@@ -55,7 +55,7 @@ func TokenInfoRoute(c echo.Context) error {
 	claims := auth.JwtCustomClaims{}
 
 	_, err = jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (interface{}, error) {
-		return consts.JWT_PUBLIC_KEY, nil
+		return consts.JWT_RSA_PUBLIC_KEY, nil
 	})
 
 	if err != nil {

@@ -14,8 +14,8 @@ import (
 var NAME string
 var VERSION string
 var COPYRIGHT string
-var JWT_PRIVATE_KEY *rsa.PrivateKey //[]byte
-var JWT_PUBLIC_KEY *rsa.PublicKey   //[]byte
+var JWT_RSA_PRIVATE_KEY *rsa.PrivateKey //[]byte
+var JWT_RSA_PUBLIC_KEY *rsa.PublicKey   //[]byte
 var SESSION_SECRET string
 
 func Load() {
@@ -33,7 +33,7 @@ func Load() {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	JWT_PRIVATE_KEY, err = jwt.ParseRSAPrivateKeyFromPEM(bytes)
+	JWT_RSA_PRIVATE_KEY, err = jwt.ParseRSAPrivateKeyFromPEM(bytes)
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
@@ -43,7 +43,7 @@ func Load() {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	JWT_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(bytes)
+	JWT_RSA_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(bytes)
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}

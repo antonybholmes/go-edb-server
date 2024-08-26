@@ -1,13 +1,9 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -56,10 +52,6 @@ import (
 // 		return next(c)
 // 	}
 // }
-
-type CustomContext struct {
-	echo.Context
-}
 
 // func JwtLoadTokenClaimsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 // 	return func(c echo.Context) error {
@@ -137,7 +129,7 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		_, ok := sess.Values[routes.SESSION_PUBLICID].(string)
 
 		if !ok {
-			return errors.New("cannot get user id from session")
+			return routes.AuthErrorReq("cannot get user id from session")
 		}
 
 		return next(c)
@@ -183,24 +175,6 @@ func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// you can add your implementation here.
-func validateJwtToken(tokenString string) (*jwt.Token, error) {
-
-	token, err := jwt.ParseWithClaims(tokenString, &auth.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return consts.JWT_PUBLIC_KEY, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
-	}
-
-	return token, nil
-}
-
 // Create a permissions middleware to verify jwt permissions on a token
 func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 
@@ -221,13 +195,12 @@ func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 			}
 
 			for _, validRole := range validRoles {
-				for _, role := range claims.Roles {
 
-					// if we find a permission, stop and move on
-					if strings.Contains(role, validRole) {
-						return next(c)
-					}
+				// if we find a permission, stop and move on
+				if strings.Contains(claims.Roles, validRole) {
+					return next(c)
 				}
+
 			}
 
 			return routes.AuthErrorReq("roles not found")

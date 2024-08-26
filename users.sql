@@ -10,11 +10,11 @@ CREATE TABLE permissions (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX roles_name_idx ON permissions (name);
 
-INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'Super', 'Superuser');
-INSERT INTO permissions (public_id, name, description) VALUES('iz4kbfy3z0a3', 'Admin', 'Administrator');
-INSERT INTO permissions (public_id, name, description) VALUES('loq75e7zqcbl', 'User', 'User');
-INSERT INTO permissions (public_id, name, description) VALUES('kflynb03pxbj', 'Login', 'Can login');
-INSERT INTO permissions (public_id, name, description) VALUES('og1o5d0p0mjy', 'RDF', 'Can view RDF lab data');
+INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'super', 'Superuser');
+INSERT INTO permissions (public_id, name, description) VALUES('iz4kbfy3z0a3', 'admin', 'Administrator');
+INSERT INTO permissions (public_id, name, description) VALUES('loq75e7zqcbl', 'user', 'User');
+INSERT INTO permissions (public_id, name, description) VALUES('kflynb03pxbj', 'login', 'Can login');
+INSERT INTO permissions (public_id, name, description) VALUES('og1o5d0p0mjy', 'rdf', 'Can view RDF lab data');
 
 DROP TABLE IF EXISTS roles;
 CREATE TABLE roles (
@@ -25,12 +25,12 @@ CREATE TABLE roles (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX permissions_name_idx ON permissions (name);
 
-INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'Super');
-INSERT INTO roles (public_id, name) VALUES('mk4bgg4w43fp', 'Admin');
-INSERT INTO roles (public_id, name) VALUES('3xvte0ik4aq4', 'User');
+INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'super');
+INSERT INTO roles (public_id, name) VALUES('mk4bgg4w43fp', 'admin');
+INSERT INTO roles (public_id, name) VALUES('3xvte0ik4aq4', 'user');
 -- INSERT INTO roles (public_id, name) VALUES('UZuAVHDGToa4F786IPTijA==', 'GetDNA');
-INSERT INTO roles (public_id, name) VALUES('x4ewk9papip2', 'Login');
-INSERT INTO roles (public_id, name) VALUES('kh2yynyheqhv', 'RDF');
+INSERT INTO roles (public_id, name) VALUES('x4ewk9papip2', 'login');
+INSERT INTO roles (public_id, name) VALUES('kh2yynyheqhv', 'rdf');
 
 DROP TABLE IF EXISTS roles_permissions;
 CREATE TABLE roles_permissions (

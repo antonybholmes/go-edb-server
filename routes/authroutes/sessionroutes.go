@@ -175,7 +175,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	//}
 
 	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
-	t, err := jwtgen.AccessToken(c, publicId, roles)
+	t, err := jwtgen.AccessToken(c, publicId, auth.MakeClaim(roles))
 
 	if err != nil {
 		return routes.TokenErrorReq()

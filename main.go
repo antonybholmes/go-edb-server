@@ -80,7 +80,7 @@ func initCache() {
 func main() {
 	consts.Load()
 
-	jwtgen.Init(consts.JWT_PRIVATE_KEY)
+	jwtgen.Init(consts.JWT_RSA_PRIVATE_KEY)
 
 	//env.Load()
 
@@ -235,10 +235,10 @@ func main() {
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return &auth.JwtCustomClaims{}
 		},
-		SigningKey: consts.JWT_PRIVATE_KEY,
+		SigningKey: consts.JWT_RSA_PRIVATE_KEY,
 		// Have to tell it to use the public key for verification
 		KeyFunc: func(token *jwt.Token) (interface{}, error) {
-			return consts.JWT_PUBLIC_KEY, nil
+			return consts.JWT_RSA_PUBLIC_KEY, nil
 		},
 	}
 	jwtMiddleWare := echojwt.WithConfig(config)
