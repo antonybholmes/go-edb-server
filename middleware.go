@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -118,8 +119,10 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	session_name := consts.SESSION_NAME
+
 	return func(c echo.Context) error {
-		sess, err := session.Get(routes.SESSION_NAME, c)
+		sess, err := session.Get(session_name, c)
 		if err != nil {
 			return err
 		}

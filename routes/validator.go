@@ -5,6 +5,7 @@ import (
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -12,7 +13,6 @@ import (
 )
 
 const (
-	SESSION_NAME     string = "session"
 	SESSION_PUBLICID string = "publicId"
 	SESSION_ROLES    string = "roles"
 )
@@ -155,7 +155,7 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 }
 
 func (validator *Validator) LoadAuthUserFromSession() *Validator {
-	sess, _ := session.Get(SESSION_NAME, validator.c)
+	sess, _ := session.Get(consts.SESSION_NAME, validator.c)
 	uuid, _ := sess.Values[SESSION_PUBLICID].(string)
 
 	if validator.Err != nil {

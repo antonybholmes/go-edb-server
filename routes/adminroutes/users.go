@@ -33,7 +33,7 @@ func UserStatsRoute(c echo.Context) error {
 
 }
 
-func ListUsersRoute(c echo.Context) error {
+func UsersRoute(c echo.Context) error {
 
 	var req UserListReq
 

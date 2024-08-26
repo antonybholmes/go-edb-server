@@ -61,13 +61,13 @@ INSERT INTO roles_permissions (role_id, permission_id) VALUES(5, 5);
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY ASC, 
-    public_id TEXT NOT NULL UNIQUE, 
-    first_name TEXT NOT NULL DEFAULT '',
-    last_name TEXT NOT NULL DEFAULT '',
+    public_id TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL DEFAULT '',
-    email_verified BOOLEAN NOT NULL DEFAULT 0,
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
+    email_is_verified BOOLEAN NOT NULL DEFAULT 0,
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_uuid ON users (public_id);

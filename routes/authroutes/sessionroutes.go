@@ -7,6 +7,7 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -68,7 +69,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		sess, err := session.Get(routes.SESSION_NAME, c)
+		sess, err := session.Get(consts.SESSION_NAME, c)
 
 		if err != nil {
 			return routes.ErrorReq("error creating session")
@@ -76,7 +77,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		sess.Options = SESSION_OPT_MAX_AGE_30D
 		sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[routes.SESSION_ROLES] = authUser.Roles
+		sess.Values[routes.SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
 
 		sess.Save(c.Request(), c.Response())
 
@@ -129,7 +130,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	sess, err := session.Get(routes.SESSION_NAME, c)
+	sess, err := session.Get(consts.SESSION_NAME, c)
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
@@ -141,7 +142,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[routes.SESSION_ROLES] = authUser.Roles
+	sess.Values[routes.SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
 
 	sess.Save(c.Request(), c.Response())
 
@@ -150,7 +151,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 }
 
 func SessionSignOutRoute(c echo.Context) error {
-	sess, err := session.Get(routes.SESSION_NAME, c)
+	sess, err := session.Get(consts.SESSION_NAME, c)
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
@@ -164,9 +165,9 @@ func SessionSignOutRoute(c echo.Context) error {
 }
 
 func SessionNewAccessTokenRoute(c echo.Context) error {
-	sess, _ := session.Get(routes.SESSION_NAME, c)
+	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
-	roles, _ := sess.Values[routes.SESSION_ROLES].([]string)
+	roles, _ := sess.Values[routes.SESSION_ROLES].(string)
 
 	//authUser, err := userdbcache.FindUserByUuid(uuid)
 
@@ -175,7 +176,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	//}
 
 	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
-	t, err := jwtgen.AccessToken(c, publicId, auth.MakeClaim(roles))
+	t, err := jwtgen.AccessToken(c, publicId, roles)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -185,7 +186,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 }
 
 func SessionUserInfoRoute(c echo.Context) error {
-	sess, _ := session.Get(routes.SESSION_NAME, c)
+	sess, _ := session.Get(consts.SESSION_NAME, c)
 	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
 	authUser, err := userdbcache.FindUserByPublicId(uuid)
@@ -198,7 +199,7 @@ func SessionUserInfoRoute(c echo.Context) error {
 }
 
 func SessionUpdateUserInfoRoute(c echo.Context) error {
-	sess, _ := session.Get(routes.SESSION_NAME, c)
+	sess, _ := session.Get(consts.SESSION_NAME, c)
 	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
 	authUser, err := userdbcache.FindUserByPublicId(uuid)

@@ -18,7 +18,7 @@ func SignupRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdbcache.CreateStandardUser(&req)
+	authUser, err := userdbcache.CreateUserFromSignup(&req)
 
 	if err != nil {
 		return routes.ErrorReq(err)

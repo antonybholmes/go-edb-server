@@ -257,7 +257,7 @@ func main() {
 	})
 
 	adminGroup.POST("/users", func(c echo.Context) error {
-		return adminroutes.ListUsersRoute(c)
+		return adminroutes.UsersRoute(c)
 	})
 
 	//
