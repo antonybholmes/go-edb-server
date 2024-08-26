@@ -169,13 +169,6 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[routes.SESSION_ROLES].(string)
 
-	//authUser, err := userdbcache.FindUserByUuid(uuid)
-
-	//if err != nil {
-	//	return routes.UserDoesNotExistReq()
-	//}
-
-	//t, err := auth.AccessToken(c, uuid, authUser.Permissions, consts.JWT_PRIVATE_KEY)
 	t, err := jwtgen.AccessToken(c, publicId, roles)
 
 	if err != nil {
@@ -187,9 +180,9 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 
 func SessionUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
+	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
-	authUser, err := userdbcache.FindUserByPublicId(uuid)
+	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -200,9 +193,9 @@ func SessionUserInfoRoute(c echo.Context) error {
 
 func SessionUpdateUserInfoRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
-	uuid, _ := sess.Values[routes.SESSION_PUBLICID].(string)
+	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
-	authUser, err := userdbcache.FindUserByPublicId(uuid)
+	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -231,45 +224,11 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 	})
 }
 
-// func SessionUpdatePasswordRoute(c echo.Context) error {
-// 	sess, _ := session.Get(SESSION_NAME, c)
-// 	uuid, _ := sess.Values[SESSION_UUID].(string)
-
-// 	req := new(auth.NewPasswordReq)
-
-// 	err := c.Bind(req)
-
-// 	if err != nil {
-// 		return routes.ErrorReq("login parameters missing")
-// 	}
-
-// 	authUser, err := userdbcache.FindUserByUuid(uuid)
-
-// 	if err != nil {
-// 		return routes.UserDoesNotExistReq()
-// 	}
-
-// 	log.Debug().Msgf("up %d", authUser.Updated)
-
-// 	err = authUser.CheckPasswordsMatch(req.Password)
-
-// 	if err != nil {
-// 		return routes.ErrorReq(err)
-// 	}
-
-// 	err = userdbcache.SetPassword(authUser.PublicId, req.NewPassword)
-
-// 	if err != nil {
-// 		return routes.ErrorReq(err)
-// 	}
-
-// 	return SendPasswordEmail(c, authUser, req.NewPassword)
-// }
-
 // Start passwordless login by sending an email
-func SessionSendResetPasswordRoute(c echo.Context) error {
+func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 
 	return routes.NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+
 		authUser := validator.AuthUser
 		req := validator.Req
 

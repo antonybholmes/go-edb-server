@@ -10,11 +10,11 @@ CREATE TABLE permissions (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX roles_name_idx ON permissions (name);
 
-INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'super', 'Superuser');
-INSERT INTO permissions (public_id, name, description) VALUES('iz4kbfy3z0a3', 'admin', 'Administrator');
-INSERT INTO permissions (public_id, name, description) VALUES('loq75e7zqcbl', 'user', 'User');
-INSERT INTO permissions (public_id, name, description) VALUES('kflynb03pxbj', 'login', 'Can login');
-INSERT INTO permissions (public_id, name, description) VALUES('og1o5d0p0mjy', 'rdf', 'Can view RDF lab data');
+INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'Super', 'Superuser');
+INSERT INTO permissions (public_id, name, description) VALUES('iz4kbfy3z0a3', 'Admin', 'Administrator');
+INSERT INTO permissions (public_id, name, description) VALUES('loq75e7zqcbl', 'User', 'User');
+INSERT INTO permissions (public_id, name, description) VALUES('kflynb03pxbj', 'Login', 'Can login');
+INSERT INTO permissions (public_id, name, description) VALUES('og1o5d0p0mjy', 'RDF', 'Can view RDF lab data');
 
 DROP TABLE IF EXISTS roles;
 CREATE TABLE roles (
@@ -25,12 +25,12 @@ CREATE TABLE roles (
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX permissions_name_idx ON permissions (name);
 
-INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'super');
-INSERT INTO roles (public_id, name) VALUES('mk4bgg4w43fp', 'admin');
-INSERT INTO roles (public_id, name) VALUES('3xvte0ik4aq4', 'user');
+INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'Super');
+INSERT INTO roles (public_id, name) VALUES('mk4bgg4w43fp', 'Admin');
+INSERT INTO roles (public_id, name) VALUES('3xvte0ik4aq4', 'User');
 -- INSERT INTO roles (public_id, name) VALUES('UZuAVHDGToa4F786IPTijA==', 'GetDNA');
-INSERT INTO roles (public_id, name) VALUES('x4ewk9papip2', 'login');
-INSERT INTO roles (public_id, name) VALUES('kh2yynyheqhv', 'rdf');
+INSERT INTO roles (public_id, name) VALUES('x4ewk9papip2', 'Login');
+INSERT INTO roles (public_id, name) VALUES('kh2yynyheqhv', 'RDF');
 
 DROP TABLE IF EXISTS roles_permissions;
 CREATE TABLE roles_permissions (
@@ -70,10 +70,10 @@ CREATE TABLE users (
     email_is_verified BOOLEAN NOT NULL DEFAULT 0,
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
-CREATE INDEX users_uuid ON users (public_id);
+CREATE INDEX users_public_id_idx ON users (public_id);
 -- CREATE INDEX name ON users (first_name, last_name);
-CREATE INDEX users_username ON users (username);
-CREATE INDEX users_email ON users (email);
+CREATE INDEX users_username_idx ON users (username);
+CREATE INDEX users_email_idx ON users (email);
 
 CREATE TRIGGER users_updated_trigger AFTER UPDATE ON users
 BEGIN
@@ -90,8 +90,6 @@ CREATE TABLE users_roles (
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(role_id) REFERENCES roles(id));
 CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
- 
-
 
 
 CREATE TABLE users_sessions(
@@ -100,5 +98,5 @@ CREATE TABLE users_sessions(
   session_id INTEGER NOT NULL UNIQUE,
   FOREIGN KEY(public_id) REFERENCES users(public_id)
 );
-CREATE INDEX users_sessions_uuid ON users_sessions (public_id);
-CREATE INDEX users_sessions_session_id ON users_sessions (session_id);
+CREATE INDEX users_sessions_public_id_idx ON users_sessions (public_id);
+CREATE INDEX users_sessions_session_id_idx ON users_sessions (session_id);

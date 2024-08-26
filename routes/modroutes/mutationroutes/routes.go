@@ -226,41 +226,6 @@ func PileupRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		// for _, duuid := range params.Datasets {
-		// 	dataset, err := mutationdbcache.GetDataset(duuid)
-
-		// 	if err != nil {
-		// 		return routes.ErrorReq(err)
-		// 	}
-
-		// 	pileup, err := dataset.Pileup(location)
-
-		// 	if err != nil {
-		// 		return routes.ErrorReq(err)
-		// 	}
-
-		// 	// sum the total number of samples involved
-		// 	ret.Samples += len(dataset.Samples)
-
-		// 	for ci := range location.Len() {
-		// 		ret.Mutations[ci] = append(ret.Mutations[ci], pileup.Mutations[ci]...)
-		// 	}
-
-		// 	//ret.Info[dbi] = db.Info
-		// }
-
-		// sort each pileup
-		// for ci := range location.Len() {
-		// 	sort.Slice(ret.Mutations[ci], func(i, j int) bool {
-		// 		// sort by variant type and then tumor
-		// 		if ret.Mutations[ci][i].Type < ret.Mutations[ci][j].Type {
-		// 			return true
-		// 		}
-
-		// 		return ret.Mutations[ci][i].Tum < ret.Mutations[ci][j].Tum
-		// 	})
-		// }
-
 		return routes.MakeDataPrettyResp(c, "", pileup)
 	})
 

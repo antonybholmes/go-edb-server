@@ -145,82 +145,6 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	//e.Logger.SetLevel(log.DEBUG)
-
-	// e.GET("/write", func(c echo.Context) error {
-	// 	sess, err := session.Get("session", c)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	sess.Options = authroutes.SESSION_OPT_24H
-	// 	sess.Values["name"] = "Steve"
-	// 	sess.Save(c.Request(), c.Response())
-
-	// 	return c.NoContent(http.StatusOK)
-	// })
-
-	// e.POST("/login", func(c echo.Context) error {
-	// 	validator, err := routes.NewValidator(c).ReqBind().Ok()
-
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	if validator.Req.Password == "" {
-	// 		return routes.ErrorReq("empty password: use passwordless")
-	// 	}
-
-	// 	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
-
-	// 	if err != nil {
-	// 		email, err := mail.ParseAddress(validator.Req.Username)
-
-	// 		if err != nil {
-	// 			return routes.ErrorReq("email address not valid")
-	// 		}
-
-	// 		// also check if username is valid email and try to login
-	// 		// with that
-	// 		authUser, err = userdbcache.FindUserByEmail(email)
-
-	// 		if err != nil {
-	// 			return routes.UserDoesNotExistReq()
-	// 		}
-	// 	}
-
-	// 	if !authUser.EmailVerified {
-	// 		return routes.ErrorReq("email address not verified")
-	// 	}
-
-	// 	if !authUser.CanSignIn {
-	// 		return routes.ErrorReq("user not allowed to login")
-	// 	}
-
-	// 	if !authUser.CheckPasswords(validator.Req.Password) {
-	// 		return routes.InvalidPasswordReq()
-	// 	}
-
-	// 	sess, err := session.Get("session", c)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	sess.Options = authroutes.SESSION_OPT_30D
-	// 	sess.Values["uuid"] = authUser.PublicId
-	// 	sess.Save(c.Request(), c.Response())
-
-	// 	return c.NoContent(http.StatusOK)
-	// })
-
-	// e.GET("/read", func(c echo.Context) error {
-	// 	sess, err := session.Get("session", c)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	log.Debug().Msgf("%s", sess.ID)
-
-	// 	return c.JSON(http.StatusOK, sess.Values[authroutes.SESSION_UUID])
-	// })
-
 	e.GET("/about", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
 	})
@@ -329,7 +253,7 @@ func main() {
 	})
 
 	sessionAuthGroup.POST("/password/reset", func(c echo.Context) error {
-		return authroutes.SessionSendResetPasswordRoute(c)
+		return authroutes.SessionSendResetPasswordEmailRoute(c)
 	})
 
 	sessionAuthGroup.POST("/passwordless/signin", func(c echo.Context) error {

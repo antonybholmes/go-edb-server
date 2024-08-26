@@ -63,8 +63,8 @@ func TokenInfoRoute(c echo.Context) error {
 	}
 
 	return routes.MakeDataPrettyResp(c, "", &routes.JwtInfo{
-		Uuid: claims.PublicId,
-		Type: claims.Type, //.TokenTypeString(claims.Type),
+		PublicId: claims.PublicId,
+		Type:     claims.Type, //.TokenTypeString(claims.Type),
 		//IpAddr:  claims.IpAddr,
 		Expires: claims.ExpiresAt.UTC().String()})
 

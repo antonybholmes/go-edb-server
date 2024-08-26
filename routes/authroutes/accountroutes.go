@@ -38,39 +38,7 @@ func UpdateAccountRoute(c echo.Context) error {
 
 		return SendUserInfoUpdatedEmail(c, authUser)
 	})
-
-	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
-	// 	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-	// 		return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-	// 			err := userdbcache.SetUsername(authUser.PublicId, req.Username)
-
-	// 			if err != nil {
-	// 				return routes.ErrorReq("error setting password")
-	// 			}
-
-	// 			return routes.MakeSuccessResp(c, "password updated", true)
-	// 		})
-	// 	})
-	// })
-
 }
-
-// func UpdateNameRoute(c echo.Context) error {
-// 	return routes.NewValidator(c).
-// 		IsValidAccessToken().
-// 		AuthUserFromUuid().
-// 		ReqBind().
-// 		Success(func(validator *routes.Validator) error {
-
-// 			err := userdbcache.SetName(validator.AuthUser.PublicId, validator.Req.Name)
-
-// 			if err != nil {
-// 				return routes.ErrorReq("error setting password")
-// 			}
-
-// 			return routes.MakeOkResp(c, "name updated")
-// 		})
-// }
 
 func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).

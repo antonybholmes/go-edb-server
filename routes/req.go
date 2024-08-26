@@ -10,7 +10,7 @@ import (
 )
 
 type JwtInfo struct {
-	Uuid string `json:"uuid"`
+	PublicId string `json:"publicId"`
 	//Name  string `json:"name"`
 	Type string `json:"type"`
 	//IpAddr  string `json:"ipAddr"`

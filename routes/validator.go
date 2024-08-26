@@ -155,14 +155,20 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 }
 
 func (validator *Validator) LoadAuthUserFromSession() *Validator {
-	sess, _ := session.Get(consts.SESSION_NAME, validator.c)
-	uuid, _ := sess.Values[SESSION_PUBLICID].(string)
+	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(uuid)
+	sess, _ := session.Get(consts.SESSION_NAME, validator.c)
+	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -214,7 +220,7 @@ func (validator *Validator) LoadTokenClaims() *Validator {
 	return validator
 }
 
-// Extracts uuid from token, checks user exists and calls success function.
+// Extracts public id from token, checks user exists and calls success function.
 // If claims argument is nil, function will search for claims automatically.
 // If claims are supplied, this step is skipped. This is so this function can
 // be nested in other call backs that may have already extracted the claims
@@ -225,8 +231,6 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 	if validator.Err != nil {
 		return validator
 	}
-
-	//log.Debug().Msgf("from uuid %s", validator.Claims.PublicId)
 
 	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
 
