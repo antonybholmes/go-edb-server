@@ -48,3 +48,15 @@ func UsersRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", users)
 
 }
+
+func RolesRoute(c echo.Context) error {
+
+	roles, err := userdbcache.Roles()
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", roles)
+
+}

@@ -56,7 +56,11 @@ var store *sqlitestore.SqliteStore
 
 func initCache() {
 
-	store = sys.Must(sqlitestore.NewSqliteStore("./data/users.db", "sessions", "/", 3600, []byte(consts.SESSION_SECRET)))
+	store = sys.Must(sqlitestore.NewSqliteStore("data/users.db",
+		"sessions",
+		"/",
+		auth.MAX_AGE_30_DAYS_SECS,
+		[]byte(consts.SESSION_SECRET)))
 
 	userdbcache.InitCache("data/users.db")
 
@@ -182,6 +186,10 @@ func main() {
 
 	adminGroup.POST("/users", func(c echo.Context) error {
 		return adminroutes.UsersRoute(c)
+	})
+
+	adminGroup.GET("/roles", func(c echo.Context) error {
+		return adminroutes.RolesRoute(c)
 	})
 
 	//
