@@ -286,7 +286,7 @@ func main() {
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
 
 	sessionUsersGroup.GET("/info", func(c echo.Context) error {
-		return authroutes.SessionUserInfoRoute(c)
+		return authroutes.SessionUserRoute(c)
 	})
 
 	sessionUsersGroup.POST("/update", func(c echo.Context) error {

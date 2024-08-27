@@ -119,10 +119,11 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	session_name := consts.SESSION_NAME
+	sessionName := consts.SESSION_NAME
 
 	return func(c echo.Context) error {
-		sess, err := session.Get(session_name, c)
+		sess, err := session.Get(sessionName, c)
+
 		if err != nil {
 			return err
 		}

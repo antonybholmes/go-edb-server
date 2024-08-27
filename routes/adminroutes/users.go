@@ -88,6 +88,14 @@ func UpdateUserRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
+		if validator.Req.Password != "" {
+			err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password, db)
+
+			if err != nil {
+				return routes.ErrorReq(err)
+			}
+		}
+
 		// set roles
 
 		err = userdbcache.SetUserRoles(authUser, validator.Req.Roles, db)

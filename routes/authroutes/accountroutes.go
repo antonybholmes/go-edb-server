@@ -21,16 +21,10 @@ func UpdateAccountRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		err := userdbcache.SetUsername(authUser.PublicId,
-			validator.Req.Username)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		err = userdbcache.SetName(authUser.PublicId,
+		err := userdbcache.SetUserInfo(authUser.PublicId,
+			validator.Req.Username,
 			validator.Req.FirstName,
-			validator.Req.LastName)
+			validator.Req.LastName, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -44,7 +38,6 @@ func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
 		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {
-
 			return routes.MakeDataPrettyResp(c, "", validator.AuthUser)
 		})
 }

@@ -178,7 +178,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
 }
 
-func SessionUserInfoRoute(c echo.Context) error {
+func SessionUserRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 

@@ -61,7 +61,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password)
+		err = userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
