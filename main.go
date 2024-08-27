@@ -145,7 +145,7 @@ func main() {
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
-		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost},
+		AllowMethods:     []string{http.MethodGet, http.MethodDelete, http.MethodPost},
 		AllowCredentials: true,
 	}))
 
@@ -186,6 +186,18 @@ func main() {
 
 	adminGroup.POST("/users", func(c echo.Context) error {
 		return adminroutes.UsersRoute(c)
+	})
+
+	adminGroup.POST("/users/update", func(c echo.Context) error {
+		return adminroutes.UpdateUserRoute(c)
+	})
+
+	adminGroup.POST("/users/add", func(c echo.Context) error {
+		return adminroutes.AddUserRoute(c)
+	})
+
+	adminGroup.DELETE("/users/:publicId", func(c echo.Context) error {
+		return adminroutes.DeleteUserRoute(c)
 	})
 
 	adminGroup.GET("/roles", func(c echo.Context) error {
@@ -273,12 +285,12 @@ func main() {
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.POST("/info", func(c echo.Context) error {
+	sessionUsersGroup.GET("/info", func(c echo.Context) error {
 		return authroutes.SessionUserInfoRoute(c)
 	})
 
 	sessionUsersGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.SessionUpdateUserInfoRoute(c)
+		return authroutes.SessionUpdateUserRoute(c)
 	})
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")

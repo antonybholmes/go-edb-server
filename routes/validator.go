@@ -9,7 +9,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -101,8 +100,6 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 		return validator
 	}
 
-	log.Debug().Msgf("body %v", validator.Req)
-
 	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
 
 	address, err := mail.ParseAddress(validator.Req.Email)
@@ -114,6 +111,24 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	}
 
 	return validator
+}
+
+func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
+
+	if err != nil {
+		validator.Err = UserDoesNotExistReq()
+	} else {
+		validator.AuthUser = authUser
+	}
+
+	return validator
+
 }
 
 func (validator *Validator) LoadAuthUserFromEmail() *Validator {

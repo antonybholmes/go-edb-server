@@ -6,13 +6,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/antonybholmes/go-auth"
 	"github.com/labstack/echo/v4"
 )
 
 type JwtInfo struct {
 	PublicId string `json:"publicId"`
 	//Name  string `json:"name"`
-	Type string `json:"type"`
+	Type auth.TokenType `json:"type"`
 	//IpAddr  string `json:"ipAddr"`
 	Expires string `json:"expires"`
 }
@@ -120,7 +121,7 @@ func HeaderAuthToken(c echo.Context) (string, error) {
 		return "", errors.New("bearer not present")
 	}
 
-	tokens := strings.Split(h, " ")
+	tokens := strings.SplitN(h, " ", 2)
 
 	if len(tokens) < 2 {
 		return "", errors.New("jwt not present")

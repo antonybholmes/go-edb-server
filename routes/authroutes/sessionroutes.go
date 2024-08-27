@@ -191,7 +191,7 @@ func SessionUserInfoRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", *authUser)
 }
 
-func SessionUpdateUserInfoRoute(c echo.Context) error {
+func SessionUpdateUserRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 
@@ -208,7 +208,7 @@ func SessionUpdateUserInfoRoute(c echo.Context) error {
 		// 	return routes.InvalidPasswordReq()
 		// }
 
-		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
+		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
