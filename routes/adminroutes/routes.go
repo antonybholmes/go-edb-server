@@ -8,8 +8,8 @@ import (
 )
 
 type UserListReq struct {
-	Offset  int
-	Records int
+	Offset  uint
+	Records uint
 }
 
 type UserStatResp struct {
@@ -136,11 +136,11 @@ func DeleteUserRoute(c echo.Context) error {
 
 	log.Debug().Msgf("delete %s", publicId)
 
-	// err := userdbcache.DeleteUser(publicId)
+	err := userdbcache.DeleteUser(publicId)
 
-	// if err != nil {
-	// 	return routes.ErrorReq(err)
-	// }
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
 
-	return routes.MakeOkPrettyResp(c, "user updated")
+	return routes.MakeOkPrettyResp(c, "user deleted")
 }
