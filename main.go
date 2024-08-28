@@ -225,20 +225,28 @@ func main() {
 		return authroutes.EmailAddressWasVerifiedRoute(c)
 	}, jwtMiddleWare)
 
-	passwordGroup := authGroup.Group("/passwords")
-
-	passwordGroup.POST("/reset", func(c echo.Context) error {
-		return authroutes.SendChangeEmailRoute(c)
-	})
-
-	passwordGroup.POST("/update", func(c echo.Context) error {
-		return authroutes.UpdatePasswordRoute(c)
-	}, jwtMiddleWare)
-
 	emailGroup := authGroup.Group("/email")
 
+	// with the correct token, performs the update
+	emailGroup.POST("/reset", func(c echo.Context) error {
+		return authroutes.SendResetEmailEmailRoute(c)
+	}, jwtMiddleWare)
+
+	// with the correct token, performs the update
 	emailGroup.POST("/update", func(c echo.Context) error {
 		return authroutes.UpdateEmailRoute(c)
+	}, jwtMiddleWare)
+
+	passwordGroup := authGroup.Group("/passwords")
+
+	// sends a reset link
+	passwordGroup.POST("/reset", func(c echo.Context) error {
+		return authroutes.SendResetPasswordFromUsernameEmailRoute(c)
+	})
+
+	// with the correct token, updates a password
+	passwordGroup.POST("/update", func(c echo.Context) error {
+		return authroutes.UpdatePasswordRoute(c)
 	}, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
@@ -268,8 +276,8 @@ func main() {
 		return authroutes.SessionUsernamePasswordSignInRoute(c)
 	})
 
-	sessionAuthGroup.POST("/email/change", func(c echo.Context) error {
-		return authroutes.SessionSendChangeEmailRoute(c)
+	sessionAuthGroup.POST("/email/reset", func(c echo.Context) error {
+		return authroutes.SessionSendResetEmailEmailRoute(c)
 	})
 
 	sessionAuthGroup.POST("/password/reset", func(c echo.Context) error {
@@ -280,7 +288,7 @@ func main() {
 		return authroutes.SessionPasswordlessSignInRoute(c)
 	}, jwtMiddleWare)
 
-	sessionAuthGroup.POST("/tokens/access", authroutes.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
+	sessionAuthGroup.POST("/tokens/access", authroutes.SessionNewAccessJwtRoute, SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)

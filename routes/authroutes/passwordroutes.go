@@ -14,7 +14,7 @@ func PasswordUpdatedResp(c echo.Context) error {
 }
 
 // Start passwordless login by sending an email
-func SendResetPasswordFromUsernameRoute(c echo.Context) error {
+func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 	return routes.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
