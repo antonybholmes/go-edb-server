@@ -164,7 +164,7 @@ func SessionSignOutRoute(c echo.Context) error {
 	return routes.MakeOkPrettyResp(c, "user was signed out")
 }
 
-func SessionNewAccessTokenRoute(c echo.Context) error {
+func SessionNewAccessJwtRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[routes.SESSION_ROLES].(string)
@@ -275,7 +275,7 @@ func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 // 	})
 // }
 
-func SessionSendChangeEmailRoute(c echo.Context) error {
+func SessionSendResetEmailEmailRoute(c echo.Context) error {
 
 	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
 
@@ -287,13 +287,13 @@ func SessionSendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ChangeEmailToken(c, validator.AuthUser, newEmail)
+		otpJwt, err := jwtgen.ResetEmailToken(c, validator.AuthUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		file := "templates/email/email/change/web.html"
+		file := "templates/email/email/reset/web.html"
 
 		go BaseSendEmailWithToken("Change Your Email Address",
 			validator.AuthUser,

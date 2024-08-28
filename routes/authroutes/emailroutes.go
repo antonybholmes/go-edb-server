@@ -7,7 +7,6 @@ import (
 	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -17,7 +16,7 @@ func EmailUpdatedResp(c echo.Context) error {
 }
 
 // Start passwordless login by sending an email
-func SendChangeEmailRoute(c echo.Context) error {
+func SendResetEmailEmailRoute(c echo.Context) error {
 	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
@@ -28,7 +27,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ChangeEmailToken(c, authUser, newEmail)
+		otpJwt, err := jwtgen.ResetEmailToken(c, authUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -37,9 +36,9 @@ func SendChangeEmailRoute(c echo.Context) error {
 		var file string
 
 		if req.CallbackUrl != "" {
-			file = "templates/email/email/change/web.html"
+			file = "templates/email/email/reset/web.html"
 		} else {
-			file = "templates/email/email/change/api.html"
+			file = "templates/email/email/reset/api.html"
 		}
 
 		go BaseSendEmailWithToken("Update Email",
@@ -59,7 +58,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 }
 
 func UpdateEmailRoute(c echo.Context) error {
-	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).CheckEmailIsWellFormed().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_CHANGE_EMAIL {
 			return routes.WrongTokentTypeReq()
@@ -74,9 +73,7 @@ func UpdateEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		publicId := authUser.PublicId
 
-		log.Debug().Msgf("change email %s", validator.Req.Email)
-
-		err = userdbcache.SetEmail(validator.AuthUser.PublicId, validator.Req.Email)
+		err = userdbcache.SetEmail(publicId, validator.Req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
