@@ -144,8 +144,9 @@ func main() {
 	//e.Use(middleware.CORS())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
-		AllowMethods:     []string{http.MethodGet, http.MethodDelete, http.MethodPost},
+		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
+		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
+
 		AllowCredentials: true,
 	}))
 
