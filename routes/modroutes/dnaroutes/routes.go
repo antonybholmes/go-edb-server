@@ -7,7 +7,7 @@ import (
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-dna/dnadbcache"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
 )

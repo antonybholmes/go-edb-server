@@ -2,11 +2,10 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 func SignupRoute(c echo.Context) error {
@@ -19,15 +18,15 @@ func SignupRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdb.CreateStandardUser(&req)
+	authUser, err := userdbcache.CreateUserFromSignup(&req)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	otpJwt, err := auth.VerifyEmailToken(c, authUser.Uuid, consts.JWT_PRIVATE_KEY)
+	otpJwt, err := jwtgen.VerifyEmailToken(c, authUser.PublicId)
 
-	log.Debug().Msgf("%s", otpJwt)
+	//log.Debug().Msgf("%s", otpJwt)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -65,11 +64,11 @@ func EmailAddressWasVerifiedRoute(c echo.Context) error {
 	authUser := validator.AuthUser
 
 	// if verified, stop and just return true
-	if authUser.EmailVerified {
+	if authUser.EmailIsVerified {
 		return routes.MakeOkPrettyResp(c, "")
 	}
 
-	err = userdb.SetIsVerified(authUser.Uuid)
+	err = userdbcache.SetIsVerified(authUser.PublicId)
 
 	if err != nil {
 		return routes.MakeSuccessPrettyResp(c, "unable to verify user", false)

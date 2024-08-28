@@ -4,14 +4,17 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
-const SESSION_NAME string = "session"
-const SESSION_UUID string = "uuid"
+const (
+	SESSION_PUBLICID string = "publicId"
+	SESSION_ROLES    string = "roles"
+)
 
 //
 // Standardized data checkers for checking header and body contain
@@ -72,6 +75,24 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 	return validator
 }
 
+func (validator *Validator) CheckUsernameIsWellFormed() *Validator {
+	validator.ParseLoginRequestBody()
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
+
+	err := auth.CheckUsername(validator.Req.Username)
+
+	if err != nil {
+		validator.Err = ErrorReq(err)
+	}
+
+	return validator
+}
+
 func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	validator.ParseLoginRequestBody()
 
@@ -79,7 +100,9 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 		return validator
 	}
 
-	address, err := auth.CheckEmailIsWellFormed(validator.Req.Username)
+	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
+
+	address, err := mail.ParseAddress(validator.Req.Email)
 
 	if err != nil {
 		validator.Err = ErrorReq(err)
@@ -90,14 +113,13 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	return validator
 }
 
-func (validator *Validator) LoadAuthUserFromEmail() *Validator {
-	validator.CheckEmailIsWellFormed()
+func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserByEmail(validator.Address)
+	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -109,14 +131,33 @@ func (validator *Validator) LoadAuthUserFromEmail() *Validator {
 
 }
 
-func (validator *Validator) LoadAuthUserFromId() *Validator {
+func (validator *Validator) LoadAuthUserFromEmail() *Validator {
+	validator.CheckEmailIsWellFormed()
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	authUser, err := userdbcache.FindUserByEmail(validator.Address)
+
+	if err != nil {
+		validator.Err = UserDoesNotExistReq()
+	} else {
+		validator.AuthUser = authUser
+	}
+
+	return validator
+
+}
+
+func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserById(validator.Req.Username)
+	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -129,14 +170,20 @@ func (validator *Validator) LoadAuthUserFromId() *Validator {
 }
 
 func (validator *Validator) LoadAuthUserFromSession() *Validator {
-	sess, _ := session.Get(SESSION_NAME, validator.c)
-	uuid, _ := sess.Values[SESSION_UUID].(string)
+	validator.ParseLoginRequestBody()
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdb.FindUserByUuid(uuid)
+	sess, _ := session.Get(consts.SESSION_NAME, validator.c)
+	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+
+	if validator.Err != nil {
+		return validator
+	}
+
+	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -166,7 +213,7 @@ func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
 		return validator
 	}
 
-	if !validator.AuthUser.EmailVerified {
+	if !validator.AuthUser.EmailIsVerified {
 		validator.Err = ErrorReq("email address not verified")
 	}
 
@@ -188,7 +235,7 @@ func (validator *Validator) LoadTokenClaims() *Validator {
 	return validator
 }
 
-// Extracts uuid from token, checks user exists and calls success function.
+// Extracts public id from token, checks user exists and calls success function.
 // If claims argument is nil, function will search for claims automatically.
 // If claims are supplied, this step is skipped. This is so this function can
 // be nested in other call backs that may have already extracted the claims
@@ -200,9 +247,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 		return validator
 	}
 
-	//log.Debug().Msgf("from uuid %s", validator.Claims.Uuid)
-
-	authUser, err := userdb.FindUserByUuid(validator.Claims.Uuid)
+	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
 
 	if err != nil {
 		validator.Err = UserDoesNotExistReq()
@@ -214,7 +259,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidRefreshToken() *Validator {
-	validator.LoadAuthUserFromToken()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator
@@ -229,7 +274,7 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 }
 
 func (validator *Validator) CheckIsValidAccessToken() *Validator {
-	validator.LoadAuthUserFromToken()
+	validator.LoadTokenClaims()
 
 	if validator.Err != nil {
 		return validator

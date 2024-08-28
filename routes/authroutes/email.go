@@ -4,18 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+
 	"net/mail"
 	"net/url"
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-mailer/mailer"
 )
 
-const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
-const TOKEN_PARAM = "token"
+const JWT_PARAM = "jwt"
 const URL_PARAM = "url"
 
 type EmailBody struct {
@@ -28,9 +28,8 @@ type EmailBody struct {
 
 func SendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
-
 	file string,
-	token string,
+	jwt string,
 	callbackUrl string,
 	vistUrl string) error {
 
@@ -40,7 +39,7 @@ func SendEmailWithToken(subject string,
 		return routes.ErrorReq(err)
 	}
 
-	return BaseSendEmailWithToken(subject, authUser, address, file, token, callbackUrl, vistUrl)
+	return BaseSendEmailWithToken(subject, authUser, address, file, jwt, callbackUrl, vistUrl)
 }
 
 // Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites
@@ -49,7 +48,7 @@ func BaseSendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
 	address *mail.Address,
 	file string,
-	token string,
+	jwt string,
 	callbackUrl string,
 	vistUrl string) error {
 
@@ -71,7 +70,7 @@ func BaseSendEmailWithToken(subject string,
 
 	firstName = strings.Split(firstName, " ")[0]
 
-	time := fmt.Sprintf("%d minutes", int(auth.TOKEN_TYPE_SHORT_TIME_TTL_MINS.Minutes()))
+	time := fmt.Sprintf("%d minutes", int(auth.TOKEN_TTL_10_MINS.Minutes()))
 
 	if callbackUrl != "" {
 		callbackUrl, err := url.Parse(callbackUrl)
@@ -90,7 +89,7 @@ func BaseSendEmailWithToken(subject string,
 			params.Set(URL_PARAM, vistUrl)
 		}
 
-		params.Set(TOKEN_PARAM, token)
+		params.Set(JWT_PARAM, jwt)
 
 		callbackUrl.RawQuery = params.Encode()
 
@@ -101,7 +100,7 @@ func BaseSendEmailWithToken(subject string,
 			Link:       link,
 			From:       consts.NAME,
 			Time:       time,
-			DoNotReply: DO_NOT_REPLY,
+			DoNotReply: consts.DO_NOT_REPLY,
 		})
 
 		if err != nil {
@@ -110,10 +109,10 @@ func BaseSendEmailWithToken(subject string,
 	} else {
 		err = t.Execute(&body, EmailBody{
 			Name:       firstName,
-			Link:       token,
+			Link:       jwt,
 			From:       consts.NAME,
 			Time:       time,
-			DoNotReply: DO_NOT_REPLY,
+			DoNotReply: consts.DO_NOT_REPLY,
 		})
 
 		if err != nil {

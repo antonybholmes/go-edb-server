@@ -4,9 +4,9 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
@@ -28,7 +28,7 @@ func SendChangeEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := auth.ChangeEmailToken(c, authUser, newEmail, consts.JWT_PRIVATE_KEY)
+		otpJwt, err := jwtgen.ChangeEmailToken(c, authUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -65,24 +65,24 @@ func UpdateEmailRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := auth.CheckOtpValid(validator.AuthUser, validator.Claims.Otp)
+		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.Otp)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
 		authUser := validator.AuthUser
-		uuid := authUser.Uuid
+		publicId := authUser.PublicId
 
 		log.Debug().Msgf("change email %s", validator.Req.Email)
 
-		err = userdb.SetEmail(validator.AuthUser.Uuid, validator.Req.Email)
+		err = userdbcache.SetEmail(validator.AuthUser.PublicId, validator.Req.Email)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		authUser, err = userdb.FindUserByUuid(uuid)
+		authUser, err = userdbcache.FindUserByPublicId(publicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)

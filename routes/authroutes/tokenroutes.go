@@ -1,11 +1,10 @@
 package authroutes
 
 import (
-	"strings"
-
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -56,7 +55,7 @@ func TokenInfoRoute(c echo.Context) error {
 	claims := auth.JwtCustomClaims{}
 
 	_, err = jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (interface{}, error) {
-		return consts.JWT_PUBLIC_KEY, nil
+		return consts.JWT_RSA_PUBLIC_KEY, nil
 	})
 
 	if err != nil {
@@ -64,8 +63,8 @@ func TokenInfoRoute(c echo.Context) error {
 	}
 
 	return routes.MakeDataPrettyResp(c, "", &routes.JwtInfo{
-		Uuid: claims.Uuid,
-		Type: claims.Type, //.TokenTypeString(claims.Type),
+		PublicId: claims.PublicId,
+		Type:     claims.Type, //.TokenTypeString(claims.Type),
 		//IpAddr:  claims.IpAddr,
 		Expires: claims.ExpiresAt.UTC().String()})
 
@@ -74,10 +73,8 @@ func TokenInfoRoute(c echo.Context) error {
 func NewAccessTokenRoute(c echo.Context) error {
 	return routes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *routes.Validator) error {
 
-		permissions := strings.Split(validator.Claims.Scope, " ")
-
 		// Generate encoded token and send it as response.
-		t, err := auth.AccessToken(c, validator.Claims.Uuid, &permissions, consts.JWT_PRIVATE_KEY)
+		t, err := jwtgen.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")

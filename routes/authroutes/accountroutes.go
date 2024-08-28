@@ -2,8 +2,8 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
 )
@@ -21,16 +21,10 @@ func UpdateAccountRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		err := userdb.SetUsername(authUser.Uuid,
-			validator.Req.Username)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		err = userdb.SetName(authUser.Uuid,
+		err := userdbcache.SetUserInfo(authUser.PublicId,
+			validator.Req.Username,
 			validator.Req.FirstName,
-			validator.Req.LastName)
+			validator.Req.LastName, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -38,45 +32,12 @@ func UpdateAccountRoute(c echo.Context) error {
 
 		return SendUserInfoUpdatedEmail(c, authUser)
 	})
-
-	// return routes.ReqBindCB(c, new(auth.UsernameReq), func(c echo.Context, req *auth.UsernameReq) error {
-	// 	return routes.IsValidAccessTokenCB(c, func(c echo.Context, claims *auth.JwtCustomClaims) error {
-	// 		return routes.AuthUserFromUuidCB(c, claims, func(c echo.Context, claims *auth.JwtCustomClaims, authUser *auth.AuthUser) error {
-	// 			err := userdb.SetUsername(authUser.Uuid, req.Username)
-
-	// 			if err != nil {
-	// 				return routes.ErrorReq("error setting password")
-	// 			}
-
-	// 			return routes.MakeSuccessResp(c, "password updated", true)
-	// 		})
-	// 	})
-	// })
-
 }
-
-// func UpdateNameRoute(c echo.Context) error {
-// 	return routes.NewValidator(c).
-// 		IsValidAccessToken().
-// 		AuthUserFromUuid().
-// 		ReqBind().
-// 		Success(func(validator *routes.Validator) error {
-
-// 			err := userdb.SetName(validator.AuthUser.Uuid, validator.Req.Name)
-
-// 			if err != nil {
-// 				return routes.ErrorReq("error setting password")
-// 			}
-
-// 			return routes.MakeOkResp(c, "name updated")
-// 		})
-// }
 
 func UserInfoRoute(c echo.Context) error {
 	return routes.NewValidator(c).
 		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {
-
 			return routes.MakeDataPrettyResp(c, "", validator.AuthUser)
 		})
 }

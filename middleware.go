@@ -1,13 +1,11 @@
 package main
 
 import (
-	"errors"
-
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -56,12 +54,64 @@ import (
 // 	}
 // }
 
+// func JwtLoadTokenClaimsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+// 		_, err := routes.NewValidator(c).CheckIsValidAccessToken().Ok()
+
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		return next(c)
+// 	}
+// }
+
+func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		if claims.Type != auth.TOKEN_TYPE_REFRESH {
+			routes.AuthErrorReq("not a refresh token")
+		}
+
+		return next(c)
+	}
+}
+
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_, err := routes.NewValidator(c).CheckIsValidAccessToken().Ok()
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
 
-		if err != nil {
-			return err
+		if claims.Type != auth.TOKEN_TYPE_ACCESS {
+			routes.AuthErrorReq("not an access token")
+		}
+
+		return next(c)
+	}
+}
+
+func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		if !auth.IsAdmin((claims.Roles)) {
+			return routes.AuthErrorReq("user is not an admin")
+		}
+
+		return next(c)
+	}
+}
+
+func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := c.Get("user").(*jwt.Token)
+		claims := user.Claims.(*auth.JwtCustomClaims)
+
+		if !auth.CanLogin((claims.Roles)) {
+			return routes.AuthErrorReq("user is not allowed to login")
 		}
 
 		return next(c)
@@ -69,18 +119,21 @@ func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	sessionName := consts.SESSION_NAME
+
 	return func(c echo.Context) error {
-		sess, err := session.Get(routes.SESSION_NAME, c)
+		sess, err := session.Get(sessionName, c)
+
 		if err != nil {
 			return err
 		}
 
 		//log.Debug().Msgf("validate session %s", sess.ID)
 
-		_, ok := sess.Values[routes.SESSION_UUID].(string)
+		_, ok := sess.Values[routes.SESSION_PUBLICID].(string)
 
 		if !ok {
-			return errors.New("cannot get user id from session")
+			return routes.AuthErrorReq("cannot get user id from session")
 		}
 
 		return next(c)
@@ -126,48 +179,35 @@ func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// you can add your implementation here.
-func validateJwtToken(tokenString string) (*jwt.Token, error) {
-
-	token, err := jwt.ParseWithClaims(tokenString, &auth.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return consts.JWT_PUBLIC_KEY, nil
-	})
-
-	if err != nil || !token.Valid {
-		return nil, err
-	}
-
-	return token, nil
-}
-
 // Create a permissions middleware to verify jwt permissions on a token
-func NewJwtPermissionsMiddleware(validPermissions ...string) echo.MiddlewareFunc {
+func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
 			user := c.Get("user").(*jwt.Token)
 
-			if user == nil {
-				return routes.AuthErrorReq("no jwt available")
-			}
+			// if user == nil {
+			// 	return routes.AuthErrorReq("no jwt available")
+			// }
 
 			claims := user.Claims.(*auth.JwtCustomClaims)
 
 			// shortcut for admin, as we allow this for everything
-			if strings.Contains(claims.Scope, "Admin") {
+			if auth.IsAdmin(claims.Roles) {
 				return next(c)
 			}
 
-			for _, permission := range validPermissions {
+			for _, validRole := range validRoles {
 
 				// if we find a permission, stop and move on
-				if strings.Contains(claims.Scope, permission) {
+				if strings.Contains(claims.Roles, validRole) {
 					return next(c)
 				}
+
 			}
 
-			return routes.AuthErrorReq("permissions not found")
+			return routes.AuthErrorReq("roles not found")
 		}
 	}
 }

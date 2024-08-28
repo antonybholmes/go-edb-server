@@ -12,28 +12,36 @@ import (
 )
 
 var NAME string
+var APP_NAME string
+var APP_URL string
 var VERSION string
 var COPYRIGHT string
-var JWT_PRIVATE_KEY *rsa.PrivateKey //[]byte
-var JWT_PUBLIC_KEY *rsa.PublicKey   //[]byte
+var JWT_RSA_PRIVATE_KEY *rsa.PrivateKey //[]byte
+var JWT_RSA_PUBLIC_KEY *rsa.PublicKey   //[]byte
 var SESSION_SECRET string
+var SESSION_NAME string
 
-func LoadConsts() {
+const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
+
+func Load() {
 	env.Load()
 
 	NAME = os.Getenv("NAME")
+	APP_NAME = os.Getenv("APP_NAME")
+	APP_URL = os.Getenv("APP_URL")
 	VERSION = os.Getenv("VERSION")
 	COPYRIGHT = os.Getenv("COPYRIGHT")
 	//JWT_PRIVATE_KEY = []byte(os.Getenv("JWT_SECRET"))
 	//JWT_PUBLIC_KEY = []byte(os.Getenv("JWT_SECRET"))
 	SESSION_SECRET = os.Getenv("SESSION_SECRET")
+	SESSION_NAME = os.Getenv("SESSION_NAME")
 
 	bytes, err := os.ReadFile("jwtRS256.key")
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	JWT_PRIVATE_KEY, err = jwt.ParseRSAPrivateKeyFromPEM(bytes)
+	JWT_RSA_PRIVATE_KEY, err = jwt.ParseRSAPrivateKeyFromPEM(bytes)
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
@@ -43,7 +51,7 @@ func LoadConsts() {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	JWT_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(bytes)
+	JWT_RSA_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(bytes)
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}

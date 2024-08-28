@@ -2,9 +2,9 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
 )
@@ -24,17 +24,17 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return PasswordlessEmailRoute(c, validator)
 		}
 
-		authUser, err := userdb.FindUserById(validator.Req.Username)
+		authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
 		if err != nil {
 			return routes.UserDoesNotExistReq()
 		}
 
-		if !authUser.EmailVerified {
+		if !authUser.EmailIsVerified {
 			return routes.EmailNotVerifiedReq()
 		}
 
-		if !authUser.CanSignIn {
+		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -44,19 +44,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		permissions, err := userdb.PermissionList(authUser)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		refreshToken, err := auth.RefreshToken(c, authUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
+		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := auth.AccessToken(c, authUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
+		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -72,9 +66,11 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		validator = routes.NewValidator(c)
 	}
 
-	return validator.LoadAuthUserFromId().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 
-		passwordlessToken, err := auth.PasswordlessToken(c, validator.AuthUser.Uuid, consts.JWT_PRIVATE_KEY)
+		authUser := validator.AuthUser
+
+		passwordlessToken, err := jwtgen.PasswordlessToken(c, authUser.PublicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -89,7 +85,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 		}
 
 		go SendEmailWithToken("Passwordless Sign In",
-			validator.AuthUser,
+			authUser,
 			file,
 			passwordlessToken,
 			validator.Req.CallbackUrl,
@@ -110,17 +106,15 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		if !validator.AuthUser.CanSignIn {
+		authUser := validator.AuthUser
+
+		//log.Debug().Msgf("user %v", authUser)
+
+		if !authUser.CanLogin() {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		permissions, err := userdb.PermissionList(validator.AuthUser) //PublicUserRolePermissionsList(validator.AuthUser)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		t, err := auth.RefreshToken(c, validator.AuthUser.Uuid, permissions, consts.JWT_PRIVATE_KEY)
+		t, err := jwtgen.RefreshToken(c, authUser.PublicId, auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()

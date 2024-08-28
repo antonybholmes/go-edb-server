@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-dna"
-	"github.com/antonybholmes/go-edb-api/routes"
-	"github.com/antonybholmes/go-edb-api/routes/modroutes/dnaroutes"
+	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-edb-server/routes/modroutes/dnaroutes"
 	"github.com/antonybholmes/go-genes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	basemath "github.com/antonybholmes/go-math"

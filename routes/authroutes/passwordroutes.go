@@ -2,9 +2,9 @@ package authroutes
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/userdb"
-	"github.com/antonybholmes/go-edb-api/consts"
-	"github.com/antonybholmes/go-edb-api/routes"
+	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/routes"
 
 	"github.com/labstack/echo/v4"
 )
@@ -15,11 +15,11 @@ func PasswordUpdatedResp(c echo.Context) error {
 
 // Start passwordless login by sending an email
 func SendResetPasswordFromUsernameRoute(c echo.Context) error {
-	return routes.NewValidator(c).LoadAuthUserFromId().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return routes.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := auth.ResetPasswordToken(c, authUser, consts.JWT_PRIVATE_KEY)
+		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -55,13 +55,13 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := auth.CheckOtpValid(validator.AuthUser, validator.Claims.Otp)
+		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.Otp)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdb.SetPassword(validator.AuthUser.Uuid, validator.Req.Password)
+		err = userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
