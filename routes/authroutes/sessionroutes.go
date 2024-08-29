@@ -22,28 +22,30 @@ const MONTH_SECONDS = 2592000
 
 func init() {
 
+	// HttpOnly and Secure are disabled so we can use them
+	// cross domain for testing
+	// http only false to allow js to delete etc on the client side
+
+	// For sessions that should end when browser closes
 	SESSION_OPT_MAX_AGE_ZERO = &sessions.Options{
-		Path:   "/",
-		MaxAge: 0,
-		// http only false to allow js to delete etc on the client side
+		Path:     "/",
+		MaxAge:   0,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
 	SESSION_OPT_24H = &sessions.Options{
-		Path:   "/",
-		MaxAge: 86400,
-		// http only false to allow js to delete etc on the client side
+		Path:     "/",
+		MaxAge:   86400,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
 	SESSION_OPT_MAX_AGE_30D = &sessions.Options{
-		Path:   "/",
-		MaxAge: MONTH_SECONDS,
-		// http only false to allow js to delete etc on the client side
+		Path:     "/",
+		MaxAge:   MONTH_SECONDS,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
@@ -75,6 +77,8 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 			return routes.ErrorReq("error creating session")
 		}
 
+		// set session options such as if cookie secure and how long it
+		// persists
 		sess.Options = SESSION_OPT_MAX_AGE_30D
 		sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
 		sess.Values[routes.SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
