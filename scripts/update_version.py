@@ -1,8 +1,13 @@
 from dotenv import dotenv_values
+from datetime import datetime
+ 
+# current time and date
+# datetime object
+time = datetime.now()
 
-config = dotenv_values(".env") 
+config = dotenv_values("version.env") 
 
-print(config)
+#print(config)
 
 major, minor, patch, build = [int(x) for x in config["VERSION"].split(".")]
 
@@ -18,7 +23,8 @@ if minor > 9:
     minor = 0
 
 config["VERSION"] = f"{major}.{minor}.{patch}.{build}"
+config["UPDATED"] = time.strftime("%b %d, %Y")
 
-with open(".env", "w") as f:
+with open("version.env", "w") as f:
     for key in sorted(config):
         print(f'{key}="{config[key]}"', file=f)

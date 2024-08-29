@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-sys/env"
@@ -25,6 +26,8 @@ const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a no
 
 func Load() {
 	env.Load()
+
+	godotenv.Load("version.env")
 
 	NAME = os.Getenv("NAME")
 	APP_NAME = os.Getenv("APP_NAME")
