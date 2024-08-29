@@ -45,6 +45,7 @@ type AboutResp struct {
 	Name      string `json:"name"`
 	Copyright string `json:"copyright"`
 	Version   string `json:"version"`
+	Updated   string `json:"updated"`
 }
 
 type InfoResp struct {
@@ -153,7 +154,11 @@ func main() {
 	}))
 
 	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
+		return c.JSON(http.StatusOK,
+			AboutResp{Name: consts.NAME,
+				Version:   consts.VERSION,
+				Updated:   consts.UPDATED,
+				Copyright: consts.COPYRIGHT})
 	})
 
 	e.GET("/info", func(c echo.Context) error {

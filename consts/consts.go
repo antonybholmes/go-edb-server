@@ -21,6 +21,7 @@ var JWT_RSA_PRIVATE_KEY *rsa.PrivateKey //[]byte
 var JWT_RSA_PUBLIC_KEY *rsa.PublicKey   //[]byte
 var SESSION_SECRET string
 var SESSION_NAME string
+var UPDATED string
 
 const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
 
@@ -33,6 +34,7 @@ func Load() {
 	APP_NAME = os.Getenv("APP_NAME")
 	APP_URL = os.Getenv("APP_URL")
 	VERSION = os.Getenv("VERSION")
+	UPDATED = os.Getenv("UPDATED")
 	COPYRIGHT = os.Getenv("COPYRIGHT")
 	//JWT_PRIVATE_KEY = []byte(os.Getenv("JWT_SECRET"))
 	//JWT_PUBLIC_KEY = []byte(os.Getenv("JWT_SECRET"))
