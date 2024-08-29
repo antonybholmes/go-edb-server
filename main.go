@@ -61,6 +61,8 @@ func initCache() {
 		"/",
 		auth.MAX_AGE_30_DAYS_SECS,
 		[]byte(consts.SESSION_SECRET)))
+	// turn off secure so sessions work cross domain
+	store.Options.HttpOnly = false
 
 	userdbcache.InitCache("data/users.db")
 
