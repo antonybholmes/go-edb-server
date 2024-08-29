@@ -16,8 +16,8 @@ func AccountUpdatedResp(c echo.Context) error {
 	return routes.MakeOkPrettyResp(c, "account updated")
 }
 
-func UpdateAccountRoute(c echo.Context) error {
-	return routes.NewValidator(c).LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
+func UpdateUserRoute(c echo.Context) error {
+	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
 
 		authUser := validator.AuthUser
 
@@ -34,7 +34,7 @@ func UpdateAccountRoute(c echo.Context) error {
 	})
 }
 
-func UserInfoRoute(c echo.Context) error {
+func UserRoute(c echo.Context) error {
 	return routes.NewValidator(c).
 		LoadAuthUserFromToken().
 		Success(func(validator *routes.Validator) error {

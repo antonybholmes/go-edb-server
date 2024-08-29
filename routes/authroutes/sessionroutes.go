@@ -161,6 +161,8 @@ func SessionSignOutRoute(c echo.Context) error {
 	}
 
 	// invalidate by time
+	sess.Values[routes.SESSION_PUBLICID] = ""
+	sess.Values[routes.SESSION_ROLES] = ""
 	sess.Options.MaxAge = 0
 
 	sess.Save(c.Request(), c.Response())
@@ -207,22 +209,11 @@ func SessionUpdateUserRoute(c echo.Context) error {
 
 	return routes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *routes.Validator) error {
 
-		// if !authUser.CheckPasswords(req.Password) {
-		// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())
-		// 	return routes.InvalidPasswordReq()
-		// }
-
 		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
-
-		// err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address)
-
-		// if err != nil {
-		// 	return routes.ErrorReq(err)
-		// }
 
 		return SendUserInfoUpdatedEmail(c, authUser)
 	})
