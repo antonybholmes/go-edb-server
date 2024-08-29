@@ -45,6 +45,7 @@ type AboutResp struct {
 	Name      string `json:"name"`
 	Copyright string `json:"copyright"`
 	Version   string `json:"version"`
+	Updated   string `json:"updated"`
 }
 
 type InfoResp struct {
@@ -61,6 +62,8 @@ func initCache() {
 		"/",
 		auth.MAX_AGE_30_DAYS_SECS,
 		[]byte(consts.SESSION_SECRET)))
+	// turn off secure so sessions work cross domain
+	store.Options.HttpOnly = false
 
 	userdbcache.InitCache("data/users.db")
 
@@ -144,13 +147,18 @@ func main() {
 	//e.Use(middleware.CORS())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
-		AllowMethods:     []string{http.MethodGet, http.MethodDelete, http.MethodPost},
+		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
+		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
+
 		AllowCredentials: true,
 	}))
 
 	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, AboutResp{Name: consts.NAME, Version: consts.VERSION, Copyright: consts.COPYRIGHT})
+		return c.JSON(http.StatusOK,
+			AboutResp{Name: consts.NAME,
+				Version:   consts.VERSION,
+				Updated:   consts.UPDATED,
+				Copyright: consts.COPYRIGHT})
 	})
 
 	e.GET("/info", func(c echo.Context) error {
