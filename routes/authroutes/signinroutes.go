@@ -34,7 +34,15 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.EmailNotVerifiedReq()
 		}
 
-		if !authUser.CanLogin() {
+		roles, err := userdbcache.UserRoleList(authUser)
+
+		if err != nil {
+			return routes.AuthErrorReq("could not get user roles")
+		}
+
+		roleClaim := auth.MakeClaim(roles)
+
+		if !auth.CanLogin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -44,13 +52,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, authUser.Roles) //auth.MakeClaim(authUser.Roles))
+		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, authUser.Roles) //auth.MakeClaim(authUser.Roles))
+		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -108,13 +116,19 @@ func PasswordlessSignInRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		//log.Debug().Msgf("user %v", authUser)
+		roles, err := userdbcache.UserRoleList(authUser)
 
-		if !authUser.CanLogin() {
+		if err != nil {
+			return routes.AuthErrorReq("could not get user roles")
+		}
+
+		roleClaim := auth.MakeClaim(roles)
+
+		if !auth.CanLogin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := jwtgen.RefreshToken(c, authUser.PublicId, authUser.Roles) //auth.MakeClaim(authUser.Roles))
+		t, err := jwtgen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
