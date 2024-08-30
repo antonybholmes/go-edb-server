@@ -3,6 +3,7 @@ package adminroutes
 import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-edb-server/routes/authroutes"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -64,7 +65,7 @@ func RolesRoute(c echo.Context) error {
 
 func UpdateUserRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *routes.Validator) error {
+	return authroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *authroutes.Validator) error {
 
 		authUser := validator.AuthUser
 
@@ -110,7 +111,7 @@ func UpdateUserRoute(c echo.Context) error {
 
 func AddUserRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *routes.Validator) error {
+	return authroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *authroutes.Validator) error {
 
 		// assume email is not verified
 		authUser, err := userdbcache.Instance().CreateUser(validator.Req.Username,

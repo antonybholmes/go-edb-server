@@ -18,7 +18,7 @@ func PasswordlessEmailSentResp(c echo.Context) error {
 }
 
 func UsernamePasswordSignInRoute(c echo.Context) error {
-	return routes.NewValidator(c).ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).ParseLoginRequestBody().Success(func(validator *Validator) error {
 
 		if validator.Req.Password == "" {
 			return PasswordlessEmailRoute(c, validator)
@@ -61,12 +61,12 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 }
 
 // Start passwordless login by sending an email
-func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
+func PasswordlessEmailRoute(c echo.Context, validator *Validator) error {
 	if validator == nil {
-		validator = routes.NewValidator(c)
+		validator = NewValidator(c)
 	}
 
-	return validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return validator.LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
 		authUser := validator.AuthUser
 
@@ -100,7 +100,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *routes.Validator) error {
 }
 
 func PasswordlessSignInRoute(c echo.Context) error {
-	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
 			return routes.WrongTokentTypeReq()

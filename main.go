@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/gorilla/sessions"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -30,7 +31,6 @@ import (
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
-	"github.com/antonybholmes/go-sys"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -38,7 +38,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/michaeljs1990/sqlitestore"
 )
 
 type AboutResp struct {
@@ -53,18 +52,24 @@ type InfoResp struct {
 	Arch   string `json:"arch"`
 }
 
-var store *sqlitestore.SqliteStore
+// var store *sqlitestore.SqliteStore
+var store *sessions.CookieStore
 
 func initCache() {
 
-	store = sys.Must(sqlitestore.NewSqliteStore("data/users.db",
-		"sessions",
-		"/",
-		auth.MAX_AGE_30_DAYS_SECS,
-		[]byte(consts.SESSION_SECRET)))
-	// turn off secure so sessions work cross domain
-	//store.Options.HttpOnly = false
-	//store.Options.Secure = false
+	// store = sys.Must(sqlitestore.NewSqliteStore("data/users.db",
+	// 	"sessions",
+	// 	"/",
+	// 	auth.MAX_AGE_7_DAYS_SECS,
+	// 	[]byte(consts.SESSION_SECRET)))
+
+	store = sessions.NewCookieStore([]byte(consts.SESSION_SECRET))
+	// store.Options = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode}
 
 	userdbcache.InitCache("data/users.db")
 
@@ -189,6 +194,8 @@ func main() {
 		JwtIsAccessTokenMiddleware,
 		JwtHasAdminPermissionMiddleware)
 
+	adminGroup.GET("/roles", adminroutes.RolesRoute)
+
 	adminUsersGroup := adminGroup.Group("/users")
 
 	adminUsersGroup.POST("", adminroutes.UsersRoute)
@@ -196,7 +203,6 @@ func main() {
 	adminUsersGroup.POST("/update", adminroutes.UpdateUserRoute)
 	adminUsersGroup.POST("/add", adminroutes.AddUserRoute)
 	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
-	adminUsersGroup.GET("/roles", adminroutes.RolesRoute)
 
 	//
 	// Allow users to sign up for an account

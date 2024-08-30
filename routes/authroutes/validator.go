@@ -1,4 +1,4 @@
-package routes
+package authroutes
 
 import (
 	"net/mail"
@@ -6,14 +6,10 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-)
-
-const (
-	SESSION_PUBLICID string = "publicId"
-	SESSION_ROLES    string = "roles"
 )
 
 //
@@ -66,7 +62,7 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 		err := validator.c.Bind(&req)
 
 		if err != nil {
-			validator.Err = ErrorReq(err)
+			validator.Err = routes.ErrorReq(err)
 		} else {
 			validator.Req = &req
 		}
@@ -87,7 +83,7 @@ func (validator *Validator) CheckUsernameIsWellFormed() *Validator {
 	err := auth.CheckUsername(validator.Req.Username)
 
 	if err != nil {
-		validator.Err = ErrorReq(err)
+		validator.Err = routes.ErrorReq(err)
 	}
 
 	return validator
@@ -105,7 +101,7 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	address, err := mail.ParseAddress(validator.Req.Email)
 
 	if err != nil {
-		validator.Err = ErrorReq(err)
+		validator.Err = routes.ErrorReq(err)
 	} else {
 		validator.Address = address
 	}
@@ -122,7 +118,7 @@ func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
 	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
 
 	if err != nil {
-		validator.Err = UserDoesNotExistReq()
+		validator.Err = routes.UserDoesNotExistReq()
 	} else {
 		validator.AuthUser = authUser
 	}
@@ -141,7 +137,7 @@ func (validator *Validator) LoadAuthUserFromEmail() *Validator {
 	authUser, err := userdbcache.FindUserByEmail(validator.Address)
 
 	if err != nil {
-		validator.Err = UserDoesNotExistReq()
+		validator.Err = routes.UserDoesNotExistReq()
 	} else {
 		validator.AuthUser = authUser
 	}
@@ -160,7 +156,7 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
 	if err != nil {
-		validator.Err = UserDoesNotExistReq()
+		validator.Err = routes.UserDoesNotExistReq()
 	} else {
 		validator.AuthUser = authUser
 	}
@@ -186,7 +182,7 @@ func (validator *Validator) LoadAuthUserFromSession() *Validator {
 	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
 	if err != nil {
-		validator.Err = UserDoesNotExistReq()
+		validator.Err = routes.UserDoesNotExistReq()
 	} else {
 		validator.AuthUser = authUser
 	}
@@ -200,7 +196,7 @@ func (validator *Validator) CheckAuthUserIsLoaded() *Validator {
 	}
 
 	if validator.AuthUser == nil {
-		validator.Err = ErrorReq("no auth user")
+		validator.Err = routes.ErrorReq("no auth user")
 	}
 
 	return validator
@@ -214,7 +210,7 @@ func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
 	}
 
 	if !validator.AuthUser.EmailIsVerified {
-		validator.Err = ErrorReq("email address not verified")
+		validator.Err = routes.ErrorReq("email address not verified")
 	}
 
 	return validator
@@ -250,7 +246,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
 
 	if err != nil {
-		validator.Err = UserDoesNotExistReq()
+		validator.Err = routes.UserDoesNotExistReq()
 	} else {
 		validator.AuthUser = authUser
 	}
@@ -266,7 +262,7 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_REFRESH {
-		validator.Err = ErrorReq("no refresh token")
+		validator.Err = routes.ErrorReq("no refresh token")
 	}
 
 	return validator
@@ -281,7 +277,7 @@ func (validator *Validator) CheckIsValidAccessToken() *Validator {
 	}
 
 	if validator.Claims.Type != auth.TOKEN_TYPE_ACCESS {
-		validator.Err = ErrorReq("no access token")
+		validator.Err = routes.ErrorReq("no access token")
 	}
 
 	return validator
