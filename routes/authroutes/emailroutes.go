@@ -17,7 +17,7 @@ func EmailUpdatedResp(c echo.Context) error {
 
 // Start passwordless login by sending an email
 func SendResetEmailEmailRoute(c echo.Context) error {
-	return routes.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
@@ -58,7 +58,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 }
 
 func UpdateEmailRoute(c echo.Context) error {
-	return routes.NewValidator(c).CheckEmailIsWellFormed().LoadAuthUserFromToken().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).CheckEmailIsWellFormed().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_CHANGE_EMAIL {
 			return routes.WrongTokentTypeReq()
