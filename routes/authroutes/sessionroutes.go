@@ -77,9 +77,17 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
+		roles, err := userdbcache.UserRoleList(authUser)
+
+		if err != nil {
+			return routes.ErrorReq("error getting user roles")
+		}
+
+		roleClaim := auth.MakeClaim(roles)
+
 		//log.Debug().Msgf("user %v", authUser)
 
-		if !authUser.CanLogin() {
+		if !auth.CanLogin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -93,7 +101,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 		// persists
 		sess.Options = SESSION_OPT_7_DAYS //SESSION_OPT_30_DAYS
 		sess.Values[SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[SESSION_ROLES] = authUser.Roles //auth.MakeClaim(authUser.Roles)
+		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
 
 		sess.Save(c.Request(), c.Response())
 
@@ -116,27 +124,40 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 	authUser, err := userdbcache.FindUserByUsername(user)
 
+	// if err != nil {
+	// 	//
+	// 	email, err := mail.ParseAddress(user)
+
+	// 	if err != nil {
+	// 		return routes.InvalidEmailReq()
+	// 	}
+
+	// 	// also check if username is valid email and try to login
+	// 	// with that
+	// 	authUser, err = userdbcache.FindUserByEmail(email)
+
+	// 	if err != nil {
+	// 		return routes.UserDoesNotExistReq()
+	// 	}
+	// }
+
 	if err != nil {
-		email, err := mail.ParseAddress(user)
-
-		if err != nil {
-			return routes.InvalidEmailReq()
-		}
-
-		// also check if username is valid email and try to login
-		// with that
-		authUser, err = userdbcache.FindUserByEmail(email)
-
-		if err != nil {
-			return routes.UserDoesNotExistReq()
-		}
+		return routes.UserDoesNotExistReq()
 	}
 
 	if !authUser.EmailIsVerified {
 		return routes.EmailNotVerifiedReq()
 	}
 
-	if !authUser.CanLogin() {
+	roles, err := userdbcache.UserRoleList(authUser)
+
+	if err != nil {
+		return routes.AuthErrorReq("could not get user roles")
+	}
+
+	roleClaim := auth.MakeClaim(roles)
+
+	if !auth.CanLogin(roleClaim) {
 		return routes.UserNotAllowedToSignIn()
 	}
 
@@ -158,7 +179,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	sess.Values[SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[SESSION_ROLES] = authUser.Roles //auth.MakeClaim(authUser.Roles)
+	sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
 
 	sess.Save(c.Request(), c.Response())
 
