@@ -93,7 +93,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 		// persists
 		sess.Options = SESSION_OPT_7_DAYS //SESSION_OPT_30_DAYS
 		sess.Values[SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
+		sess.Values[SESSION_ROLES] = authUser.Roles //auth.MakeClaim(authUser.Roles)
 
 		sess.Save(c.Request(), c.Response())
 
@@ -158,7 +158,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	sess.Values[SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
+	sess.Values[SESSION_ROLES] = authUser.Roles //auth.MakeClaim(authUser.Roles)
 
 	sess.Save(c.Request(), c.Response())
 
