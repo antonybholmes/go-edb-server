@@ -44,13 +44,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, auth.MakeClaim(authUser.Roles))
+		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, authUser.Roles) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, auth.MakeClaim(authUser.Roles))
+		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, authUser.Roles) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -114,7 +114,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := jwtgen.RefreshToken(c, authUser.PublicId, auth.MakeClaim(authUser.Roles))
+		t, err := jwtgen.RefreshToken(c, authUser.PublicId, authUser.Roles) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
