@@ -189,6 +189,8 @@ func main() {
 		JwtIsAccessTokenMiddleware,
 		JwtHasAdminPermissionMiddleware)
 
+	adminGroup.GET("/roles", adminroutes.RolesRoute)
+
 	adminUsersGroup := adminGroup.Group("/users")
 
 	adminUsersGroup.POST("", adminroutes.UsersRoute)
@@ -196,7 +198,6 @@ func main() {
 	adminUsersGroup.POST("/update", adminroutes.UpdateUserRoute)
 	adminUsersGroup.POST("/add", adminroutes.AddUserRoute)
 	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
-	adminUsersGroup.GET("/roles", adminroutes.RolesRoute)
 
 	//
 	// Allow users to sign up for an account
