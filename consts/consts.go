@@ -28,6 +28,7 @@ const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a no
 func Load() {
 	env.Load()
 
+	godotenv.Load("consts.env")
 	godotenv.Load("version.env")
 
 	NAME = os.Getenv("NAME")

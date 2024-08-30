@@ -14,36 +14,50 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var SESSION_OPT_MAX_AGE_ZERO *sessions.Options
-var SESSION_OPT_24H *sessions.Options
-var SESSION_OPT_MAX_AGE_30D *sessions.Options
+const (
+	SESSION_PUBLICID string = "publicId"
+	SESSION_ROLES    string = "roles"
+)
 
-const MONTH_SECONDS = 2592000
+var SESSION_OPT_ZERO *sessions.Options
+var SESSION_OPT_24H *sessions.Options
+var SESSION_OPT_30_DAYS *sessions.Options
+var SESSION_OPT_7_DAYS *sessions.Options
 
 func init() {
 
-	SESSION_OPT_MAX_AGE_ZERO = &sessions.Options{
-		Path:   "/",
-		MaxAge: 0,
-		// http only false to allow js to delete etc on the client side
+	// HttpOnly and Secure are disabled so we can use them
+	// cross domain for testing
+	// http only false to allow js to delete etc on the client side
+
+	// For sessions that should end when browser closes
+	SESSION_OPT_ZERO = &sessions.Options{
+		Path:     "/",
+		MaxAge:   0,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
 	SESSION_OPT_24H = &sessions.Options{
-		Path:   "/",
-		MaxAge: 86400,
-		// http only false to allow js to delete etc on the client side
+		Path:     "/",
+		MaxAge:   auth.MAX_AGE_DAY_SECS,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
-	SESSION_OPT_MAX_AGE_30D = &sessions.Options{
-		Path:   "/",
-		MaxAge: MONTH_SECONDS,
-		// http only false to allow js to delete etc on the client side
+	SESSION_OPT_30_DAYS = &sessions.Options{
+		Path:     "/",
+		MaxAge:   auth.MAX_AGE_30_DAYS_SECS,
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	SESSION_OPT_7_DAYS = &sessions.Options{
+		Path:     "/",
+		MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
@@ -55,7 +69,7 @@ func init() {
 // can be used to generate access tokens to use resources
 func SessionPasswordlessSignInRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
 		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
 			return routes.WrongTokentTypeReq()
@@ -75,9 +89,11 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 			return routes.ErrorReq("error creating session")
 		}
 
-		sess.Options = SESSION_OPT_MAX_AGE_30D
-		sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[routes.SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
+		// set session options such as if cookie secure and how long it
+		// persists
+		sess.Options = SESSION_OPT_7_DAYS //SESSION_OPT_30_DAYS
+		sess.Values[SESSION_PUBLICID] = authUser.PublicId
+		sess.Values[SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
 
 		sess.Save(c.Request(), c.Response())
 
@@ -86,7 +102,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 }
 
 func SessionUsernamePasswordSignInRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).ParseLoginRequestBody().Ok()
+	validator, err := NewValidator(c).ParseLoginRequestBody().Ok()
 
 	if err != nil {
 		return err
@@ -136,13 +152,13 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	if validator.Req.StaySignedIn {
-		sess.Options = SESSION_OPT_MAX_AGE_30D
+		sess.Options = SESSION_OPT_7_DAYS
 	} else {
-		sess.Options = SESSION_OPT_MAX_AGE_ZERO
+		sess.Options = SESSION_OPT_ZERO
 	}
 
-	sess.Values[routes.SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[routes.SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
+	sess.Values[SESSION_PUBLICID] = authUser.PublicId
+	sess.Values[SESSION_ROLES] = auth.MakeClaim(authUser.Roles)
 
 	sess.Save(c.Request(), c.Response())
 
@@ -157,6 +173,8 @@ func SessionSignOutRoute(c echo.Context) error {
 	}
 
 	// invalidate by time
+	sess.Values[SESSION_PUBLICID] = ""
+	sess.Values[SESSION_ROLES] = ""
 	sess.Options.MaxAge = 0
 
 	sess.Save(c.Request(), c.Response())
@@ -166,8 +184,8 @@ func SessionSignOutRoute(c echo.Context) error {
 
 func SessionNewAccessJwtRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
-	roles, _ := sess.Values[routes.SESSION_ROLES].(string)
+	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	roles, _ := sess.Values[SESSION_ROLES].(string)
 
 	t, err := jwtgen.AccessToken(c, publicId, roles)
 
@@ -180,7 +198,7 @@ func SessionNewAccessJwtRoute(c echo.Context) error {
 
 func SessionUserRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
+	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 
 	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
@@ -193,7 +211,7 @@ func SessionUserRoute(c echo.Context) error {
 
 func SessionUpdateUserRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[routes.SESSION_PUBLICID].(string)
+	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 
 	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
@@ -201,24 +219,13 @@ func SessionUpdateUserRoute(c echo.Context) error {
 		return routes.UserDoesNotExistReq()
 	}
 
-	return routes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *routes.Validator) error {
-
-		// if !authUser.CheckPasswords(req.Password) {
-		// 	log.Debug().Msgf("%s", routes.InvalidPasswordReq())
-		// 	return routes.InvalidPasswordReq()
-		// }
+	return NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *Validator) error {
 
 		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
-
-		// err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address)
-
-		// if err != nil {
-		// 	return routes.ErrorReq(err)
-		// }
 
 		return SendUserInfoUpdatedEmail(c, authUser)
 	})
@@ -227,7 +234,7 @@ func SessionUpdateUserRoute(c echo.Context) error {
 // Start passwordless login by sending an email
 func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
 		authUser := validator.AuthUser
 		req := validator.Req
@@ -263,7 +270,7 @@ func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 
 // func SessionUpdatePasswordRoute(c echo.Context) error {
 
-// 	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+// 	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
 
 // 		err := userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password)
 
@@ -277,7 +284,7 @@ func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 
 func SessionSendResetEmailEmailRoute(c echo.Context) error {
 
-	return routes.NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
 
 		req := validator.Req
 

@@ -55,7 +55,7 @@ func SignupRoute(c echo.Context) error {
 }
 
 func EmailAddressWasVerifiedRoute(c echo.Context) error {
-	validator, err := routes.NewValidator(c).LoadAuthUserFromToken().Ok()
+	validator, err := NewValidator(c).LoadAuthUserFromToken().Ok()
 
 	if err != nil {
 		return err

@@ -25,36 +25,36 @@ replace github.com/antonybholmes/go-pathway => ../go-pathway
 replace github.com/antonybholmes/go-gex => ../go-gex
 
 require (
-	github.com/antonybholmes/go-basemath v0.0.0-20240802221548-7773050a8f2f // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20240823140021-325275b6abfd
+	github.com/antonybholmes/go-basemath v0.0.0-20240825181410-a6174a39116c // indirect
+	github.com/antonybholmes/go-dna v0.0.0-20240825181410-efbbb323d020
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240823140020-de9d92d0a6bf
-	github.com/antonybholmes/go-genes v0.0.0-20240823140016-f18b6da1d275
+	github.com/antonybholmes/go-auth v0.0.0-20240828204658-a6c98cae85bd
+	github.com/antonybholmes/go-genes v0.0.0-20240826172513-0a5bd4f56938
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/rs/zerolog v1.33.0
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240823140010-a01c78133118
-	github.com/antonybholmes/go-sys v0.0.0-20240801224521-3bed2c519a83
+	github.com/antonybholmes/go-mailer v0.0.0-20240825181417-33f4ccd92adc
+	github.com/antonybholmes/go-sys v0.0.0-20240825181411-a5bc491d0736
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/michaeljs1990/sqlitestore v0.0.0-20210507162135-8585425bc864
 )
 
 require (
-	github.com/antonybholmes/go-geneconv v0.0.0-20240823140011-7da62d6322df
-	github.com/antonybholmes/go-math v0.0.0-20240802221548-7773050a8f2f
-	github.com/antonybholmes/go-motiftogene v0.0.0-20240805202904-08e20e1f17c9
-	github.com/antonybholmes/go-mutations v0.0.0-20240823140017-dc25bf48a1df
-	github.com/antonybholmes/go-pathway v0.0.0-20240823140013-771c5524aaff
+	github.com/antonybholmes/go-geneconv v0.0.0-20240825181412-52096cd6f9ff
+	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
+	github.com/antonybholmes/go-motiftogene v0.0.0-20240825181409-b09b8f950e37
+	github.com/antonybholmes/go-mutations v0.0.0-20240826214634-51d4e4bec40c
+	github.com/antonybholmes/go-pathway v0.0.0-20240825181413-de16612136ea
 )
 
 require (
@@ -63,7 +63,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-gex v0.0.0-20240822220523-cc665b971f77
+	github.com/antonybholmes/go-gex v0.0.0-20240825181414-7343636e387b
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect

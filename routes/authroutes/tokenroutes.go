@@ -71,7 +71,7 @@ func TokenInfoRoute(c echo.Context) error {
 }
 
 func NewAccessTokenRoute(c echo.Context) error {
-	return routes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *routes.Validator) error {
+	return NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *Validator) error {
 
 		// Generate encoded token and send it as response.
 		t, err := jwtgen.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles)
