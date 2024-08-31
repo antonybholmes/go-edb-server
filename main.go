@@ -15,7 +15,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
-	"github.com/antonybholmes/go-edb-server/routes/adminroutes"
+	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
 	"github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
 	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
