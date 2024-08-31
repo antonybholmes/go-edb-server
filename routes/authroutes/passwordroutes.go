@@ -19,7 +19,7 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
+		otpJwt, err := jwtgen.ResetPasswordJwt(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -51,7 +51,7 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 func UpdatePasswordRoute(c echo.Context) error {
 	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
+		if validator.Claims.Type != auth.JWT_RESET_PASSWORD {
 			return routes.WrongTokentTypeReq()
 		}
 

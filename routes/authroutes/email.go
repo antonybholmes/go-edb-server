@@ -70,7 +70,7 @@ func BaseSendEmailWithToken(subject string,
 
 	firstName = strings.Split(firstName, " ")[0]
 
-	time := fmt.Sprintf("%d minutes", int(auth.TOKEN_TTL_10_MINS.Minutes()))
+	time := fmt.Sprintf("%d minutes", int(auth.JWT_TTL_10_MINS.Minutes()))
 
 	if callbackUrl != "" {
 		callbackUrl, err := url.Parse(callbackUrl)

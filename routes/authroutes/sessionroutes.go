@@ -71,7 +71,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+		if validator.Claims.Type != auth.JWT_PASSWORDLESS {
 			return routes.WrongTokentTypeReq()
 		}
 
@@ -208,7 +208,7 @@ func SessionNewAccessJwtRoute(c echo.Context) error {
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)
 
-	t, err := jwtgen.AccessToken(c, publicId, roles)
+	t, err := jwtgen.AccessJwt(c, publicId, roles)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -260,7 +260,7 @@ func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
+		otpJwt, err := jwtgen.ResetPasswordJwt(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -315,7 +315,7 @@ func SessionSendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ResetEmailToken(c, validator.AuthUser, newEmail)
+		otpJwt, err := jwtgen.ResetEmailJwt(c, validator.AuthUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)

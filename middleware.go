@@ -72,7 +72,7 @@ func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(*auth.JwtCustomClaims)
 
-		if claims.Type != auth.TOKEN_TYPE_REFRESH {
+		if claims.Type != auth.JWT_REFRESH {
 			routes.AuthErrorReq("not a refresh token")
 		}
 
@@ -85,7 +85,7 @@ func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(*auth.JwtCustomClaims)
 
-		if claims.Type != auth.TOKEN_TYPE_ACCESS {
+		if claims.Type != auth.JWT_ACCESS {
 			routes.AuthErrorReq("not an access token")
 		}
 

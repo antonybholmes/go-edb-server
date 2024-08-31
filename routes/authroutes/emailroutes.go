@@ -27,7 +27,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ResetEmailToken(c, authUser, newEmail)
+		otpJwt, err := jwtgen.ResetEmailJwt(c, authUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -60,7 +60,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 func UpdateEmailRoute(c echo.Context) error {
 	return NewValidator(c).CheckEmailIsWellFormed().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.TOKEN_TYPE_CHANGE_EMAIL {
+		if validator.Claims.Type != auth.JWT_CHANGE_EMAIL {
 			return routes.WrongTokentTypeReq()
 		}
 

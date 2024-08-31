@@ -261,7 +261,7 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 		return validator
 	}
 
-	if validator.Claims.Type != auth.TOKEN_TYPE_REFRESH {
+	if validator.Claims.Type != auth.JWT_REFRESH {
 		validator.Err = routes.ErrorReq("no refresh token")
 	}
 
@@ -276,7 +276,7 @@ func (validator *Validator) CheckIsValidAccessToken() *Validator {
 		return validator
 	}
 
-	if validator.Claims.Type != auth.TOKEN_TYPE_ACCESS {
+	if validator.Claims.Type != auth.JWT_ACCESS {
 		validator.Err = routes.ErrorReq("no access token")
 	}
 
