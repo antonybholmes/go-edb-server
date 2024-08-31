@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
@@ -73,7 +73,7 @@ func BaseSendEmailWithToken(subject string,
 
 	firstName = strings.Split(firstName, " ")[0]
 
-	time := fmt.Sprintf("%d minutes", int(auth.JWT_TTL_10_MINS.Minutes()))
+	time := fmt.Sprintf("%d minutes", int(auth.TTL_10_MINS.Minutes()))
 
 	if callbackUrl != "" {
 		callbackUrl, err := url.Parse(callbackUrl)
@@ -148,7 +148,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ResetEmailJwt(c, authUser, newEmail)
+		otpJwt, err := tokengen.ResetEmailToken(c, authUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -181,7 +181,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 func UpdateEmailRoute(c echo.Context) error {
 	return NewValidator(c).CheckEmailIsWellFormed().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.JWT_CHANGE_EMAIL {
+		if validator.Claims.Type != auth.CHANGE_EMAIL_TOKEN {
 			return routes.WrongTokentTypeReq()
 		}
 

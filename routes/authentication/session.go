@@ -5,7 +5,7 @@ import (
 	"net/mail"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
@@ -71,7 +71,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.JWT_PASSWORDLESS {
+		if validator.Claims.Type != auth.PASSWORDLESS_TOKEN {
 			return routes.WrongTokentTypeReq()
 		}
 
@@ -208,7 +208,7 @@ func SessionNewAccessJwtRoute(c echo.Context) error {
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)
 
-	t, err := jwtgen.AccessJwt(c, publicId, roles)
+	t, err := tokengen.AccessToken(c, publicId, roles)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -238,7 +238,7 @@ func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := jwtgen.ResetPasswordJwt(c, authUser)
+		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -293,7 +293,7 @@ func SessionSendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ResetEmailJwt(c, validator.AuthUser, newEmail)
+		otpJwt, err := tokengen.ResetEmailToken(c, validator.AuthUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)

@@ -2,7 +2,7 @@ package authorization
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-edb-server/routes/authentication"
@@ -20,7 +20,7 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := jwtgen.ResetPasswordJwt(c, authUser)
+		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -52,7 +52,7 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 func UpdatePasswordRoute(c echo.Context) error {
 	return authentication.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *authentication.Validator) error {
 
-		if validator.Claims.Type != auth.JWT_RESET_PASSWORD {
+		if validator.Claims.Type != auth.RESET_PASSWORD_TOKEN {
 			return routes.WrongTokentTypeReq()
 		}
 

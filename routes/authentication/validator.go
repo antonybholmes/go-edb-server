@@ -22,7 +22,7 @@ type Validator struct {
 	Address  *mail.Address
 	Req      *auth.LoginReq
 	AuthUser *auth.AuthUser
-	Claims   *auth.JwtCustomClaims
+	Claims   *auth.TokenClaims
 	Err      *echo.HTTPError
 }
 
@@ -225,7 +225,7 @@ func (validator *Validator) LoadTokenClaims() *Validator {
 
 	if validator.Claims == nil {
 		user := validator.c.Get("user").(*jwt.Token)
-		validator.Claims = user.Claims.(*auth.JwtCustomClaims)
+		validator.Claims = user.Claims.(*auth.TokenClaims)
 	}
 
 	return validator
@@ -261,7 +261,7 @@ func (validator *Validator) CheckIsValidRefreshToken() *Validator {
 		return validator
 	}
 
-	if validator.Claims.Type != auth.JWT_REFRESH {
+	if validator.Claims.Type != auth.REFRESH_TOKEN {
 		validator.Err = routes.ErrorReq("no refresh token")
 	}
 
@@ -276,7 +276,7 @@ func (validator *Validator) CheckIsValidAccessToken() *Validator {
 		return validator
 	}
 
-	if validator.Claims.Type != auth.JWT_ACCESS {
+	if validator.Claims.Type != auth.ACCESS_TOKEN {
 		validator.Err = routes.ErrorReq("no access token")
 	}
 

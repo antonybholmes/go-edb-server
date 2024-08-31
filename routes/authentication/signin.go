@@ -2,7 +2,7 @@ package authentication
 
 import (
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/routes"
 
@@ -52,13 +52,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := jwtgen.RefreshJwt(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		refreshToken, err := tokengen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := jwtgen.AccessJwt(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		accessToken, err := tokengen.AccessToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -78,7 +78,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *Validator) error {
 
 		authUser := validator.AuthUser
 
-		passwordlessToken, err := jwtgen.PasswordlessJwt(c, authUser.PublicId)
+		passwordlessToken, err := tokengen.PasswordlessToken(c, authUser.PublicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -110,7 +110,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *Validator) error {
 func PasswordlessSignInRoute(c echo.Context) error {
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.JWT_PASSWORDLESS {
+		if validator.Claims.Type != auth.PASSWORDLESS_TOKEN {
 			return routes.WrongTokentTypeReq()
 		}
 
@@ -128,7 +128,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := jwtgen.RefreshJwt(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		t, err := tokengen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()

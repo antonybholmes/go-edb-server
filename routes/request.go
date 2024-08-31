@@ -13,7 +13,7 @@ import (
 type JwtInfo struct {
 	PublicId string `json:"publicId"`
 	//Name  string `json:"name"`
-	Type auth.JwtType `json:"type"`
+	Type auth.TokenType `json:"type"`
 	//IpAddr  string `json:"ipAddr"`
 	Expires string `json:"expires"`
 }

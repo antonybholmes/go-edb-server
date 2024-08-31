@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
@@ -94,7 +94,7 @@ func initCache() {
 func main() {
 	consts.Load()
 
-	jwtgen.Init(consts.JWT_RSA_PRIVATE_KEY)
+	tokengen.Init(consts.JWT_RSA_PRIVATE_KEY)
 
 	//env.Load()
 
@@ -176,7 +176,7 @@ func main() {
 	// will parse our jwt with scope etc
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return &auth.JwtCustomClaims{}
+			return &auth.TokenClaims{}
 		},
 		SigningKey: consts.JWT_RSA_PRIVATE_KEY,
 		// Have to tell it to use the public key for verification

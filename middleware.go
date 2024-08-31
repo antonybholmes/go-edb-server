@@ -71,9 +71,9 @@ import (
 func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
-		if claims.Type != auth.JWT_REFRESH {
+		if claims.Type != auth.REFRESH_TOKEN {
 			routes.AuthErrorReq("not a refresh token")
 		}
 
@@ -84,9 +84,9 @@ func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
-		if claims.Type != auth.JWT_ACCESS {
+		if claims.Type != auth.ACCESS_TOKEN {
 			routes.AuthErrorReq("not an access token")
 		}
 
@@ -97,7 +97,7 @@ func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
 		if !auth.IsAdmin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not an admin")
@@ -110,7 +110,7 @@ func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
 		if !auth.CanLogin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not allowed to login")
@@ -193,7 +193,7 @@ func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 			// 	return routes.AuthErrorReq("no jwt available")
 			// }
 
-			claims := user.Claims.(*auth.JwtCustomClaims)
+			claims := user.Claims.(*auth.TokenClaims)
 
 			// shortcut for admin, as we allow this for everything
 			if auth.IsAdmin(claims.Roles) {
