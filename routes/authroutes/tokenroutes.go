@@ -74,13 +74,13 @@ func NewAccessTokenRoute(c echo.Context) error {
 	return NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *Validator) error {
 
 		// Generate encoded token and send it as response.
-		t, err := jwtgen.AccessJwt(c, validator.Claims.PublicId, validator.Claims.Roles)
+		accessToken, err := jwtgen.AccessJwt(c, validator.Claims.PublicId, validator.Claims.Roles)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")
 		}
 
-		return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
+		return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: accessToken})
 	})
 
 }

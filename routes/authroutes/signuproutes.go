@@ -55,37 +55,34 @@ func SignupRoute(c echo.Context) error {
 }
 
 func EmailAddressWasVerifiedRoute(c echo.Context) error {
-	validator, err := NewValidator(c).LoadAuthUserFromToken().Ok()
+	return NewValidator(c).LoadAuthUserFromToken().Success(func(validator *Validator) error {
 
-	if err != nil {
-		return err
-	}
+		authUser := validator.AuthUser
 
-	authUser := validator.AuthUser
+		// if verified, stop and just return true
+		if authUser.EmailIsVerified {
+			return routes.MakeOkPrettyResp(c, "")
+		}
 
-	// if verified, stop and just return true
-	if authUser.EmailIsVerified {
-		return routes.MakeOkPrettyResp(c, "")
-	}
+		err := userdbcache.SetIsVerified(authUser.PublicId)
 
-	err = userdbcache.SetIsVerified(authUser.PublicId)
+		if err != nil {
+			return routes.MakeSuccessPrettyResp(c, "unable to verify user", false)
+		}
 
-	if err != nil {
-		return routes.MakeSuccessPrettyResp(c, "unable to verify user", false)
-	}
+		file := "templates/email/verify/verified.html"
 
-	file := "templates/email/verify/verified.html"
+		go SendEmailWithToken("Email Address Verified",
+			authUser,
+			file,
+			"",
+			"",
+			"")
 
-	go SendEmailWithToken("Email Address Verified",
-		authUser,
-		file,
-		"",
-		"",
-		"")
+		//if err != nil {
+		//	return routes.ErrorReq(err)
+		//}
 
-	//if err != nil {
-	//	return routes.ErrorReq(err)
-	//}
-
-	return routes.MakeOkPrettyResp(c, "email address verified") //c.JSON(http.StatusOK, JWTResp{t})
+		return routes.MakeOkPrettyResp(c, "email address verified")
+	})
 }

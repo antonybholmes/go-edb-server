@@ -10,7 +10,7 @@ import (
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/dnaroutes"
+	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/dnaroutes"
 	"github.com/antonybholmes/go-genes"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	basemath "github.com/antonybholmes/go-math"
