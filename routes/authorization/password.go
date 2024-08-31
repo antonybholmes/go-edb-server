@@ -1,10 +1,11 @@
-package authroutes
+package authorization
 
 import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
 
 	"github.com/labstack/echo/v4"
 )
@@ -15,7 +16,7 @@ func PasswordUpdatedResp(c echo.Context) error {
 
 // Start passwordless login by sending an email
 func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
-	return NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
+	return authentication.NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *authentication.Validator) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
@@ -33,7 +34,7 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 			file = "templates/email/password/reset/api.html"
 		}
 
-		go SendEmailWithToken("Password Reset",
+		go authentication.SendEmailWithToken("Password Reset",
 			authUser,
 			file,
 			otpJwt,
@@ -49,7 +50,7 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 }
 
 func UpdatePasswordRoute(c echo.Context) error {
-	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
+	return authentication.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *authentication.Validator) error {
 
 		if validator.Claims.Type != auth.JWT_RESET_PASSWORD {
 			return routes.WrongTokentTypeReq()
@@ -81,7 +82,7 @@ func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string)
 		file = "templates/email/password/updated.html"
 	}
 
-	go SendEmailWithToken("Password Updated",
+	go authentication.SendEmailWithToken("Password Updated",
 		authUser,
 		file,
 		"",

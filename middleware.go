@@ -6,7 +6,8 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/authroutes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -131,7 +132,7 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		//log.Debug().Msgf("validate session %s", sess.ID)
 
-		_, ok := sess.Values[authroutes.SESSION_PUBLICID].(string)
+		_, ok := sess.Values[authentication.SESSION_PUBLICID].(string)
 
 		if !ok {
 			return routes.AuthErrorReq("cannot get user id from session")

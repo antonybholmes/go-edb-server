@@ -1,10 +1,11 @@
-package authroutes
+package authorization
 
 import (
 	"github.com/antonybholmes/go-auth"
 	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -71,7 +72,7 @@ func TokenInfoRoute(c echo.Context) error {
 }
 
 func NewAccessTokenRoute(c echo.Context) error {
-	return NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *Validator) error {
+	return authentication.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *authentication.Validator) error {
 
 		// Generate encoded token and send it as response.
 		accessToken, err := jwtgen.AccessJwt(c, validator.Claims.PublicId, validator.Claims.Roles)

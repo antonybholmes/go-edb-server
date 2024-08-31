@@ -16,14 +16,15 @@ import (
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes/adminroutes"
-	"github.com/antonybholmes/go-edb-server/routes/authroutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/dnaroutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/geneconvroutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/generoutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/gexroutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/motiftogeneroutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/mutationroutes"
-	"github.com/antonybholmes/go-edb-server/routes/moduleroutes/pathwayroutes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	"github.com/antonybholmes/go-edb-server/routes/authorization"
+	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
+	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
+	geneconvroutes "github.com/antonybholmes/go-edb-server/routes/modules/geneconv"
+	gexroutes "github.com/antonybholmes/go-edb-server/routes/modules/gex"
+	motiftogeneroutes "github.com/antonybholmes/go-edb-server/routes/modules/motiftogene"
+	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
+	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
@@ -207,7 +208,7 @@ func main() {
 	//
 	// Allow users to sign up for an account
 
-	e.POST("/signup", authroutes.SignupRoute)
+	e.POST("/signup", authentication.SignupRoute)
 
 	//
 	// user groups: start
@@ -215,51 +216,51 @@ func main() {
 
 	authGroup := e.Group("/auth")
 
-	authGroup.POST("/signin", authroutes.UsernamePasswordSignInRoute)
+	authGroup.POST("/signin", authentication.UsernamePasswordSignInRoute)
 
 	emailGroup := authGroup.Group("/email")
 
 	emailGroup.POST("/verify",
-		authroutes.EmailAddressWasVerifiedRoute,
+		authentication.EmailAddressWasVerifiedRoute,
 		jwtMiddleWare)
 
 	// with the correct token, performs the update
-	emailGroup.POST("/reset", authroutes.SendResetEmailEmailRoute, jwtMiddleWare)
+	emailGroup.POST("/reset", authentication.SendResetEmailEmailRoute, jwtMiddleWare)
 	// with the correct token, performs the update
-	emailGroup.POST("/update", authroutes.UpdateEmailRoute, jwtMiddleWare)
+	emailGroup.POST("/update", authentication.UpdateEmailRoute, jwtMiddleWare)
 
 	passwordGroup := authGroup.Group("/passwords")
 
 	// sends a reset link
-	passwordGroup.POST("/reset", authroutes.SendResetPasswordFromUsernameEmailRoute)
+	passwordGroup.POST("/reset", authorization.SendResetPasswordFromUsernameEmailRoute)
 
 	// with the correct token, updates a password
-	passwordGroup.POST("/update", authroutes.UpdatePasswordRoute, jwtMiddleWare)
+	passwordGroup.POST("/update", authorization.UpdatePasswordRoute, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
-		return authroutes.PasswordlessEmailRoute(c, nil)
+		return authentication.PasswordlessEmailRoute(c, nil)
 	})
 
 	passwordlessGroup.POST("/signin",
-		authroutes.PasswordlessSignInRoute,
+		authentication.PasswordlessSignInRoute,
 		jwtMiddleWare)
 
 	tokenGroup := authGroup.Group("/tokens")
 	tokenGroup.Use(jwtMiddleWare)
-	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
-	tokenGroup.POST("/access", authroutes.NewAccessTokenRoute)
+	tokenGroup.POST("/info", authorization.TokenInfoRoute)
+	tokenGroup.POST("/access", authorization.NewAccessTokenRoute)
 
 	usersGroup := authGroup.Group("/users")
 	usersGroup.Use(jwtMiddleWare,
 		JwtIsAccessTokenMiddleware)
 
-	usersGroup.POST("", authroutes.UserRoute)
+	usersGroup.POST("", authorization.UserRoute)
 
-	usersGroup.POST("/update", authroutes.UpdateUserRoute)
+	usersGroup.POST("/update", authorization.UpdateUserRoute)
 
-	//usersGroup.POST("/passwords/update", authroutes.UpdatePasswordRoute)
+	//usersGroup.POST("/passwords/update", authentication.UpdatePasswordRoute)
 
 	//
 	// Deal with logins where we want a session
@@ -269,32 +270,32 @@ func main() {
 
 	//sessionAuthGroup := sessionGroup.Group("/auth")
 
-	sessionGroup.POST("/signin", authroutes.SessionUsernamePasswordSignInRoute)
+	sessionGroup.POST("/signin", authentication.SessionUsernamePasswordSignInRoute)
 
 	sessionGroup.POST("/passwordless/signin",
-		authroutes.SessionPasswordlessSignInRoute,
+		authentication.SessionPasswordlessSignInRoute,
 		jwtMiddleWare)
 
-	sessionGroup.POST("/signout", authroutes.SessionSignOutRoute)
+	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)
 
-	sessionGroup.POST("/email/reset", authroutes.SessionSendResetEmailEmailRoute)
+	sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
-	sessionGroup.POST("/password/reset", authroutes.SessionSendResetPasswordEmailRoute)
+	sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authroutes.SessionNewAccessJwtRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessJwtRoute, SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authroutes.SessionUserRoute)
+	sessionUsersGroup.GET("", authentication.SessionUserRoute)
 
-	sessionUsersGroup.POST("/update", authroutes.SessionUpdateUserRoute)
+	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
 	// sessionPasswordGroup.Use(SessionIsValidMiddleware)
 
 	// sessionPasswordGroup.POST("/update", func(c echo.Context) error {
-	// 	return authroutes.SessionUpdatePasswordRoute(c)
+	// 	return authentication.SessionUpdatePasswordRoute(c)
 	// })
 
 	//

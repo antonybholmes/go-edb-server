@@ -1,9 +1,10 @@
-package authroutes
+package authorization
 
 import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
 
 	"github.com/labstack/echo/v4"
 )
@@ -17,7 +18,7 @@ func AccountUpdatedResp(c echo.Context) error {
 }
 
 func UpdateUserRoute(c echo.Context) error {
-	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
+	return authentication.NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *authentication.Validator) error {
 
 		authUser := validator.AuthUser
 
@@ -35,9 +36,9 @@ func UpdateUserRoute(c echo.Context) error {
 }
 
 func UserRoute(c echo.Context) error {
-	return NewValidator(c).
+	return authentication.NewValidator(c).
 		LoadAuthUserFromToken().
-		Success(func(validator *Validator) error {
+		Success(func(validator *authentication.Validator) error {
 			return routes.MakeDataPrettyResp(c, "", validator.AuthUser)
 		})
 }
@@ -46,7 +47,7 @@ func SendUserInfoUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
 
 	var file = "templates/email/account/updated.html"
 
-	go SendEmailWithToken("Account Updated",
+	go authentication.SendEmailWithToken("Account Updated",
 		authUser,
 		file,
 		"",

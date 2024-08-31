@@ -1,4 +1,4 @@
-package authroutes
+package authentication
 
 import (
 	"net/http"
@@ -228,28 +228,6 @@ func SessionUserRoute(c echo.Context) error {
 	}
 
 	return routes.MakeDataPrettyResp(c, "", *authUser)
-}
-
-func SessionUpdateUserRoute(c echo.Context) error {
-	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
-
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
-
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
-
-	return NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *Validator) error {
-
-		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, nil)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		return SendUserInfoUpdatedEmail(c, authUser)
-	})
 }
 
 // Start passwordless login by sending an email
