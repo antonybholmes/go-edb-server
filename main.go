@@ -58,7 +58,7 @@ type InfoResp struct {
 // var store *sqlitestore.SqliteStore
 var store *sessions.CookieStore
 
-func initCache() {
+func init() {
 
 	// store = sys.Must(sqlitestore.NewSqliteStore("data/users.db",
 	// 	"sessions",
@@ -94,7 +94,6 @@ func initCache() {
 }
 
 func main() {
-	consts.Load()
 
 	tokengen.Init(consts.JWT_RSA_PRIVATE_KEY)
 
@@ -103,7 +102,7 @@ func main() {
 	// list env to see what is loaded
 	env.Ls()
 
-	initCache()
+	//initCache()
 
 	email := gomailer.RedisQueueEmail{To: "antony@antonybholmes.dev"}
 
