@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
 
 	"github.com/gorilla/sessions"
+	"github.com/rs/zerolog"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
@@ -30,7 +32,6 @@ import (
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
-	"github.com/antonybholmes/go-sys"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -131,11 +132,16 @@ func main() {
 	// write to both stdout and log file
 	f := env.GetStr("LOG_FILE", fmt.Sprintf("logs/%s.log", consts.APP_NAME))
 
-	logger, err := sys.NewFileLog(f) // zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
+	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 
 	if err != nil {
-		//	fmt.Errorf()("%s", err)
+		//return nil, err
 	}
+
+	// to prevent file closing before program exits
+	defer logFile.Close()
+
+	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger()
 
 	// We cache options regarding ttl so some session routes need to be in an object
 	sr := authentication.NewSessionRoutes()
