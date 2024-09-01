@@ -15,6 +15,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/rdb"
 	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
 	"github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
@@ -28,6 +29,7 @@ import (
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
+	gomailer "github.com/antonybholmes/go-mailer"
 	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
@@ -102,6 +104,10 @@ func main() {
 	env.Ls()
 
 	initCache()
+
+	email := gomailer.RedisQueueEmail{To: "antony@antonybholmes.dev"}
+
+	rdb.PublishEmail(&email)
 
 	//buildMode := env.GetStr("BUILD", "dev")
 
