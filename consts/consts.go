@@ -24,6 +24,8 @@ var SESSION_SECRET string
 var SESSION_NAME string
 var UPDATED string
 
+var REDIS_ADDR string
+
 var PASSWORDLESS_TOKEN_TTL_MINS time.Duration
 var ACCESS_TOKEN_TTL_MINS time.Duration
 var OTP_TOKEN_TTL_MINS time.Duration
@@ -41,6 +43,9 @@ func init() {
 	VERSION = os.Getenv("VERSION")
 	UPDATED = os.Getenv("UPDATED")
 	COPYRIGHT = os.Getenv("COPYRIGHT")
+
+	REDIS_ADDR = os.Getenv("REDIS_ADDR")
+
 	//JWT_PRIVATE_KEY = []byte(os.Getenv("JWT_SECRET"))
 	//JWT_PUBLIC_KEY = []byte(os.Getenv("JWT_SECRET"))
 	SESSION_SECRET = os.Getenv("SESSION_SECRET")
