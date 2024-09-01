@@ -262,42 +262,42 @@ func SessionUserRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", *authUser)
 }
 
-// Start passwordless login by sending an email
-func SessionSendResetPasswordEmailRoute(c echo.Context) error {
+// // Start passwordless login by sending an email
+// func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 
-	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
+// 	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
-		authUser := validator.AuthUser
-		req := validator.Req
+// 		authUser := validator.AuthUser
+// 		req := validator.Req
 
-		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
+// 		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+// 		if err != nil {
+// 			return routes.ErrorReq(err)
+// 		}
 
-		var file string
+// 		var file string
 
-		if req.CallbackUrl != "" {
-			file = "templates/email/password/reset/web.html"
-		} else {
-			file = "templates/email/password/reset/api.html"
-		}
+// 		if req.CallbackUrl != "" {
+// 			file = "templates/email/password/reset/web.html"
+// 		} else {
+// 			file = "templates/email/password/reset/api.html"
+// 		}
 
-		go SendEmailWithToken("Password Reset",
-			authUser,
-			file,
-			otpJwt,
-			req.CallbackUrl,
-			req.VisitUrl)
+// 		go SendEmailWithToken("Password Reset",
+// 			authUser,
+// 			file,
+// 			otpJwt,
+// 			req.CallbackUrl,
+// 			req.VisitUrl)
 
-		//if err != nil {
-		//	return routes.ErrorReq(err)
-		//}
+// 		//if err != nil {
+// 		//	return routes.ErrorReq(err)
+// 		//}
 
-		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
-	})
-}
+// 		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
+// 	})
+// }
 
 // func SessionUpdatePasswordRoute(c echo.Context) error {
 

@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
 
 	"github.com/gorilla/sessions"
+	"github.com/rs/zerolog"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
@@ -26,11 +28,9 @@ import (
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
-	"github.com/antonybholmes/go-mailer/mailserver"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
-	"github.com/antonybholmes/go-sys"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -73,7 +73,7 @@ func init() {
 
 	userdbcache.InitCache("data/users.db")
 
-	mailserver.Init()
+	//mailserver.Init()
 
 	dnadbcache.InitCache("data/modules/dna")
 	genedbcache.InitCache("data/modules/genes")
@@ -131,11 +131,16 @@ func main() {
 	// write to both stdout and log file
 	f := env.GetStr("LOG_FILE", fmt.Sprintf("logs/%s.log", consts.APP_NAME))
 
-	logger, err := sys.NewFileLog(f) // zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
+	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 
 	if err != nil {
-		//	fmt.Errorf()("%s", err)
+		//return nil, err
 	}
+
+	// to prevent file closing before program exits
+	defer logFile.Close()
+
+	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger()
 
 	// We cache options regarding ttl so some session routes need to be in an object
 	sr := authentication.NewSessionRoutes()
@@ -223,7 +228,7 @@ func main() {
 	emailGroup := authGroup.Group("/email")
 
 	emailGroup.POST("/verify",
-		authentication.EmailAddressWasVerifiedRoute,
+		authentication.EmailAddressVerifiedRoute,
 		jwtMiddleWare)
 
 	// with the correct token, performs the update
@@ -234,10 +239,10 @@ func main() {
 	passwordGroup := authGroup.Group("/passwords")
 
 	// sends a reset link
-	passwordGroup.POST("/reset", authorization.SendResetPasswordFromUsernameEmailRoute)
+	passwordGroup.POST("/reset", authentication.SendResetPasswordFromUsernameEmailRoute)
 
 	// with the correct token, updates a password
-	passwordGroup.POST("/update", authorization.UpdatePasswordRoute, jwtMiddleWare)
+	passwordGroup.POST("/update", authentication.UpdatePasswordRoute, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
 
@@ -280,9 +285,9 @@ func main() {
 
 	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)
 
-	sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
+	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
-	sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
+	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
 	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
 
