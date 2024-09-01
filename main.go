@@ -30,7 +30,6 @@ import (
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
 	gomailer "github.com/antonybholmes/go-mailer"
-	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
@@ -76,7 +75,7 @@ func init() {
 
 	userdbcache.InitCache("data/users.db")
 
-	mailer.InitMailer()
+	//mailer.InitMailer()
 
 	dnadbcache.InitCache("data/modules/dna")
 	genedbcache.InitCache("data/modules/genes")
@@ -100,15 +99,13 @@ func main() {
 	//env.Load()
 
 	// list env to see what is loaded
-	env.Ls()
+	//env.Ls()
 
 	//initCache()
 
+	// test redis
 	email := gomailer.RedisQueueEmail{To: "antony@antonybholmes.dev"}
-
 	rdb.PublishEmail(&email)
-
-	//buildMode := env.GetStr("BUILD", "dev")
 
 	//
 	// Set logging to file
@@ -164,21 +161,9 @@ func main() {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
 		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
-
+		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
 	}))
-
-	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK,
-			AboutResp{Name: consts.NAME,
-				Version:   consts.VERSION,
-				Updated:   consts.UPDATED,
-				Copyright: consts.COPYRIGHT})
-	})
-
-	e.GET("/info", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
-	})
 
 	// Configure middleware with the custom claims type which
 	// will parse our jwt with scope etc
@@ -198,6 +183,18 @@ func main() {
 	// Routes
 	//
 
+	e.GET("/about", func(c echo.Context) error {
+		return c.JSON(http.StatusOK,
+			AboutResp{Name: consts.NAME,
+				Version:   consts.VERSION,
+				Updated:   consts.UPDATED,
+				Copyright: consts.COPYRIGHT})
+	})
+
+	e.GET("/info", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
+	})
+
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(jwtMiddleWare,
 		JwtIsAccessTokenMiddleware,
@@ -213,9 +210,7 @@ func main() {
 	adminUsersGroup.POST("/add", adminroutes.AddUserRoute)
 	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
 
-	//
 	// Allow users to sign up for an account
-
 	e.POST("/signup", authentication.SignupRoute)
 
 	//
