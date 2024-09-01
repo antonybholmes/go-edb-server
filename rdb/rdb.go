@@ -35,7 +35,7 @@ func PublishEmail(email *mailer.RedisQueueEmail) error {
 		return err
 	}
 
-	return Publish("email", payload)
+	return Publish(mailer.REDIS_EMAIL_CHANNEL, payload)
 }
 
 func Publish(channel string, data []byte) error {
