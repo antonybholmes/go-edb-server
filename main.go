@@ -28,7 +28,6 @@ import (
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
-	"github.com/antonybholmes/go-mailer/mailserver"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
@@ -74,7 +73,7 @@ func init() {
 
 	userdbcache.InitCache("data/users.db")
 
-	mailserver.Init()
+	//mailserver.Init()
 
 	dnadbcache.InitCache("data/modules/dna")
 	genedbcache.InitCache("data/modules/genes")
