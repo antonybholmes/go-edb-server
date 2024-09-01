@@ -136,6 +136,9 @@ func main() {
 
 	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
 
+	// We cache options regarding ttl so some session routes need to be in an object
+	sr := authentication.NewSessionRoutes()
+
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,
@@ -270,10 +273,10 @@ func main() {
 
 	//sessionAuthGroup := sessionGroup.Group("/auth")
 
-	sessionGroup.POST("/signin", authentication.SessionUsernamePasswordSignInRoute)
+	sessionGroup.POST("/signin", sr.SessionUsernamePasswordSignInRoute)
 
 	sessionGroup.POST("/passwordless/signin",
-		authentication.SessionPasswordlessSignInRoute,
+		sr.SessionPasswordlessSignInRoute,
 		jwtMiddleWare)
 
 	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)
@@ -282,7 +285,7 @@ func main() {
 
 	sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessJwtRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)

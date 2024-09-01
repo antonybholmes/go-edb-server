@@ -3,6 +3,9 @@ package authentication
 import (
 	"net/http"
 	"net/mail"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
@@ -20,9 +23,10 @@ const (
 )
 
 var SESSION_OPT_ZERO *sessions.Options
-var SESSION_OPT_24H *sessions.Options
-var SESSION_OPT_30_DAYS *sessions.Options
-var SESSION_OPT_7_DAYS *sessions.Options
+
+//var SESSION_OPT_24H *sessions.Options
+//var SESSION_OPT_30_DAYS *sessions.Options
+//var SESSION_OPT_7_DAYS *sessions.Options
 
 func init() {
 
@@ -39,35 +43,63 @@ func init() {
 		SameSite: http.SameSiteNoneMode,
 	}
 
-	SESSION_OPT_24H = &sessions.Options{
+	// SESSION_OPT_24H = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_DAY_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode,
+	// }
+
+	// SESSION_OPT_30_DAYS = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_30_DAYS_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode,
+	// }
+
+	// SESSION_OPT_7_DAYS = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode,
+	// }
+}
+
+type SessionRoutes struct {
+	options *sessions.Options
+}
+
+func NewSessionRoutes() *SessionRoutes {
+	maxAge := auth.MAX_AGE_7_DAYS_SECS
+
+	t := os.Getenv("SESSION_TTL_HOURS")
+
+	if t != "" {
+		v, err := strconv.ParseUint(t, 10, 32)
+
+		if err == nil {
+			maxAge = int((time.Duration(v) * time.Hour).Seconds())
+		}
+	}
+
+	options := sessions.Options{
 		Path:     "/",
-		MaxAge:   auth.MAX_AGE_DAY_SECS,
+		MaxAge:   maxAge,
 		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
-	SESSION_OPT_30_DAYS = &sessions.Options{
-		Path:     "/",
-		MaxAge:   auth.MAX_AGE_30_DAYS_SECS,
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	}
-
-	SESSION_OPT_7_DAYS = &sessions.Options{
-		Path:     "/",
-		MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	return &SessionRoutes{options: &options}
 }
 
 // Validate the passwordless token we generated and create
 // a user session. The session acts as a refresh token and
 // can be used to generate access tokens to use resources
-func SessionPasswordlessSignInRoute(c echo.Context) error {
+func (sr *SessionRoutes) SessionPasswordlessSignInRoute(c echo.Context) error {
 
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
@@ -99,7 +131,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 
 		// set session options such as if cookie secure and how long it
 		// persists
-		sess.Options = SESSION_OPT_7_DAYS //SESSION_OPT_30_DAYS
+		sess.Options = sr.options //SESSION_OPT_30_DAYS
 		sess.Values[SESSION_PUBLICID] = authUser.PublicId
 		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
 
@@ -109,7 +141,7 @@ func SessionPasswordlessSignInRoute(c echo.Context) error {
 	})
 }
 
-func SessionUsernamePasswordSignInRoute(c echo.Context) error {
+func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	validator, err := NewValidator(c).ParseLoginRequestBody().Ok()
 
 	if err != nil {
@@ -173,7 +205,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	if validator.Req.StaySignedIn {
-		sess.Options = SESSION_OPT_7_DAYS
+		sess.Options = sr.options
 	} else {
 		sess.Options = SESSION_OPT_ZERO
 	}
@@ -203,7 +235,7 @@ func SessionSignOutRoute(c echo.Context) error {
 	return routes.MakeOkPrettyResp(c, "user was signed out")
 }
 
-func SessionNewAccessJwtRoute(c echo.Context) error {
+func SessionNewAccessTokenRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)

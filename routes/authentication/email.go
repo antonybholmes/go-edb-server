@@ -32,7 +32,7 @@ type EmailBody struct {
 func SendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
 	file string,
-	jwt string,
+	token string,
 	callbackUrl string,
 	vistUrl string) error {
 
@@ -42,7 +42,7 @@ func SendEmailWithToken(subject string,
 		return routes.ErrorReq(err)
 	}
 
-	return BaseSendEmailWithToken(subject, authUser, address, file, jwt, callbackUrl, vistUrl)
+	return BaseSendEmailWithToken(subject, authUser, address, file, token, callbackUrl, vistUrl)
 }
 
 // Generic method for sending an email with a token in it. For APIS this is a token to use in the request, for websites
@@ -51,7 +51,7 @@ func BaseSendEmailWithToken(subject string,
 	authUser *auth.AuthUser,
 	address *mail.Address,
 	file string,
-	jwt string,
+	token string,
 	callbackUrl string,
 	vistUrl string) error {
 
@@ -92,7 +92,7 @@ func BaseSendEmailWithToken(subject string,
 			params.Set(URL_PARAM, vistUrl)
 		}
 
-		params.Set(JWT_PARAM, jwt)
+		params.Set(JWT_PARAM, token)
 
 		callbackUrl.RawQuery = params.Encode()
 
@@ -112,7 +112,7 @@ func BaseSendEmailWithToken(subject string,
 	} else {
 		err = t.Execute(&body, EmailBody{
 			Name:       firstName,
-			Link:       jwt,
+			Link:       token,
 			From:       consts.NAME,
 			Time:       time,
 			DoNotReply: consts.DO_NOT_REPLY,
@@ -148,7 +148,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := tokengen.ResetEmailToken(c, authUser, newEmail)
+		otpToken, err := tokengen.ResetEmailToken(c, authUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -166,7 +166,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 			authUser,
 			newEmail,
 			file,
-			otpJwt,
+			otpToken,
 			req.CallbackUrl,
 			req.Url)
 
