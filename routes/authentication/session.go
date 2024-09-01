@@ -96,51 +96,6 @@ func NewSessionRoutes() *SessionRoutes {
 	return &SessionRoutes{options: &options}
 }
 
-// Validate the passwordless token we generated and create
-// a user session. The session acts as a refresh token and
-// can be used to generate access tokens to use resources
-func (sr *SessionRoutes) SessionPasswordlessSignInRoute(c echo.Context) error {
-
-	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
-
-		if validator.Claims.Type != auth.PASSWORDLESS_TOKEN {
-			return routes.WrongTokentTypeReq()
-		}
-
-		authUser := validator.AuthUser
-
-		roles, err := userdbcache.UserRoleList(authUser)
-
-		if err != nil {
-			return routes.ErrorReq("error getting user roles")
-		}
-
-		roleClaim := auth.MakeClaim(roles)
-
-		//log.Debug().Msgf("user %v", authUser)
-
-		if !auth.CanLogin(roleClaim) {
-			return routes.UserNotAllowedToSignIn()
-		}
-
-		sess, err := session.Get(consts.SESSION_NAME, c)
-
-		if err != nil {
-			return routes.ErrorReq("error creating session")
-		}
-
-		// set session options such as if cookie secure and how long it
-		// persists
-		sess.Options = sr.options //SESSION_OPT_30_DAYS
-		sess.Values[SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
-
-		sess.Save(c.Request(), c.Response())
-
-		return UserSignedInResp(c)
-	})
-}
-
 func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	validator, err := NewValidator(c).ParseLoginRequestBody().Ok()
 
@@ -149,7 +104,7 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 	}
 
 	if validator.Req.Password == "" {
-		return PasswordlessEmailRoute(c, validator)
+		return PasswordlessSigninEmailRoute(c, validator)
 	}
 
 	user := validator.Req.Username
@@ -217,6 +172,51 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 
 	return UserSignedInResp(c)
 	//return c.NoContent(http.StatusOK)
+}
+
+// Validate the passwordless token we generated and create
+// a user session. The session acts as a refresh token and
+// can be used to generate access tokens to use resources
+func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
+
+	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
+
+		if validator.Claims.Type != auth.PASSWORDLESS_TOKEN {
+			return routes.WrongTokentTypeReq()
+		}
+
+		authUser := validator.AuthUser
+
+		roles, err := userdbcache.UserRoleList(authUser)
+
+		if err != nil {
+			return routes.ErrorReq("error getting user roles")
+		}
+
+		roleClaim := auth.MakeClaim(roles)
+
+		//log.Debug().Msgf("user %v", authUser)
+
+		if !auth.CanLogin(roleClaim) {
+			return routes.UserNotAllowedToSignIn()
+		}
+
+		sess, err := session.Get(consts.SESSION_NAME, c)
+
+		if err != nil {
+			return routes.ErrorReq("error creating session")
+		}
+
+		// set session options such as if cookie secure and how long it
+		// persists
+		sess.Options = sr.options //SESSION_OPT_30_DAYS
+		sess.Values[SESSION_PUBLICID] = authUser.PublicId
+		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
+
+		sess.Save(c.Request(), c.Response())
+
+		return UserSignedInResp(c)
+	})
 }
 
 func SessionSignOutRoute(c echo.Context) error {
@@ -289,7 +289,7 @@ func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 			file,
 			otpJwt,
 			req.CallbackUrl,
-			req.Url)
+			req.VisitUrl)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)
@@ -339,7 +339,7 @@ func SessionSendResetEmailEmailRoute(c echo.Context) error {
 			file,
 			otpJwt,
 			req.CallbackUrl,
-			req.Url)
+			req.VisitUrl)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)

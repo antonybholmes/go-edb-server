@@ -3,10 +3,11 @@ package consts
 import (
 	"crypto/rsa"
 	"os"
+	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 
+	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-sys/env"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -23,13 +24,15 @@ var SESSION_SECRET string
 var SESSION_NAME string
 var UPDATED string
 
+var PASSWORDLESS_TOKEN_TTL_MINS time.Duration
+var ACCESS_TOKEN_TTL_MINS time.Duration
+var OTP_TOKEN_TTL_MINS time.Duration
+
 const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
 
 func init() {
-	env.Load()
-
-	godotenv.Load("consts.env")
-	godotenv.Load("version.env")
+	env.Load("consts.env")
+	env.Load("version.env")
 
 	NAME = os.Getenv("NAME")
 	APP_NAME = os.Getenv("APP_NAME")
@@ -61,4 +64,8 @@ func init() {
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
 	}
+
+	PASSWORDLESS_TOKEN_TTL_MINS = env.GetMin("PASSWORDLESS_TOKEN_TTL_MINS", auth.TTL_10_MINS)
+	ACCESS_TOKEN_TTL_MINS = env.GetMin("ACCESS_TOKEN_TTL_MINS", auth.TTL_15_MINS)
+	OTP_TOKEN_TTL_MINS = env.GetMin("OTP_TOKEN_TTL_MINS", auth.TTL_20_MINS)
 }

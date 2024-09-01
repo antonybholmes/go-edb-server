@@ -14,7 +14,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-mailer/mailer"
+	"github.com/antonybholmes/go-mailer/mailserver"
 	"github.com/labstack/echo/v4"
 )
 
@@ -123,7 +123,7 @@ func BaseSendEmailWithToken(subject string,
 		}
 	}
 
-	err = mailer.SendHtmlEmail(address, subject, body.String())
+	err = mailserver.SendHtmlEmail(address, subject, body.String())
 
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 			file,
 			otpToken,
 			req.CallbackUrl,
-			req.Url)
+			req.VisitUrl)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)
