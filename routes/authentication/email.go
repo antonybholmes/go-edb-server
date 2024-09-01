@@ -13,7 +13,9 @@ import (
 	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/rdb"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-mailer"
 	"github.com/antonybholmes/go-mailer/mailserver"
 	"github.com/labstack/echo/v4"
 )
@@ -154,21 +156,30 @@ func SendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		var file string
+		// var file string
 
-		if req.CallbackUrl != "" {
-			file = "templates/email/email/reset/web.html"
-		} else {
-			file = "templates/email/email/reset/api.html"
-		}
+		// if req.CallbackUrl != "" {
+		// 	file = "templates/email/email/reset/web.html"
+		// } else {
+		// 	file = "templates/email/email/reset/api.html"
+		// }
 
-		go BaseSendEmailWithToken("Update Email",
-			authUser,
-			newEmail,
-			file,
-			otpToken,
-			req.CallbackUrl,
-			req.VisitUrl)
+		// go BaseSendEmailWithToken("Update Email",
+		// 	authUser,
+		// 	newEmail,
+		// 	file,
+		// 	otpToken,
+		// 	req.CallbackUrl,
+		// 	req.VisitUrl)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To:          authUser.Email,
+			Token:       otpToken,
+			EmailType:   mailer.REDIS_EMAIL_TYPE_EMAIL_RESET,
+			Ttl:         fmt.Sprintf("%d minutes", int(consts.SHORT_TTL_MINS.Minutes())),
+			CallBackUrl: req.CallbackUrl,
+			VisitUrl:    req.VisitUrl}
+		rdb.PublishEmail(&email)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)
@@ -206,7 +217,14 @@ func UpdateEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		return SendEmailChangedEmail(c, authUser)
+		//return SendEmailChangedEmail(c, authUser)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To:        authUser.Email,
+			EmailType: mailer.REDIS_EMAIL_TYPE_EMAIL_UPDATED}
+		rdb.PublishEmail(&email)
+
+		return routes.MakeOkPrettyResp(c, "email updated confirmation email sent")
 	})
 }
 

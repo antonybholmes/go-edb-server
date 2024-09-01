@@ -27,6 +27,7 @@ var UPDATED string
 var PASSWORDLESS_TOKEN_TTL_MINS time.Duration
 var ACCESS_TOKEN_TTL_MINS time.Duration
 var OTP_TOKEN_TTL_MINS time.Duration
+var SHORT_TTL_MINS time.Duration
 
 const DO_NOT_REPLY = "Please do not reply to this message. It was sent from a notification-only email address that we don't monitor."
 
@@ -68,4 +69,5 @@ func init() {
 	PASSWORDLESS_TOKEN_TTL_MINS = env.GetMin("PASSWORDLESS_TOKEN_TTL_MINS", auth.TTL_10_MINS)
 	ACCESS_TOKEN_TTL_MINS = env.GetMin("ACCESS_TOKEN_TTL_MINS", auth.TTL_15_MINS)
 	OTP_TOKEN_TTL_MINS = env.GetMin("OTP_TOKEN_TTL_MINS", auth.TTL_20_MINS)
+	SHORT_TTL_MINS = env.GetMin("SHORT_TTL_MINS", auth.TTL_10_MINS)
 }

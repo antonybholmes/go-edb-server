@@ -229,7 +229,7 @@ func main() {
 	emailGroup := authGroup.Group("/email")
 
 	emailGroup.POST("/verify",
-		authentication.EmailAddressWasVerifiedRoute,
+		authentication.EmailAddressVerifiedRoute,
 		jwtMiddleWare)
 
 	// with the correct token, performs the update
@@ -240,10 +240,10 @@ func main() {
 	passwordGroup := authGroup.Group("/passwords")
 
 	// sends a reset link
-	passwordGroup.POST("/reset", authorization.SendResetPasswordFromUsernameEmailRoute)
+	passwordGroup.POST("/reset", authentication.SendResetPasswordFromUsernameEmailRoute)
 
 	// with the correct token, updates a password
-	passwordGroup.POST("/update", authorization.UpdatePasswordRoute, jwtMiddleWare)
+	passwordGroup.POST("/update", authentication.UpdatePasswordRoute, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
 
@@ -286,9 +286,9 @@ func main() {
 
 	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)
 
-	sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
+	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
-	sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
+	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
 	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
 
