@@ -1,100 +1,102 @@
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
-DROP TABLE IF EXISTS roles;
-CREATE TABLE roles (
-    id INTEGER PRIMARY KEY ASC, 
-    uuid TEXT NOT NULL UNIQUE, 
-    name TEXT NOT NULL UNIQUE,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    UNIQUE(uuid, name));
-CREATE INDEX roles_name_idx ON roles (name);
-
-INSERT INTO roles (uuid, name) VALUES('908e6e2e-e90e-4548-a3a0-67ad356db923', 'Superuser');
-INSERT INTO roles (uuid, name) VALUES('d99d8a0d-dd1c-4f9a-9736-fde7904386d8', 'Admin');
-INSERT INTO roles (uuid, name) VALUES('a2296fab-a06d-4a16-a224-4f95613cf4a4', 'Standard');
-INSERT INTO roles (uuid, name) VALUES('0f988db6-810f-4e0a-82f5-2493baf6b49e', 'Mutations');
-
 DROP TABLE IF EXISTS permissions;
 CREATE TABLE permissions (
     id INTEGER PRIMARY KEY ASC, 
-    uuid TEXT NOT NULL, 
-    name TEXT NOT NULL,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    UNIQUE(uuid, name));
+    public_id TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT "",
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
+CREATE INDEX roles_name_idx ON permissions (name);
+
+INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'Super', 'Superuser');
+INSERT INTO permissions (public_id, name, description) VALUES('iz4kbfy3z0a3', 'Admin', 'Administrator');
+INSERT INTO permissions (public_id, name, description) VALUES('loq75e7zqcbl', 'User', 'User');
+INSERT INTO permissions (public_id, name, description) VALUES('kflynb03pxbj', 'Login', 'Can login');
+INSERT INTO permissions (public_id, name, description) VALUES('og1o5d0p0mjy', 'RDF', 'Can view RDF lab data');
+
+DROP TABLE IF EXISTS roles;
+CREATE TABLE roles (
+    id INTEGER PRIMARY KEY ASC, 
+    public_id TEXT NOT NULL UNIQUE, 
+    name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT "",
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX permissions_name_idx ON permissions (name);
 
-INSERT INTO permissions (uuid, name) VALUES('5d224abe-bf22-4661-9ead-85cdc91746a5', 'Admin');
-INSERT INTO permissions (uuid, name) VALUES('4a0730a9-211f-48b9-bb65-803abeca9e31', 'GetDNA');
-INSERT INTO permissions (uuid, name) VALUES('7df054ba-ef7b-4240-9b40-ff537904990b', 'GetMutations');
+INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'Super');
+INSERT INTO roles (public_id, name) VALUES('mk4bgg4w43fp', 'Admin');
+INSERT INTO roles (public_id, name) VALUES('3xvte0ik4aq4', 'User');
+-- INSERT INTO roles (public_id, name) VALUES('UZuAVHDGToa4F786IPTijA==', 'GetDNA');
+INSERT INTO roles (public_id, name) VALUES('x4ewk9papip2', 'Login');
+INSERT INTO roles (public_id, name) VALUES('kh2yynyheqhv', 'RDF');
 
-DROP TABLE IF EXISTS role_permissions;
-CREATE TABLE role_permissions (
+DROP TABLE IF EXISTS roles_permissions;
+CREATE TABLE roles_permissions (
     id INTEGER PRIMARY KEY ASC, 
-    role_uuid TEXT NOT NULL, 
-    permission_uuid TEXT NOT NULL,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    UNIQUE(role_uuid, permission_uuid),
-    FOREIGN KEY(role_uuid) REFERENCES roles(uuid),
-    FOREIGN KEY(permission_uuid) REFERENCES permissions(uuid));
-CREATE INDEX role_permissions_role_uuid_idx ON role_permissions (role_uuid);
-CREATE INDEX role_permissions_permission_uuid_idx ON role_permissions (permission_uuid);
+    role_id INTEGER NOT NULL,
+    permission_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE(role_id, permission_id),
+    FOREIGN KEY(role_id) REFERENCES roles(id),
+    FOREIGN KEY(permission_id) REFERENCES permissions(id));
+CREATE INDEX roles_permissions_role_id_idx ON roles_permissions (role_id, permission_id);
 
 -- super/user admin
-INSERT INTO role_permissions (role_uuid, permission_uuid) VALUES('908e6e2e-e90e-4548-a3a0-67ad356db923', '5d224abe-bf22-4661-9ead-85cdc91746a5');
-INSERT INTO role_permissions (role_uuid, permission_uuid) VALUES('d99d8a0d-dd1c-4f9a-9736-fde7904386d8', '5d224abe-bf22-4661-9ead-85cdc91746a5');
+INSERT INTO roles_permissions (role_id, permission_id) VALUES(1, 1);
+INSERT INTO roles_permissions (role_id, permission_id) VALUES(1, 2);
+INSERT INTO roles_permissions (role_id, permission_id) VALUES(2, 2);
 
 --
 -- standard
---
--- dna
-INSERT INTO role_permissions (role_uuid, permission_uuid) VALUES('a2296fab-a06d-4a16-a224-4f95613cf4a4', '4a0730a9-211f-48b9-bb65-803abeca9e31');
+INSERT INTO roles_permissions (role_id, permission_id) VALUES(3, 3);
 
--- mutations
-INSERT INTO role_permissions (role_uuid, permission_uuid) VALUES('0f988db6-810f-4e0a-82f5-2493baf6b49e', '7df054ba-ef7b-4240-9b40-ff537904990b');
+-- users can login
+INSERT INTO roles_permissions (role_id, permission_id) VALUES(4, 4);
+
+-- rdf
+INSERT INTO roles_permissions (role_id, permission_id) VALUES(5, 5);
 
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY ASC, 
-    uuid TEXT NOT NULL UNIQUE, 
-    first_name TEXT NOT NULL DEFAULT '',
-    last_name TEXT NOT NULL DEFAULT '',
+    public_id TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL DEFAULT '',
-    email_verified BOOLEAN NOT NULL DEFAULT 0,
-    can_signin BOOLEAN NOT NULL DEFAULT 1,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
-CREATE INDEX users_uuid ON users (uuid);
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
+    email_is_verified BOOLEAN NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
+CREATE INDEX users_public_id_idx ON users (public_id);
 -- CREATE INDEX name ON users (first_name, last_name);
-CREATE INDEX users_username ON users (username);
-CREATE INDEX users_email ON users (email);
+CREATE INDEX users_username_idx ON users (username);
+CREATE INDEX users_email_idx ON users (email);
 
 CREATE TRIGGER users_updated_trigger AFTER UPDATE ON users
 BEGIN
-      update users SET updated_on = CURRENT_TIMESTAMP WHERE id=NEW.id;
+      update users SET updated_at = CURRENT_TIMESTAMP WHERE id=NEW.id;
 END;
 
-DROP TABLE IF EXISTS user_roles;
-CREATE TABLE user_roles (
+DROP TABLE IF EXISTS users_roles;
+CREATE TABLE users_roles (
     id INTEGER PRIMARY KEY ASC, 
-    user_uuid TEXT NOT NULL,
-    role_uuid TEXT NOT NULL, 
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    UNIQUE(user_uuid, role_uuid),
-    FOREIGN KEY(user_uuid) REFERENCES users(uuid),
-    FOREIGN KEY(role_uuid) REFERENCES roles(uuid));
-CREATE INDEX user_roles_user_uuid_idx ON user_roles (user_uuid);
-CREATE INDEX user_roles_role_uuid_idx ON user_roles (role_uuid);
-
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE(user_id, role_id),
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(role_id) REFERENCES roles(id));
+CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 
 CREATE TABLE users_sessions(
   id INTEGER PRIMARY KEY ASC,
-  uuid TEXT NOT NULL,
+  public_id TEXT NOT NULL,
   session_id INTEGER NOT NULL UNIQUE,
-  FOREIGN KEY(uuid) REFERENCES users(uuid)
+  FOREIGN KEY(public_id) REFERENCES users(public_id)
 );
-CREATE INDEX users_sessions_uuid ON users_sessions (uuid);
-CREATE INDEX users_sessions_session_id ON users_sessions (session_id);
+CREATE INDEX users_sessions_public_id_idx ON users_sessions (public_id);
+CREATE INDEX users_sessions_session_id_idx ON users_sessions (session_id);

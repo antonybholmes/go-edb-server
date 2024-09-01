@@ -18,19 +18,21 @@
 
 *.out
 
-.env
+.env*
 
 # Dependency directories (remove the comment below to include it)
 
 # vendor/
 
+su.sql
 
 data
 logs
 deployments/*
-go-edb-api
+go-edb-server
 
 tests.sh
 
 jwtRS256.key
 jwtRS256.key.pub
+
