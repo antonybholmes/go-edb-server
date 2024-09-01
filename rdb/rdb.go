@@ -22,7 +22,7 @@ func init() {
 		DB:       0,  // use default DB
 	})
 
-	log.Debug().Msgf("start rdb")
+	log.Debug().Msgf("start rdb %s", consts.REDIS_ADDR)
 }
 
 func Instance() *redis.Client {

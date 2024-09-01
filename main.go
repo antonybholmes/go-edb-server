@@ -57,6 +57,7 @@ var store *sessions.CookieStore
 
 func init() {
 
+	env.Ls()
 	// store = sys.Must(sqlitestore.NewSqliteStore("data/users.db",
 	// 	"sessions",
 	// 	"/",
