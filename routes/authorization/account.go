@@ -3,9 +3,10 @@ package authorization
 import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/rdb"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-edb-server/routes/authentication"
-
+	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,7 +32,14 @@ func UpdateUserRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		return SendUserInfoUpdatedEmail(c, authUser)
+		//return SendUserInfoUpdatedEmail(c, authUser)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To:        authUser.Email,
+			EmailType: mailer.REDIS_EMAIL_TYPE_ACCOUNT_UPDATED}
+		rdb.PublishEmail(&email)
+
+		return routes.MakeOkPrettyResp(c, "account updated confirmation email sent")
 	})
 }
 
@@ -45,7 +53,7 @@ func UserRoute(c echo.Context) error {
 
 func SendUserInfoUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
 
-	var file = "templates/email/account/updated.html"
+	file := "templates/email/account/updated.html"
 
 	go authentication.SendEmailWithToken("Account Updated",
 		authUser,
