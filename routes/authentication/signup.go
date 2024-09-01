@@ -45,7 +45,7 @@ func SignupRoute(c echo.Context) error {
 		file,
 		otpJwt,
 		req.CallbackUrl,
-		req.Url)
+		req.VisitUrl)
 
 	//if err != nil {
 	//	return routes.ErrorReq(err)

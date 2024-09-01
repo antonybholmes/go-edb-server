@@ -1,21 +1,18 @@
 package main
 
 import (
-	"io"
+	"fmt"
 	"net/http"
 	"os"
 	"runtime"
 
 	"github.com/gorilla/sessions"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
-	"github.com/antonybholmes/go-edb-server/rdb"
 	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
 	"github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
@@ -29,10 +26,11 @@ import (
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
-	gomailer "github.com/antonybholmes/go-mailer"
+	"github.com/antonybholmes/go-mailer/mailserver"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
+	"github.com/antonybholmes/go-sys"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -75,7 +73,7 @@ func init() {
 
 	userdbcache.InitCache("data/users.db")
 
-	//mailer.InitMailer()
+	mailserver.Init()
 
 	dnadbcache.InitCache("data/modules/dna")
 	genedbcache.InitCache("data/modules/genes")
@@ -93,6 +91,11 @@ func init() {
 }
 
 func main() {
+	//env.Reload()
+	//env.Load("consts.env")
+	//env.Load("version.env")
+
+	//consts.Init()
 
 	tokengen.Init(consts.JWT_RSA_PRIVATE_KEY)
 
@@ -104,8 +107,8 @@ func main() {
 	//initCache()
 
 	// test redis
-	email := gomailer.RedisQueueEmail{To: "antony@antonybholmes.dev"}
-	rdb.PublishEmail(&email)
+	//email := gomailer.RedisQueueEmail{To: "antony@antonybholmes.dev"}
+	//rdb.PublishEmail(&email)
 
 	//
 	// Set logging to file
@@ -126,17 +129,13 @@ func main() {
 	e.Use(session.Middleware(store))
 
 	// write to both stdout and log file
-	f := env.GetStr("LOG_FILE", "logs/app.log")
+	f := env.GetStr("LOG_FILE", fmt.Sprintf("logs/%s.log", consts.APP_NAME))
 
-	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	logger, err := sys.NewFileLog(f) // zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
 
 	if err != nil {
-		log.Fatal().Msgf("%s", err)
+		//	fmt.Errorf()("%s", err)
 	}
-
-	defer logFile.Close()
-
-	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
 
 	// We cache options regarding ttl so some session routes need to be in an object
 	sr := authentication.NewSessionRoutes()
@@ -243,7 +242,7 @@ func main() {
 	passwordlessGroup := authGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
-		return authentication.PasswordlessEmailRoute(c, nil)
+		return authentication.PasswordlessSigninEmailRoute(c, nil)
 	})
 
 	passwordlessGroup.POST("/signin",
@@ -276,7 +275,7 @@ func main() {
 	sessionGroup.POST("/signin", sr.SessionUsernamePasswordSignInRoute)
 
 	sessionGroup.POST("/passwordless/signin",
-		sr.SessionPasswordlessSignInRoute,
+		sr.SessionPasswordlessValidateSignInRoute,
 		jwtMiddleWare)
 
 	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)

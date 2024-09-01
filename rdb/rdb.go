@@ -39,6 +39,6 @@ func PublishEmail(email *mailer.RedisQueueEmail) error {
 }
 
 func Publish(channel string, data []byte) error {
-	log.Debug().Msgf("send %v", data)
+	//log.Debug().Msgf("send %v", data)
 	return rdb.Publish(ctx, channel, data).Err()
 }
