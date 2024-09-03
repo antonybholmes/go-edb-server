@@ -32,8 +32,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240901041133-b1aa4cd29426
-	github.com/antonybholmes/go-genes v0.0.0-20240831050904-eed3a6fcd344
+	github.com/antonybholmes/go-auth v0.0.0-20240901220333-c6210ff22d37
+	github.com/antonybholmes/go-genes v0.0.0-20240901185659-8b17b98bbf71
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
@@ -42,18 +42,18 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240901063101-2fa28d529d35
-	github.com/antonybholmes/go-sys v0.0.0-20240901041129-6c570bd0bacc
+	github.com/antonybholmes/go-mailer v0.0.0-20240901222928-242cea64757a
+	github.com/antonybholmes/go-sys v0.0.0-20240901191116-4f230479c4a8
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.1
 )
 
 require (
-	github.com/antonybholmes/go-geneconv v0.0.0-20240830030423-75f690f29a1c
+	github.com/antonybholmes/go-geneconv v0.0.0-20240901185654-d75dd1745c01
 	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
-	github.com/antonybholmes/go-motiftogene v0.0.0-20240830030420-89c7275daaf0
+	github.com/antonybholmes/go-motiftogene v0.0.0-20240901185652-b6d4aa5d3c35
 	github.com/antonybholmes/go-mutations v0.0.0-20240831050902-7ba8652704c1
-	github.com/antonybholmes/go-pathway v0.0.0-20240830030425-38992477bbdd
+	github.com/antonybholmes/go-pathway v0.0.0-20240901185656-7497cb6ea997
 	github.com/redis/go-redis/v9 v9.6.1
 )
 
