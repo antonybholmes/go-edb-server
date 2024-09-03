@@ -155,6 +155,8 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 
 	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
 
+	//log.Debug().Msgf("beep2 %s", authUser.Username)
+
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
 	} else {

@@ -34,12 +34,21 @@ func UpdateUserRoute(c echo.Context) error {
 
 		//return SendUserInfoUpdatedEmail(c, authUser)
 
+		// reload user details
+		authUser, err = userdbcache.FindUserByPublicId(authUser.PublicId)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		// send email notification of change
 		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
 			To:        authUser.Email,
 			EmailType: mailer.REDIS_EMAIL_TYPE_ACCOUNT_UPDATED}
 		rdb.PublishEmail(&email)
 
-		return routes.MakeOkPrettyResp(c, "account updated confirmation email sent")
+		// send back updated user to having to do a separate call to get the new data
+		return routes.MakeDataPrettyResp(c, "account updated confirmation email sent", authUser)
 	})
 }
 
