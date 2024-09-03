@@ -7,7 +7,7 @@ CREATE TABLE permissions (
     public_id TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT "",
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX roles_name_idx ON permissions (name);
 
 INSERT INTO permissions (public_id, name, description) VALUES('uwkrk2ljj387', 'Super', 'Superuser');
@@ -22,7 +22,7 @@ CREATE TABLE roles (
     public_id TEXT NOT NULL UNIQUE, 
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT "",
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX permissions_name_idx ON permissions (name);
 
 INSERT INTO roles (public_id, name) VALUES('p1gbjods0h90', 'Super');
@@ -37,7 +37,7 @@ CREATE TABLE roles_permissions (
     id INTEGER PRIMARY KEY ASC, 
     role_id INTEGER NOT NULL,
     permission_id INTEGER NOT NULL,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(role_id, permission_id),
     FOREIGN KEY(role_id) REFERENCES roles(id),
     FOREIGN KEY(permission_id) REFERENCES permissions(id));
@@ -68,8 +68,8 @@ CREATE TABLE users (
     first_name TEXT NOT NULL DEFAULT '',
     last_name TEXT NOT NULL DEFAULT '',
     email_is_verified BOOLEAN NOT NULL DEFAULT 0,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_public_id_idx ON users (public_id);
 -- CREATE INDEX name ON users (first_name, last_name);
 CREATE INDEX users_username_idx ON users (username);
@@ -77,7 +77,7 @@ CREATE INDEX users_email_idx ON users (email);
 
 CREATE TRIGGER users_updated_trigger AFTER UPDATE ON users
 BEGIN
-      update users SET updated_on = CURRENT_TIMESTAMP WHERE id=NEW.id;
+      update users SET updated_at = CURRENT_TIMESTAMP WHERE id=NEW.id;
 END;
 
 DROP TABLE IF EXISTS users_roles;
@@ -85,7 +85,7 @@ CREATE TABLE users_roles (
     id INTEGER PRIMARY KEY ASC, 
     user_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL, 
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(user_id, role_id),
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(role_id) REFERENCES roles(id));

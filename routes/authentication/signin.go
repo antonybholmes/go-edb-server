@@ -1,11 +1,15 @@
-package authroutes
+package authentication
 
 import (
-	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
-	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/routes"
+	"fmt"
 
+	"github.com/antonybholmes/go-auth"
+	"github.com/antonybholmes/go-auth/tokengen"
+	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/rdb"
+	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,7 +25,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 	return NewValidator(c).ParseLoginRequestBody().Success(func(validator *Validator) error {
 
 		if validator.Req.Password == "" {
-			return PasswordlessEmailRoute(c, validator)
+			return PasswordlessSigninEmailRoute(c, validator)
 		}
 
 		authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
@@ -52,13 +56,13 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := jwtgen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		refreshToken, err := tokengen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := jwtgen.AccessToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		accessToken, err := tokengen.AccessToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -69,7 +73,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 }
 
 // Start passwordless login by sending an email
-func PasswordlessEmailRoute(c echo.Context, validator *Validator) error {
+func PasswordlessSigninEmailRoute(c echo.Context, validator *Validator) error {
 	if validator == nil {
 		validator = NewValidator(c)
 	}
@@ -78,26 +82,35 @@ func PasswordlessEmailRoute(c echo.Context, validator *Validator) error {
 
 		authUser := validator.AuthUser
 
-		passwordlessToken, err := jwtgen.PasswordlessToken(c, authUser.PublicId)
+		passwordlessToken, err := tokengen.PasswordlessToken(c, authUser.PublicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		var file string
+		// var file string
 
-		if validator.Req.CallbackUrl != "" {
-			file = "templates/email/passwordless/web.html"
-		} else {
-			file = "templates/email/passwordless/api.html"
-		}
+		// if validator.Req.CallbackUrl != "" {
+		// 	file = "templates/email/passwordless/web.html"
+		// } else {
+		// 	file = "templates/email/passwordless/api.html"
+		// }
 
-		go SendEmailWithToken("Passwordless Sign In",
-			authUser,
-			file,
-			passwordlessToken,
-			validator.Req.CallbackUrl,
-			validator.Req.Url)
+		// go SendEmailWithToken("Passwordless Sign In",
+		// 	authUser,
+		// 	file,
+		// 	passwordlessToken,
+		// 	validator.Req.CallbackUrl,
+		// 	validator.Req.VisitUrl)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To:          authUser.Email,
+			Token:       passwordlessToken,
+			EmailType:   mailer.REDIS_EMAIL_TYPE_PASSWORDLESS,
+			Ttl:         fmt.Sprintf("%d minutes", int(consts.PASSWORDLESS_TOKEN_TTL_MINS.Minutes())),
+			CallBackUrl: validator.Req.CallbackUrl,
+			VisitUrl:    validator.Req.VisitUrl}
+		rdb.PublishEmail(&email)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)
@@ -110,7 +123,7 @@ func PasswordlessEmailRoute(c echo.Context, validator *Validator) error {
 func PasswordlessSignInRoute(c echo.Context) error {
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
+		if validator.Claims.Type != auth.PASSWORDLESS_TOKEN {
 			return routes.WrongTokentTypeReq()
 		}
 
@@ -128,7 +141,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := jwtgen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		t, err := tokengen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()

@@ -6,7 +6,8 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/authroutes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -70,9 +71,9 @@ import (
 func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
-		if claims.Type != auth.TOKEN_TYPE_REFRESH {
+		if claims.Type != auth.REFRESH_TOKEN {
 			routes.AuthErrorReq("not a refresh token")
 		}
 
@@ -83,9 +84,9 @@ func JwtIsRefreshTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
-		if claims.Type != auth.TOKEN_TYPE_ACCESS {
+		if claims.Type != auth.ACCESS_TOKEN {
 			routes.AuthErrorReq("not an access token")
 		}
 
@@ -96,7 +97,7 @@ func JwtIsAccessTokenMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
 		if !auth.IsAdmin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not an admin")
@@ -109,7 +110,7 @@ func JwtHasAdminPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwt.Token)
-		claims := user.Claims.(*auth.JwtCustomClaims)
+		claims := user.Claims.(*auth.TokenClaims)
 
 		if !auth.CanLogin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not allowed to login")
@@ -131,7 +132,7 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		//log.Debug().Msgf("validate session %s", sess.ID)
 
-		_, ok := sess.Values[authroutes.SESSION_PUBLICID].(string)
+		_, ok := sess.Values[authentication.SESSION_PUBLICID].(string)
 
 		if !ok {
 			return routes.AuthErrorReq("cannot get user id from session")
@@ -192,7 +193,7 @@ func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 			// 	return routes.AuthErrorReq("no jwt available")
 			// }
 
-			claims := user.Claims.(*auth.JwtCustomClaims)
+			claims := user.Claims.(*auth.TokenClaims)
 
 			// shortcut for admin, as we allow this for everything
 			if auth.IsAdmin(claims.Roles) {

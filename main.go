@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -8,26 +9,25 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
-	"github.com/antonybholmes/go-edb-server/routes/adminroutes"
-	"github.com/antonybholmes/go-edb-server/routes/authroutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/dnaroutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/geneconvroutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/generoutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/gexroutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/motiftogeneroutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/mutationroutes"
-	"github.com/antonybholmes/go-edb-server/routes/modroutes/pathwayroutes"
+	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	"github.com/antonybholmes/go-edb-server/routes/authorization"
+	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
+	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
+	geneconvroutes "github.com/antonybholmes/go-edb-server/routes/modules/geneconv"
+	gexroutes "github.com/antonybholmes/go-edb-server/routes/modules/gex"
+	motiftogeneroutes "github.com/antonybholmes/go-edb-server/routes/modules/motiftogene"
+	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
+	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
-	"github.com/antonybholmes/go-mailer/mailer"
 	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
@@ -55,8 +55,9 @@ type InfoResp struct {
 // var store *sqlitestore.SqliteStore
 var store *sessions.CookieStore
 
-func initCache() {
+func init() {
 
+	env.Ls()
 	// store = sys.Must(sqlitestore.NewSqliteStore("data/users.db",
 	// 	"sessions",
 	// 	"/",
@@ -73,7 +74,7 @@ func initCache() {
 
 	userdbcache.InitCache("data/users.db")
 
-	mailer.InitMailer()
+	//mailserver.Init()
 
 	dnadbcache.InitCache("data/modules/dna")
 	genedbcache.InitCache("data/modules/genes")
@@ -91,18 +92,24 @@ func initCache() {
 }
 
 func main() {
-	consts.Load()
+	//env.Reload()
+	//env.Load("consts.env")
+	//env.Load("version.env")
 
-	jwtgen.Init(consts.JWT_RSA_PRIVATE_KEY)
+	//consts.Init()
+
+	tokengen.Init(consts.JWT_RSA_PRIVATE_KEY)
 
 	//env.Load()
 
 	// list env to see what is loaded
-	env.Ls()
+	//env.Ls()
 
-	initCache()
+	//initCache()
 
-	//buildMode := env.GetStr("BUILD", "dev")
+	// test redis
+	//email := gomailer.RedisQueueEmail{To: "antony@antonybholmes.dev"}
+	//rdb.PublishEmail(&email)
 
 	//
 	// Set logging to file
@@ -123,17 +130,21 @@ func main() {
 	e.Use(session.Middleware(store))
 
 	// write to both stdout and log file
-	f := env.GetStr("LOG_FILE", "logs/app.log")
+	f := env.GetStr("LOG_FILE", fmt.Sprintf("logs/%s.log", consts.APP_NAME))
 
 	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 
 	if err != nil {
-		log.Fatal().Msgf("%s", err)
+		//return nil, err
 	}
 
+	// to prevent file closing before program exits
 	defer logFile.Close()
 
-	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger() //os.Stderr)
+	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger()
+
+	// We cache options regarding ttl so some session routes need to be in an object
+	sr := authentication.NewSessionRoutes()
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
@@ -155,27 +166,15 @@ func main() {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:8000"},
 		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
-
+		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
 	}))
-
-	e.GET("/about", func(c echo.Context) error {
-		return c.JSON(http.StatusOK,
-			AboutResp{Name: consts.NAME,
-				Version:   consts.VERSION,
-				Updated:   consts.UPDATED,
-				Copyright: consts.COPYRIGHT})
-	})
-
-	e.GET("/info", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
-	})
 
 	// Configure middleware with the custom claims type which
 	// will parse our jwt with scope etc
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
-			return &auth.JwtCustomClaims{}
+			return &auth.TokenClaims{}
 		},
 		SigningKey: consts.JWT_RSA_PRIVATE_KEY,
 		// Have to tell it to use the public key for verification
@@ -188,6 +187,18 @@ func main() {
 	//
 	// Routes
 	//
+
+	e.GET("/about", func(c echo.Context) error {
+		return c.JSON(http.StatusOK,
+			AboutResp{Name: consts.NAME,
+				Version:   consts.VERSION,
+				Updated:   consts.UPDATED,
+				Copyright: consts.COPYRIGHT})
+	})
+
+	e.GET("/info", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
+	})
 
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(jwtMiddleWare,
@@ -204,10 +215,8 @@ func main() {
 	adminUsersGroup.POST("/add", adminroutes.AddUserRoute)
 	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
 
-	//
 	// Allow users to sign up for an account
-
-	e.POST("/signup", authroutes.SignupRoute)
+	e.POST("/signup", authentication.SignupRoute)
 
 	//
 	// user groups: start
@@ -215,51 +224,51 @@ func main() {
 
 	authGroup := e.Group("/auth")
 
-	authGroup.POST("/signin", authroutes.UsernamePasswordSignInRoute)
+	authGroup.POST("/signin", authentication.UsernamePasswordSignInRoute)
 
 	emailGroup := authGroup.Group("/email")
 
 	emailGroup.POST("/verify",
-		authroutes.EmailAddressWasVerifiedRoute,
+		authentication.EmailAddressVerifiedRoute,
 		jwtMiddleWare)
 
 	// with the correct token, performs the update
-	emailGroup.POST("/reset", authroutes.SendResetEmailEmailRoute, jwtMiddleWare)
+	emailGroup.POST("/reset", authentication.SendResetEmailEmailRoute, jwtMiddleWare)
 	// with the correct token, performs the update
-	emailGroup.POST("/update", authroutes.UpdateEmailRoute, jwtMiddleWare)
+	emailGroup.POST("/update", authentication.UpdateEmailRoute, jwtMiddleWare)
 
 	passwordGroup := authGroup.Group("/passwords")
 
 	// sends a reset link
-	passwordGroup.POST("/reset", authroutes.SendResetPasswordFromUsernameEmailRoute)
+	passwordGroup.POST("/reset", authentication.SendResetPasswordFromUsernameEmailRoute)
 
 	// with the correct token, updates a password
-	passwordGroup.POST("/update", authroutes.UpdatePasswordRoute, jwtMiddleWare)
+	passwordGroup.POST("/update", authentication.UpdatePasswordRoute, jwtMiddleWare)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
-		return authroutes.PasswordlessEmailRoute(c, nil)
+		return authentication.PasswordlessSigninEmailRoute(c, nil)
 	})
 
 	passwordlessGroup.POST("/signin",
-		authroutes.PasswordlessSignInRoute,
+		authentication.PasswordlessSignInRoute,
 		jwtMiddleWare)
 
 	tokenGroup := authGroup.Group("/tokens")
 	tokenGroup.Use(jwtMiddleWare)
-	tokenGroup.POST("/info", authroutes.TokenInfoRoute)
-	tokenGroup.POST("/access", authroutes.NewAccessTokenRoute)
+	tokenGroup.POST("/info", authorization.TokenInfoRoute)
+	tokenGroup.POST("/access", authorization.NewAccessTokenRoute)
 
 	usersGroup := authGroup.Group("/users")
 	usersGroup.Use(jwtMiddleWare,
 		JwtIsAccessTokenMiddleware)
 
-	usersGroup.POST("", authroutes.UserRoute)
+	usersGroup.POST("", authorization.UserRoute)
 
-	usersGroup.POST("/update", authroutes.UpdateUserRoute)
+	usersGroup.POST("/update", authorization.UpdateUserRoute)
 
-	//usersGroup.POST("/passwords/update", authroutes.UpdatePasswordRoute)
+	//usersGroup.POST("/passwords/update", authentication.UpdatePasswordRoute)
 
 	//
 	// Deal with logins where we want a session
@@ -269,32 +278,32 @@ func main() {
 
 	//sessionAuthGroup := sessionGroup.Group("/auth")
 
-	sessionGroup.POST("/signin", authroutes.SessionUsernamePasswordSignInRoute)
+	sessionGroup.POST("/signin", sr.SessionUsernamePasswordSignInRoute)
 
 	sessionGroup.POST("/passwordless/signin",
-		authroutes.SessionPasswordlessSignInRoute,
+		sr.SessionPasswordlessValidateSignInRoute,
 		jwtMiddleWare)
 
-	sessionGroup.POST("/signout", authroutes.SessionSignOutRoute)
+	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)
 
-	sessionGroup.POST("/email/reset", authroutes.SessionSendResetEmailEmailRoute)
+	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
-	sessionGroup.POST("/password/reset", authroutes.SessionSendResetPasswordEmailRoute)
+	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authroutes.SessionNewAccessJwtRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authroutes.SessionUserRoute)
+	sessionUsersGroup.GET("", authentication.SessionUserRoute)
 
-	sessionUsersGroup.POST("/update", authroutes.SessionUpdateUserRoute)
+	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
 	// sessionPasswordGroup.Use(SessionIsValidMiddleware)
 
 	// sessionPasswordGroup.POST("/update", func(c echo.Context) error {
-	// 	return authroutes.SessionUpdatePasswordRoute(c)
+	// 	return authentication.SessionUpdatePasswordRoute(c)
 	// })
 
 	//

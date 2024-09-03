@@ -10,7 +10,7 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-mailer/mailer"
+	"github.com/antonybholmes/go-mailer/mailserver"
 )
 
 const FILE = "templates/email/account/created.html"
@@ -56,7 +56,7 @@ func SendAccountCreatedEmail(
 		return routes.ErrorReq(err)
 	}
 
-	err = mailer.SendHtmlEmail(address, "New account created", body.String())
+	err = mailserver.SendHtmlEmail(address, "New account created", body.String())
 
 	if err != nil {
 		return err

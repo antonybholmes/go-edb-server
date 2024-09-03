@@ -10,7 +10,7 @@ import (
 // you can add your implementation here.
 func validateJwtToken(tokenString string) (*jwt.Token, error) {
 
-	token, err := jwt.ParseWithClaims(tokenString, &auth.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &auth.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return consts.JWT_RSA_PUBLIC_KEY, nil
 	})
 

@@ -1,11 +1,16 @@
-package authroutes
+package authentication
 
 import (
+	"fmt"
+
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/rdb"
 	"github.com/antonybholmes/go-edb-server/routes"
 
+	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
 )
 
@@ -19,26 +24,35 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		req := validator.Req
 
-		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
+		otpToken, err := tokengen.ResetPasswordToken(c, authUser)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		var file string
+		// var file string
 
-		if req.CallbackUrl != "" {
-			file = "templates/email/password/reset/web.html"
-		} else {
-			file = "templates/email/password/reset/api.html"
-		}
+		// if req.CallbackUrl != "" {
+		// 	file = "templates/email/password/reset/web.html"
+		// } else {
+		// 	file = "templates/email/password/reset/api.html"
+		// }
 
-		go SendEmailWithToken("Password Reset",
-			authUser,
-			file,
-			otpJwt,
-			req.CallbackUrl,
-			req.Url)
+		// go authentication.SendEmailWithToken("Password Reset",
+		// 	authUser,
+		// 	file,
+		// 	otpToken,
+		// 	req.CallbackUrl,
+		// 	req.VisitUrl)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To:          authUser.Email,
+			Token:       otpToken,
+			EmailType:   mailer.REDIS_EMAIL_TYPE_PASSWORD_RESET,
+			Ttl:         fmt.Sprintf("%d minutes", int(consts.SHORT_TTL_MINS.Minutes())),
+			CallBackUrl: req.CallbackUrl,
+			VisitUrl:    req.VisitUrl}
+		rdb.PublishEmail(&email)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)
@@ -51,23 +65,32 @@ func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 func UpdatePasswordRoute(c echo.Context) error {
 	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 
-		if validator.Claims.Type != auth.TOKEN_TYPE_RESET_PASSWORD {
+		if validator.Claims.Type != auth.RESET_PASSWORD_TOKEN {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.Otp)
+		authUser := validator.AuthUser
+
+		err := auth.CheckOTPValid(authUser, validator.Claims.Otp)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password, nil)
+		err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password, nil)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		return SendPasswordEmail(c, validator.AuthUser, validator.Req.Password)
+		//return SendPasswordEmail(c, validator.AuthUser, validator.Req.Password)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To:        authUser.Email,
+			EmailType: mailer.REDIS_EMAIL_TYPE_PASSWORD_UPDATED}
+		rdb.PublishEmail(&email)
+
+		return routes.MakeOkPrettyResp(c, "password updated confirmation email sent")
 	})
 }
 

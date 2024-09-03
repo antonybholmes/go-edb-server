@@ -1,11 +1,14 @@
-package authroutes
+package authentication
 
 import (
 	"net/http"
 	"net/mail"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-auth/jwtgen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
@@ -20,9 +23,10 @@ const (
 )
 
 var SESSION_OPT_ZERO *sessions.Options
-var SESSION_OPT_24H *sessions.Options
-var SESSION_OPT_30_DAYS *sessions.Options
-var SESSION_OPT_7_DAYS *sessions.Options
+
+//var SESSION_OPT_24H *sessions.Options
+//var SESSION_OPT_30_DAYS *sessions.Options
+//var SESSION_OPT_7_DAYS *sessions.Options
 
 func init() {
 
@@ -39,77 +43,60 @@ func init() {
 		SameSite: http.SameSiteNoneMode,
 	}
 
-	SESSION_OPT_24H = &sessions.Options{
-		Path:     "/",
-		MaxAge:   auth.MAX_AGE_DAY_SECS,
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	// SESSION_OPT_24H = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_DAY_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode,
+	// }
 
-	SESSION_OPT_30_DAYS = &sessions.Options{
-		Path:     "/",
-		MaxAge:   auth.MAX_AGE_30_DAYS_SECS,
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	// SESSION_OPT_30_DAYS = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_30_DAYS_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode,
+	// }
 
-	SESSION_OPT_7_DAYS = &sessions.Options{
-		Path:     "/",
-		MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	}
+	// SESSION_OPT_7_DAYS = &sessions.Options{
+	// 	Path:     "/",
+	// 	MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
+	// 	HttpOnly: false,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteNoneMode,
+	// }
 }
 
-// Validate the passwordless token we generated and create
-// a user session. The session acts as a refresh token and
-// can be used to generate access tokens to use resources
-func SessionPasswordlessSignInRoute(c echo.Context) error {
-
-	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
-
-		if validator.Claims.Type != auth.TOKEN_TYPE_PASSWORDLESS {
-			return routes.WrongTokentTypeReq()
-		}
-
-		authUser := validator.AuthUser
-
-		roles, err := userdbcache.UserRoleList(authUser)
-
-		if err != nil {
-			return routes.ErrorReq("error getting user roles")
-		}
-
-		roleClaim := auth.MakeClaim(roles)
-
-		//log.Debug().Msgf("user %v", authUser)
-
-		if !auth.CanLogin(roleClaim) {
-			return routes.UserNotAllowedToSignIn()
-		}
-
-		sess, err := session.Get(consts.SESSION_NAME, c)
-
-		if err != nil {
-			return routes.ErrorReq("error creating session")
-		}
-
-		// set session options such as if cookie secure and how long it
-		// persists
-		sess.Options = SESSION_OPT_7_DAYS //SESSION_OPT_30_DAYS
-		sess.Values[SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
-
-		sess.Save(c.Request(), c.Response())
-
-		return UserSignedInResp(c)
-	})
+type SessionRoutes struct {
+	options *sessions.Options
 }
 
-func SessionUsernamePasswordSignInRoute(c echo.Context) error {
+func NewSessionRoutes() *SessionRoutes {
+	maxAge := auth.MAX_AGE_7_DAYS_SECS
+
+	t := os.Getenv("SESSION_TTL_HOURS")
+
+	if t != "" {
+		v, err := strconv.ParseUint(t, 10, 32)
+
+		if err == nil {
+			maxAge = int((time.Duration(v) * time.Hour).Seconds())
+		}
+	}
+
+	options := sessions.Options{
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	return &SessionRoutes{options: &options}
+}
+
+func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	validator, err := NewValidator(c).ParseLoginRequestBody().Ok()
 
 	if err != nil {
@@ -117,7 +104,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	if validator.Req.Password == "" {
-		return PasswordlessEmailRoute(c, validator)
+		return PasswordlessSigninEmailRoute(c, validator)
 	}
 
 	user := validator.Req.Username
@@ -173,7 +160,7 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 	}
 
 	if validator.Req.StaySignedIn {
-		sess.Options = SESSION_OPT_7_DAYS
+		sess.Options = sr.options
 	} else {
 		sess.Options = SESSION_OPT_ZERO
 	}
@@ -185,6 +172,51 @@ func SessionUsernamePasswordSignInRoute(c echo.Context) error {
 
 	return UserSignedInResp(c)
 	//return c.NoContent(http.StatusOK)
+}
+
+// Validate the passwordless token we generated and create
+// a user session. The session acts as a refresh token and
+// can be used to generate access tokens to use resources
+func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
+
+	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
+
+		if validator.Claims.Type != auth.PASSWORDLESS_TOKEN {
+			return routes.WrongTokentTypeReq()
+		}
+
+		authUser := validator.AuthUser
+
+		roles, err := userdbcache.UserRoleList(authUser)
+
+		if err != nil {
+			return routes.ErrorReq("error getting user roles")
+		}
+
+		roleClaim := auth.MakeClaim(roles)
+
+		//log.Debug().Msgf("user %v", authUser)
+
+		if !auth.CanLogin(roleClaim) {
+			return routes.UserNotAllowedToSignIn()
+		}
+
+		sess, err := session.Get(consts.SESSION_NAME, c)
+
+		if err != nil {
+			return routes.ErrorReq("error creating session")
+		}
+
+		// set session options such as if cookie secure and how long it
+		// persists
+		sess.Options = sr.options //SESSION_OPT_30_DAYS
+		sess.Values[SESSION_PUBLICID] = authUser.PublicId
+		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
+
+		sess.Save(c.Request(), c.Response())
+
+		return UserSignedInResp(c)
+	})
 }
 
 func SessionSignOutRoute(c echo.Context) error {
@@ -203,12 +235,12 @@ func SessionSignOutRoute(c echo.Context) error {
 	return routes.MakeOkPrettyResp(c, "user was signed out")
 }
 
-func SessionNewAccessJwtRoute(c echo.Context) error {
+func SessionNewAccessTokenRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)
 
-	t, err := jwtgen.AccessToken(c, publicId, roles)
+	t, err := tokengen.AccessToken(c, publicId, roles)
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -230,64 +262,42 @@ func SessionUserRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", *authUser)
 }
 
-func SessionUpdateUserRoute(c echo.Context) error {
-	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+// // Start passwordless login by sending an email
+// func SessionSendResetPasswordEmailRoute(c echo.Context) error {
 
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
+// 	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
+// 		authUser := validator.AuthUser
+// 		req := validator.Req
 
-	return NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *Validator) error {
+// 		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
 
-		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, nil)
+// 		if err != nil {
+// 			return routes.ErrorReq(err)
+// 		}
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+// 		var file string
 
-		return SendUserInfoUpdatedEmail(c, authUser)
-	})
-}
+// 		if req.CallbackUrl != "" {
+// 			file = "templates/email/password/reset/web.html"
+// 		} else {
+// 			file = "templates/email/password/reset/api.html"
+// 		}
 
-// Start passwordless login by sending an email
-func SessionSendResetPasswordEmailRoute(c echo.Context) error {
+// 		go SendEmailWithToken("Password Reset",
+// 			authUser,
+// 			file,
+// 			otpJwt,
+// 			req.CallbackUrl,
+// 			req.VisitUrl)
 
-	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
+// 		//if err != nil {
+// 		//	return routes.ErrorReq(err)
+// 		//}
 
-		authUser := validator.AuthUser
-		req := validator.Req
-
-		otpJwt, err := jwtgen.ResetPasswordToken(c, authUser)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		var file string
-
-		if req.CallbackUrl != "" {
-			file = "templates/email/password/reset/web.html"
-		} else {
-			file = "templates/email/password/reset/api.html"
-		}
-
-		go SendEmailWithToken("Password Reset",
-			authUser,
-			file,
-			otpJwt,
-			req.CallbackUrl,
-			req.Url)
-
-		//if err != nil {
-		//	return routes.ErrorReq(err)
-		//}
-
-		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
-	})
-}
+// 		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
+// 	})
+// }
 
 // func SessionUpdatePasswordRoute(c echo.Context) error {
 
@@ -315,7 +325,7 @@ func SessionSendResetEmailEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpJwt, err := jwtgen.ResetEmailToken(c, validator.AuthUser, newEmail)
+		otpJwt, err := tokengen.ResetEmailToken(c, validator.AuthUser, newEmail)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -329,7 +339,7 @@ func SessionSendResetEmailEmailRoute(c echo.Context) error {
 			file,
 			otpJwt,
 			req.CallbackUrl,
-			req.Url)
+			req.VisitUrl)
 
 		//if err != nil {
 		//	return routes.ErrorReq(err)

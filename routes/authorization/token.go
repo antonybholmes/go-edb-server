@@ -1,10 +1,11 @@
-package authroutes
+package authorization
 
 import (
 	"github.com/antonybholmes/go-auth"
-	jwtgen "github.com/antonybholmes/go-auth/jwtgen"
+	tokengen "github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -52,7 +53,7 @@ func TokenInfoRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	claims := auth.JwtCustomClaims{}
+	claims := auth.TokenClaims{}
 
 	_, err = jwt.ParseWithClaims(t, &claims, func(token *jwt.Token) (interface{}, error) {
 		return consts.JWT_RSA_PUBLIC_KEY, nil
@@ -71,16 +72,16 @@ func TokenInfoRoute(c echo.Context) error {
 }
 
 func NewAccessTokenRoute(c echo.Context) error {
-	return NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *Validator) error {
+	return authentication.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *authentication.Validator) error {
 
 		// Generate encoded token and send it as response.
-		t, err := jwtgen.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles)
+		accessToken, err := tokengen.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles)
 
 		if err != nil {
 			return routes.ErrorReq("error creating access token")
 		}
 
-		return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
+		return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: accessToken})
 	})
 
 }
