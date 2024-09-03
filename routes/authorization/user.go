@@ -14,7 +14,7 @@ type NameReq struct {
 	Name string `json:"name"`
 }
 
-func AccountUpdatedResp(c echo.Context) error {
+func UserUpdatedResp(c echo.Context) error {
 	return routes.MakeOkPrettyResp(c, "account updated")
 }
 
@@ -66,6 +66,6 @@ func SendUserInfoUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
 	//	return routes.ErrorReq(err)
 	//}
 
-	return AccountUpdatedResp(c)
+	return UserUpdatedResp(c)
 
 }
