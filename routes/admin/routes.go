@@ -106,7 +106,6 @@ func UpdateUserRoute(c echo.Context) error {
 		}
 
 		// set roles
-
 		err = userdbcache.SetUserRoles(authUser, validator.Req.Roles)
 
 		if err != nil {
