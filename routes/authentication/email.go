@@ -211,7 +211,7 @@ func UpdateEmailRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		authUser, err = userdbcache.FindUserByPublicId(publicId, nil)
+		authUser, err = userdbcache.FindUserByPublicId(publicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)

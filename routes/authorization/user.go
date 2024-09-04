@@ -20,25 +20,19 @@ func UserUpdatedResp(c echo.Context) error {
 }
 
 func UpdateUserRoute(c echo.Context) error {
-	log.Debug().Msgf("ppsdpsapsdpds")
+
 	return authentication.NewValidator(c).ParseLoginRequestBody().LoadTokenClaims().Success(func(validator *authentication.Validator) error {
 
-		db, err := userdbcache.NewConn() //not clear on what is needed for the user and password
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		defer db.Close()
+		//db, err := userdbcache.AutoConn(nil) //not clear on what is needed for the user and password
 
 		publicId := validator.Claims.PublicId
 
 		log.Debug().Msgf("update pub %s", publicId)
 
-		err = userdbcache.SetUserInfo(publicId,
+		err := userdbcache.SetUserInfo(publicId,
 			validator.Req.Username,
 			validator.Req.FirstName,
-			validator.Req.LastName, db)
+			validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -47,7 +41,7 @@ func UpdateUserRoute(c echo.Context) error {
 		//return SendUserInfoUpdatedEmail(c, authUser)
 
 		// reload user details
-		authUser, err := userdbcache.FindUserByPublicId(publicId, db)
+		authUser, err := userdbcache.FindUserByPublicId(publicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)
