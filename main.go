@@ -38,6 +38,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/mattn/go-sqlite3"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type AboutResp struct {
@@ -130,18 +131,33 @@ func main() {
 	e.Use(session.Middleware(store))
 
 	// write to both stdout and log file
-	f := env.GetStr("LOG_FILE", fmt.Sprintf("logs/%s.log", consts.APP_NAME))
+	// f := env.GetStr("LOG_FILE", fmt.Sprintf("logs/%s.log", consts.APP_NAME))
 
-	logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	// logFile, err := os.OpenFile(f, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 
-	if err != nil {
-		//return nil, err
+	// if err != nil {
+	// 	//return nil, err
+	// }
+
+	// // to prevent file closing before program exits
+	// defer logFile.Close()
+
+	fileLogger := &lumberjack.Logger{
+		Filename:   fmt.Sprintf("logs/%s.log", consts.APP_NAME),
+		MaxSize:    5, //
+		MaxBackups: 10,
+		MaxAge:     14,
+		Compress:   true,
 	}
 
-	// to prevent file closing before program exits
-	defer logFile.Close()
+	logger := zerolog.New(io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stderr}, fileLogger)).With().Timestamp().Logger()
 
-	logger := zerolog.New(io.MultiWriter(os.Stdout, logFile)).With().Timestamp().Logger()
+	// we use != development because it means we need to set the env variable in order
+	// to see debugging work. The default is to assume production, in which case we use
+	// lumberjack
+	if os.Getenv("APP_ENV") != "development" {
+		logger = zerolog.New(io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stderr}, fileLogger)).With().Timestamp().Logger()
+	}
 
 	// We cache options regarding ttl so some session routes need to be in an object
 	sr := authentication.NewSessionRoutes()
