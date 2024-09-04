@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 //
@@ -115,7 +116,7 @@ func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
+	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId, nil)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
@@ -181,7 +182,7 @@ func (validator *Validator) LoadAuthUserFromSession() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
+	authUser, err := userdbcache.FindUserByPublicId(publicId, nil)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
@@ -225,6 +226,8 @@ func (validator *Validator) LoadTokenClaims() *Validator {
 		return validator
 	}
 
+	log.Debug().Msgf("dsjsdjkdsjkds")
+
 	if validator.Claims == nil {
 		user := validator.c.Get("user").(*jwt.Token)
 		validator.Claims = user.Claims.(*auth.TokenClaims)
@@ -245,7 +248,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
+	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId, nil)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()

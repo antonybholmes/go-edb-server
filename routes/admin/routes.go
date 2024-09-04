@@ -65,9 +65,7 @@ func RolesRoute(c echo.Context) error {
 
 func UpdateUserRoute(c echo.Context) error {
 
-	return authentication.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *authentication.Validator) error {
-
-		authUser := validator.AuthUser
+	return authentication.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *authentication.Validator) error {
 
 		db, err := userdbcache.NewConn()
 
@@ -76,6 +74,14 @@ func UpdateUserRoute(c echo.Context) error {
 		}
 
 		defer db.Close()
+
+		authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId, db)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		//authUser, err := userdbcache.C
 
 		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, db)
 

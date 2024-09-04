@@ -13,7 +13,7 @@ func SessionUpdateUserRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[authentication.SESSION_PUBLICID].(string)
 
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
+	authUser, err := userdbcache.FindUserByPublicId(publicId, nil)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()

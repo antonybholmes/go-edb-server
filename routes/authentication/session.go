@@ -253,7 +253,7 @@ func SessionUserRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
+	authUser, err := userdbcache.FindUserByPublicId(publicId, nil)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
