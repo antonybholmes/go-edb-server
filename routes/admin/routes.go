@@ -2,10 +2,12 @@ package adminroutes
 
 import (
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-edb-server/consts"
+	"github.com/antonybholmes/go-edb-server/rdb"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type UserListReq struct {
@@ -67,30 +69,36 @@ func UpdateUserRoute(c echo.Context) error {
 
 	return authentication.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *authentication.Validator) error {
 
+		//db, err := userdbcache.NewConn()
+
+		// if err != nil {
+		// 	return routes.ErrorReq(err)
+		// }
+
+		//defer db.Close()
+
+		//authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
+
+		// if err != nil {
+		// 	return routes.ErrorReq(err)
+		// }
+
 		authUser := validator.AuthUser
 
-		db, err := userdbcache.NewConn()
+		err := userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		defer db.Close()
-
-		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, db)
-
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
-
-		err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address, db)
+		err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
 		if validator.Req.Password != "" {
-			err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password, db)
+			err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password)
 
 			if err != nil {
 				return routes.ErrorReq(err)
@@ -98,8 +106,7 @@ func UpdateUserRoute(c echo.Context) error {
 		}
 
 		// set roles
-
-		err = userdbcache.SetUserRoles(authUser, validator.Req.Roles, db)
+		err = userdbcache.SetUserRoles(authUser, validator.Req.Roles)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -126,7 +133,15 @@ func AddUserRoute(c echo.Context) error {
 		}
 
 		// tell user their account was created
-		go SendAccountCreatedEmail(authUser, validator.Address)
+		//go SendAccountCreatedEmail(authUser, validator.Address)
+
+		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
+			To: authUser.Email,
+
+			EmailType: mailer.REDIS_EMAIL_TYPE_ACCOUNT_CREATED,
+
+			CallBackUrl: consts.APP_URL}
+		rdb.PublishEmail(&email)
 
 		return routes.MakeOkPrettyResp(c, "account created email sent")
 	})
@@ -134,8 +149,6 @@ func AddUserRoute(c echo.Context) error {
 
 func DeleteUserRoute(c echo.Context) error {
 	publicId := c.Param("publicId")
-
-	log.Debug().Msgf("delete %s", publicId)
 
 	err := userdbcache.DeleteUser(publicId)
 

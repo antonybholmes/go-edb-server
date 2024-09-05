@@ -77,7 +77,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password, nil)
+		err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -94,27 +94,23 @@ func UpdatePasswordRoute(c echo.Context) error {
 	})
 }
 
-func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string) error {
+// func SendPasswordEmail(c echo.Context, authUser *auth.AuthUser, password string) error {
 
-	var file string
+// 	var file string
 
-	if password == "" {
-		file = "templates/email/password/switch-to-passwordless.html"
-	} else {
-		file = "templates/email/password/updated.html"
-	}
+// 	if password == "" {
+// 		file = "templates/email/password/switch-to-passwordless.html"
+// 	} else {
+// 		file = "templates/email/password/updated.html"
+// 	}
 
-	go SendEmailWithToken("Password Updated",
-		authUser,
-		file,
-		"",
-		"",
-		"")
+// 	go SendEmailWithToken("Password Updated",
+// 		authUser,
+// 		file,
+// 		"",
+// 		"",
+// 		"")
 
-	//if err != nil {
-	//	return routes.ErrorReq(err)
-	//}
+// 	return PasswordUpdatedResp(c)
 
-	return PasswordUpdatedResp(c)
-
-}
+// }

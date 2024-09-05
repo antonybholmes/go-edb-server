@@ -1,2 +1,2 @@
 python scripts/update_version.py
-go run .
+APP_ENV=development go run .

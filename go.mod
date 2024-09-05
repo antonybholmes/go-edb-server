@@ -32,8 +32,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240901220333-c6210ff22d37
-	github.com/antonybholmes/go-genes v0.0.0-20240901185659-8b17b98bbf71
+	github.com/antonybholmes/go-auth v0.0.0-20240903191548-b3bd93c364cb
+	github.com/antonybholmes/go-genes v0.0.0-20240903191545-dc86fc7b386f
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
@@ -49,11 +49,11 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-geneconv v0.0.0-20240901185654-d75dd1745c01
+	github.com/antonybholmes/go-geneconv v0.0.0-20240903191544-9c437f6435e6
 	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
-	github.com/antonybholmes/go-motiftogene v0.0.0-20240901185652-b6d4aa5d3c35
+	github.com/antonybholmes/go-motiftogene v0.0.0-20240903191547-c4cf1ca1c9c9
 	github.com/antonybholmes/go-mutations v0.0.0-20240831050902-7ba8652704c1
-	github.com/antonybholmes/go-pathway v0.0.0-20240901185656-7497cb6ea997
+	github.com/antonybholmes/go-pathway v0.0.0-20240903191544-3563a223175e
 	github.com/redis/go-redis/v9 v9.6.1
 )
 
@@ -82,4 +82,5 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

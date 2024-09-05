@@ -21,7 +21,7 @@ func SessionUpdateUserRoute(c echo.Context) error {
 
 	return authentication.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *authentication.Validator) error {
 
-		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName, nil)
+		err = userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)
