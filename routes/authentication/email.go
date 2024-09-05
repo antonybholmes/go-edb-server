@@ -205,7 +205,7 @@ func UpdateEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		publicId := authUser.PublicId
 
-		err = userdbcache.SetEmail(publicId, validator.Req.Email)
+		err = userdbcache.SetEmailAddress(publicId, validator.Address)
 
 		if err != nil {
 			return routes.ErrorReq(err)

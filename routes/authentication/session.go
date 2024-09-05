@@ -2,7 +2,6 @@ package authentication
 
 import (
 	"net/http"
-	"net/mail"
 	"os"
 	"strconv"
 	"time"
@@ -313,38 +312,38 @@ func SessionUserRoute(c echo.Context) error {
 // 	})
 // }
 
-func SessionSendResetEmailEmailRoute(c echo.Context) error {
+// func SessionSendResetEmailEmailRoute(c echo.Context) error {
 
-	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
+// 	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
 
-		req := validator.Req
+// 		req := validator.Req
 
-		newEmail, err := mail.ParseAddress(req.Email)
+// 		newEmail, err := mail.ParseAddress(req.Email)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+// 		if err != nil {
+// 			return routes.ErrorReq(err)
+// 		}
 
-		otpJwt, err := tokengen.ResetEmailToken(c, validator.AuthUser, newEmail)
+// 		otpJwt, err := tokengen.ResetEmailToken(c, validator.AuthUser, newEmail)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+// 		if err != nil {
+// 			return routes.ErrorReq(err)
+// 		}
 
-		file := "templates/email/email/reset/web.html"
+// 		file := "templates/email/email/reset/web.html"
 
-		go BaseSendEmailWithToken("Change Your Email Address",
-			validator.AuthUser,
-			newEmail,
-			file,
-			otpJwt,
-			req.CallbackUrl,
-			req.VisitUrl)
+// 		go BaseSendEmailWithToken("Change Your Email Address",
+// 			validator.AuthUser,
+// 			newEmail,
+// 			file,
+// 			otpJwt,
+// 			req.CallbackUrl,
+// 			req.VisitUrl)
 
-		//if err != nil {
-		//	return routes.ErrorReq(err)
-		//}
+// 		//if err != nil {
+// 		//	return routes.ErrorReq(err)
+// 		//}
 
-		return routes.MakeOkPrettyResp(c, "check your email for a change email link")
-	})
-}
+// 		return routes.MakeOkPrettyResp(c, "check your email for a change email link")
+// 	})
+// }
