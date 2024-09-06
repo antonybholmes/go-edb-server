@@ -150,7 +150,7 @@ func main() {
 		Compress:   true,
 	}
 
-	logger := zerolog.New(io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stderr}, fileLogger)).With().Timestamp().Logger()
+	logger := zerolog.New(io.MultiWriter(os.Stderr, fileLogger)).With().Timestamp().Logger()
 
 	// we use != development because it means we need to set the env variable in order
 	// to see debugging work. The default is to assume production, in which case we use
@@ -300,7 +300,7 @@ func main() {
 		sr.SessionPasswordlessValidateSignInRoute,
 		jwtMiddleWare)
 
-	sessionGroup.POST("/signout", authentication.SessionSignOutRoute)
+	sessionGroup.GET("/signout", authentication.SessionSignOutRoute)
 
 	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
