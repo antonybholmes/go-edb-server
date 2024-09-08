@@ -43,7 +43,7 @@ func UsersRoute(c echo.Context) error {
 
 	c.Bind(&req)
 
-	users, err := userdbcache.Users(req.Offset, req.Records)
+	users, err := userdbcache.Users(req.Records, req.Offset)
 
 	if err != nil {
 		return routes.ErrorReq(err)
