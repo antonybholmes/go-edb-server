@@ -1,4 +1,4 @@
-CREATE  FUNCTION updated_at_updated()
+CREATE FUNCTION updated_at_updated()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();

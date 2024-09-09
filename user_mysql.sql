@@ -28,7 +28,7 @@ CREATE TABLE user_roles (
     description VARCHAR(255) NOT NULL DEFAULT "",
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL);
-CREATE INDEX permissions_name_idx ON user_permissions (name);
+CREATE INDEX user_roles_name_idx ON user_roles (name);
 
 INSERT INTO user_roles (public_id, name) VALUES('p1gbjods0h90', 'Super');
 INSERT INTO user_roles (public_id, name) VALUES('mk4bgg4w43fp', 'Admin');
