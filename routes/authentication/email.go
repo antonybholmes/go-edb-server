@@ -196,7 +196,7 @@ func UpdateEmailRoute(c echo.Context) error {
 			return routes.WrongTokentTypeReq()
 		}
 
-		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.Otp)
+		err := auth.CheckOTPValid(validator.AuthUser, validator.Claims.OneTimePasscode)
 
 		if err != nil {
 			return routes.ErrorReq(err)

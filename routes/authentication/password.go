@@ -71,7 +71,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		err := auth.CheckOTPValid(authUser, validator.Claims.Otp)
+		err := auth.CheckOTPValid(authUser, validator.Claims.OneTimePasscode)
 
 		if err != nil {
 			return routes.ErrorReq(err)

@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -220,14 +221,17 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 
 func SessionSignOutRoute(c echo.Context) error {
 	sess, err := session.Get(consts.SESSION_NAME, c)
+
 	if err != nil {
 		return routes.ErrorReq("error creating session")
 	}
 
+	log.Debug().Msgf("invalidate session")
+
 	// invalidate by time
 	sess.Values[SESSION_PUBLICID] = ""
 	sess.Values[SESSION_ROLES] = ""
-	sess.Options.MaxAge = 0
+	sess.Options.MaxAge = -1
 
 	sess.Save(c.Request(), c.Response())
 

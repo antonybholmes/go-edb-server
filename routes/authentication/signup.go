@@ -22,7 +22,7 @@ func SignupRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpToken, err := tokengen.VerifyEmailToken(c, authUser.PublicId)
+		otpToken, err := tokengen.VerifyEmailToken(c, authUser.PublicId, req.VisitUrl)
 
 		//log.Debug().Msgf("%s", otpJwt)
 
@@ -55,7 +55,8 @@ func SignupRoute(c echo.Context) error {
 			EmailType:   mailer.REDIS_EMAIL_TYPE_VERIFY,
 			Ttl:         fmt.Sprintf("%d minutes", int(consts.SHORT_TTL_MINS.Minutes())),
 			CallBackUrl: req.CallbackUrl,
-			VisitUrl:    req.VisitUrl}
+			//VisitUrl:    req.VisitUrl
+		}
 		rdb.PublishEmail(&email)
 
 		return routes.MakeOkPrettyResp(c, "check your email for a verification link")
