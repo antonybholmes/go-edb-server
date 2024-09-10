@@ -1,4 +1,5 @@
- 
+
+DROP TABLE IF EXISTS users_roles; 
 DROP TABLE IF EXISTS user_roles_permissions;
 DROP TABLE IF EXISTS user_permissions;
 DROP TABLE IF EXISTS user_roles;
@@ -45,8 +46,8 @@ CREATE TABLE user_roles_permissions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(role_id, permission_id),
-    FOREIGN KEY(role_id) REFERENCES user_roles(id),
-    FOREIGN KEY(permission_id) REFERENCES user_permissions(id));
+    FOREIGN KEY(role_id) REFERENCES user_roles(id) ON DELETE CASCADE,
+    FOREIGN KEY(permission_id) REFERENCES user_permissions(id) ON DELETE CASCADE);
 CREATE INDEX roles_permissions_role_id_idx ON user_roles_permissions (role_id, permission_id);
 
 -- super/user admin
@@ -90,8 +91,8 @@ CREATE TABLE users_roles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(user_id, role_id),
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    FOREIGN KEY(role_id) REFERENCES user_roles(id));
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(role_id) REFERENCES user_roles(id) ON DELETE CASCADE);
 CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 

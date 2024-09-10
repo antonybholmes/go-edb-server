@@ -22,7 +22,7 @@ func SignupRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		otpToken, err := tokengen.VerifyEmailToken(c, authUser.PublicId, req.VisitUrl)
+		otpToken, err := tokengen.VerifyEmailToken(c, authUser, req.VisitUrl)
 
 		//log.Debug().Msgf("%s", otpJwt)
 

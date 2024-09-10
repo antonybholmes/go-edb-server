@@ -198,7 +198,11 @@ func main() {
 			return consts.JWT_RSA_PUBLIC_KEY, nil
 		},
 	}
-	jwtMiddleWare := echojwt.WithConfig(config)
+	// check jwt key and put in user field. This should be
+	// called before any other jwt checks
+	validateJwtMiddleware := echojwt.WithConfig(config)
+
+	rdfMiddlware := RDFMiddleware()
 
 	//
 	// Routes
@@ -217,7 +221,7 @@ func main() {
 	})
 
 	adminGroup := e.Group("/admin")
-	adminGroup.Use(jwtMiddleWare,
+	adminGroup.Use(validateJwtMiddleware,
 		JwtIsAccessTokenMiddleware,
 		JwtHasAdminPermissionMiddleware)
 
@@ -246,12 +250,12 @@ func main() {
 
 	emailGroup.POST("/verify",
 		authentication.EmailAddressVerifiedRoute,
-		jwtMiddleWare)
+		validateJwtMiddleware)
 
 	// with the correct token, performs the update
-	emailGroup.POST("/reset", authentication.SendResetEmailEmailRoute, jwtMiddleWare)
+	emailGroup.POST("/reset", authentication.SendResetEmailEmailRoute, validateJwtMiddleware)
 	// with the correct token, performs the update
-	emailGroup.POST("/update", authentication.UpdateEmailRoute, jwtMiddleWare)
+	emailGroup.POST("/update", authentication.UpdateEmailRoute, validateJwtMiddleware)
 
 	passwordGroup := authGroup.Group("/passwords")
 
@@ -259,7 +263,7 @@ func main() {
 	passwordGroup.POST("/reset", authentication.SendResetPasswordFromUsernameEmailRoute)
 
 	// with the correct token, updates a password
-	passwordGroup.POST("/update", authentication.UpdatePasswordRoute, jwtMiddleWare)
+	passwordGroup.POST("/update", authentication.UpdatePasswordRoute, validateJwtMiddleware)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
 
@@ -269,15 +273,15 @@ func main() {
 
 	passwordlessGroup.POST("/signin",
 		authentication.PasswordlessSignInRoute,
-		jwtMiddleWare)
+		validateJwtMiddleware)
 
 	tokenGroup := authGroup.Group("/tokens")
-	tokenGroup.Use(jwtMiddleWare)
+	tokenGroup.Use(validateJwtMiddleware)
 	tokenGroup.POST("/info", authorization.TokenInfoRoute)
 	tokenGroup.POST("/access", authorization.NewAccessTokenRoute)
 
 	usersGroup := authGroup.Group("/users")
-	usersGroup.Use(jwtMiddleWare,
+	usersGroup.Use(validateJwtMiddleware,
 		JwtIsAccessTokenMiddleware)
 
 	usersGroup.POST("", authorization.UserRoute)
@@ -298,7 +302,7 @@ func main() {
 
 	sessionGroup.POST("/passwordless/signin",
 		sr.SessionPasswordlessValidateSignInRoute,
-		jwtMiddleWare)
+		validateJwtMiddleware)
 
 	sessionGroup.GET("/signout", authentication.SessionSignOutRoute)
 
@@ -376,7 +380,10 @@ func main() {
 
 	gexGroup.POST("/datasets", gexroutes.GexDatasetsRoute)
 
-	gexGroup.POST("/exp", gexroutes.GexGeneExpRoute)
+	gexGroup.POST("/exp", gexroutes.GexGeneExpRoute,
+		validateJwtMiddleware,
+		JwtIsAccessTokenMiddleware,
+		rdfMiddlware)
 
 	geneConvGroup := moduleGroup.Group("/geneconv")
 
