@@ -11,7 +11,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 // func JwtOtpCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
@@ -142,47 +141,47 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		authorizationHeader := c.Request().Header.Get("authorization")
+// func ValidateJwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// 	return func(c echo.Context) error {
+// 		authorizationHeader := c.Request().Header.Get("authorization")
 
-		if len(authorizationHeader) == 0 {
-			return routes.AuthErrorReq("missing Authentication header")
+// 		if len(authorizationHeader) == 0 {
+// 			return routes.AuthErrorReq("missing Authentication header")
 
-		}
+// 		}
 
-		log.Debug().Msgf("parsing authentication header")
+// 		log.Debug().Msgf("parsing authentication header")
 
-		authPair := strings.SplitN(authorizationHeader, " ", 2)
+// 		authPair := strings.SplitN(authorizationHeader, " ", 2)
 
-		if len(authPair) != 2 {
-			return routes.AuthErrorReq("wrong Authentication header definiton")
-		}
+// 		if len(authPair) != 2 {
+// 			return routes.AuthErrorReq("wrong Authentication header definiton")
+// 		}
 
-		headerAuthScheme := authPair[0]
-		headerAuthToken := authPair[1]
+// 		headerAuthScheme := authPair[0]
+// 		headerAuthToken := authPair[1]
 
-		if headerAuthScheme != "Bearer" {
-			return routes.AuthErrorReq("wrong Authentication header definiton")
-		}
+// 		if headerAuthScheme != "Bearer" {
+// 			return routes.AuthErrorReq("wrong Authentication header definiton")
+// 		}
 
-		log.Debug().Msgf("validating JWT token")
+// 		log.Debug().Msgf("validating JWT token")
 
-		token, err := validateJwtToken(headerAuthToken)
+// 		token, err := validateJwtToken(headerAuthToken)
 
-		if err != nil {
-			return routes.AuthErrorReq(err)
-		}
+// 		if err != nil {
+// 			return routes.AuthErrorReq(err)
+// 		}
 
-		log.Debug().Msgf("JWT token is valid")
-		c.Set("user", token)
-		return next(c)
+// 		log.Debug().Msgf("JWT token is valid")
+// 		c.Set("user", token)
+// 		return next(c)
 
-	}
-}
+// 	}
+// }
 
 // Create a permissions middleware to verify jwt permissions on a token
-func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
+func JwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -197,6 +196,7 @@ func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 
 			// shortcut for admin, as we allow this for everything
 			if auth.IsAdmin(claims.Roles) {
+				//log.Debug().Msgf("is admin")
 				return next(c)
 			}
 
@@ -212,4 +212,8 @@ func NewJwtRoleMiddleware(validRoles ...string) echo.MiddlewareFunc {
 			return routes.AuthErrorReq("roles not found")
 		}
 	}
+}
+
+func RDFMiddleware() echo.MiddlewareFunc {
+	return JwtRoleMiddleware("RDF")
 }
