@@ -370,7 +370,11 @@ func main() {
 
 	mutationsGroup.POST("/maf/:assembly", mutationroutes.PileupRoute)
 
-	mutationsGroup.POST("/pileup/:assembly", mutationroutes.PileupRoute)
+	mutationsGroup.POST("/pileup/:assembly",
+		mutationroutes.PileupRoute,
+		validateJwtMiddleware,
+		JwtIsAccessTokenMiddleware,
+		rdfMiddlware)
 
 	gexGroup := moduleGroup.Group("/gex")
 
