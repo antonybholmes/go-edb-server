@@ -11,6 +11,7 @@ import (
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 func UserSignedInResp(c echo.Context) error {
@@ -102,6 +103,8 @@ func PasswordlessSigninEmailRoute(c echo.Context, validator *Validator) error {
 		// 	passwordlessToken,
 		// 	validator.Req.CallbackUrl,
 		// 	validator.Req.VisitUrl)
+
+		log.Debug().Msgf("sendy %v", authUser.Email)
 
 		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
 			To:          authUser.Email,

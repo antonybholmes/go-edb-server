@@ -96,4 +96,5 @@ CREATE TABLE users_roles (
 CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 
- 
+INSERT INTO users (public_id, username, email, email_is_verified) VALUES ('2ewpxwqldfl8', 'root', 'antony@antonyholmes.dev', true);
+INSERT INTO users_roles (user_id, role_id) VALUES (1, 1);
