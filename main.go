@@ -73,7 +73,7 @@ func init() {
 	// 	Secure:   true,
 	// 	SameSite: http.SameSiteNoneMode}
 
-	userdbcache.InitCache("data/users.db")
+	userdbcache.InitCache() //"data/users.db")
 
 	//mailserver.Init()
 
