@@ -18,7 +18,7 @@ replace github.com/antonybholmes/go-mailer => ../go-mailer
 
 replace github.com/antonybholmes/go-geneconv => ../go-geneconv
 
-replace github.com/antonybholmes/go-motiftogene => ../go-motiftogene
+replace github.com/antonybholmes/go-motifs => ../go-motifs
 
 replace github.com/antonybholmes/go-pathway => ../go-pathway
 
@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20240910174002-f5a14db03964
+	github.com/antonybholmes/go-auth v0.0.0-20240920022518-0a2782630f0a
 	github.com/antonybholmes/go-genes v0.0.0-20240906031011-9a091afb32ea
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -51,7 +51,7 @@ require (
 require (
 	github.com/antonybholmes/go-geneconv v0.0.0-20240906031006-7395fc872f03
 	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
-	github.com/antonybholmes/go-motiftogene v0.0.0-20240903191547-c4cf1ca1c9c9
+	github.com/antonybholmes/go-motifs v0.0.0-20240903191547-c4cf1ca1c9c9
 	github.com/antonybholmes/go-mutations v0.0.0-20240906031007-308bb7d69f8e
 	github.com/antonybholmes/go-pathway v0.0.0-20240906031008-4e23ac88716b
 	github.com/redis/go-redis/v9 v9.6.1
