@@ -22,13 +22,13 @@ import (
 	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
 	geneconvroutes "github.com/antonybholmes/go-edb-server/routes/modules/geneconv"
 	gexroutes "github.com/antonybholmes/go-edb-server/routes/modules/gex"
-	motiftogeneroutes "github.com/antonybholmes/go-edb-server/routes/modules/motiftogene"
+	motifroutes "github.com/antonybholmes/go-edb-server/routes/modules/motifs"
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
-	"github.com/antonybholmes/go-motiftogene/motiftogenedb"
+	"github.com/antonybholmes/go-motifs/motifsdb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
 	"github.com/antonybholmes/go-sys/env"
@@ -87,7 +87,7 @@ func init() {
 
 	geneconvdbcache.InitCache("data/modules/geneconv/geneconv.db")
 
-	motiftogenedb.InitCache("data/modules/motiftogene/motiftogene.db")
+	motifsdb.InitCache("data/modules/motifs/motifs.db")
 
 	pathwaydbcache.InitCache("data/modules/pathway/pathway.db")
 }
@@ -377,13 +377,9 @@ func main() {
 		rdfMiddlware)
 
 	gexGroup := moduleGroup.Group("/gex")
-
 	gexGroup.GET("/platforms", gexroutes.PlaformsRoute)
-
 	gexGroup.POST("/types", gexroutes.GexValueTypesRoute)
-
 	gexGroup.POST("/datasets", gexroutes.GexDatasetsRoute)
-
 	gexGroup.POST("/exp", gexroutes.GexGeneExpRoute,
 		validateJwtMiddleware,
 		JwtIsAccessTokenMiddleware,
@@ -397,14 +393,11 @@ func main() {
 	// 	return geneconvroutes.GeneInfoRoute(c, "")
 	// })
 
-	motifToGeneGroup := moduleGroup.Group("/motiftogene")
-
-	motifToGeneGroup.POST("/convert", motiftogeneroutes.ConvertRoute)
+	motifsGroup := moduleGroup.Group("/motifs")
+	motifsGroup.POST("/search", motifroutes.SearchRoute)
 
 	pathwayGroup := moduleGroup.Group("/pathway")
-
 	pathwayGroup.POST("/datasets", pathwayroutes.DatasetsRoute)
-
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
 	//
