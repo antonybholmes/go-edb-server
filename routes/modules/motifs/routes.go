@@ -37,6 +37,20 @@ func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 	return &params, nil
 }
 
+func DatasetsRoute(c echo.Context) error {
+
+	// Don't care about the errors, just plug empty list into failures
+	datasets, err := motifsdb.Datasets()
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", datasets)
+
+	//return routes.MakeDataResp(c, "", mutationdbcache.GetInstance().List())
+}
+
 func SearchRoute(c echo.Context) error {
 
 	params, err := ParseParamsFromPost(c)
