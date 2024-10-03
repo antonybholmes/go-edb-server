@@ -89,7 +89,7 @@ func init() {
 
 	motifsdb.InitCache("data/modules/motifs/motifs.db")
 
-	pathwaydbcache.InitCache("data/modules/pathway/pathway.db")
+	pathwaydbcache.InitCache("data/modules/pathway/pathway-v2.db")
 }
 
 func main() {
@@ -394,10 +394,13 @@ func main() {
 	// })
 
 	motifsGroup := moduleGroup.Group("/motifs")
+	motifsGroup.GET("/datasets", motifroutes.DatasetsRoute)
 	motifsGroup.POST("/search", motifroutes.SearchRoute)
 
 	pathwayGroup := moduleGroup.Group("/pathway")
-	pathwayGroup.POST("/datasets", pathwayroutes.DatasetsRoute)
+	pathwayGroup.GET("/genes", pathwayroutes.GenesRoute)
+	pathwayGroup.POST("/dataset", pathwayroutes.DatasetRoute)
+	pathwayGroup.GET("/datasets", pathwayroutes.DatasetsRoute)
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
 	//

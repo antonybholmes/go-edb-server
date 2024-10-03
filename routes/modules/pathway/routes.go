@@ -7,14 +7,32 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ReqParams struct {
+type ReqOverlapParams struct {
 	Geneset  pathway.Geneset `json:"geneset"`
 	Datasets []string        `json:"datasets"`
 }
 
-func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
+type ReqDatasetParams struct {
+	Organization string `json:"organization"`
+	Name         string `json:"name"`
+}
 
-	var params ReqParams
+func ParseOverlapParamsFromPost(c echo.Context) (*ReqOverlapParams, error) {
+
+	var params ReqOverlapParams
+
+	err := c.Bind(&params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &params, nil
+}
+
+func ParseDatasetParamsFromPost(c echo.Context) (*ReqDatasetParams, error) {
+
+	var params ReqDatasetParams
 
 	err := c.Bind(&params)
 
@@ -50,9 +68,31 @@ func ParseParamsFromPost(c echo.Context) (*ReqParams, error) {
 // 	return routes.MakeDataResp(c, "", ret)
 // }
 
+func GenesRoute(c echo.Context) error {
+
+	return routes.MakeDataPrettyResp(c, "", pathwaydbcache.Genes())
+}
+
+func DatasetRoute(c echo.Context) error {
+
+	params, err := ParseDatasetParamsFromPost(c)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	datasets, err := pathwaydbcache.MakePublicDataset(params.Organization, params.Name)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", datasets)
+}
+
 func DatasetsRoute(c echo.Context) error {
 
-	datasets, err := pathwaydbcache.Datasets()
+	datasets, err := pathwaydbcache.AllDatasetsInfo()
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -63,7 +103,7 @@ func DatasetsRoute(c echo.Context) error {
 
 func PathwayOverlapRoute(c echo.Context) error {
 
-	params, err := ParseParamsFromPost(c)
+	params, err := ParseOverlapParamsFromPost(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
