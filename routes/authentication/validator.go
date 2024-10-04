@@ -1,4 +1,4 @@
-package authentication
+package authenticationroutes
 
 import (
 	"net/mail"

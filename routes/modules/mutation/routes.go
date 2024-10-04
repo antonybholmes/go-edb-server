@@ -3,7 +3,7 @@ package mutationroutes
 import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 
 	"github.com/antonybholmes/go-mutations"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
@@ -189,7 +189,7 @@ type PileupResp struct {
 }
 
 func PileupRoute(c echo.Context) error {
-	return authentication.NewValidator(c).Success(func(validator *authentication.Validator) error {
+	return authenticationroutes.NewValidator(c).Success(func(validator *authenticationroutes.Validator) error {
 
 		assembly := c.Param("assembly")
 

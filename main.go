@@ -16,7 +16,8 @@ import (
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
-	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	auth0routes "github.com/antonybholmes/go-edb-server/routes/auth0"
+	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
 	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
 	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
@@ -160,7 +161,7 @@ func main() {
 	}
 
 	// We cache options regarding ttl so some session routes need to be in an object
-	sr := authentication.NewSessionRoutes()
+	sr := authenticationroutes.NewSessionRoutes()
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
@@ -236,7 +237,7 @@ func main() {
 	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
 
 	// Allow users to sign up for an account
-	e.POST("/signup", authentication.SignupRoute)
+	e.POST("/signup", authenticationroutes.SignupRoute)
 
 	//
 	// user groups: start
@@ -244,35 +245,38 @@ func main() {
 
 	authGroup := e.Group("/auth")
 
-	authGroup.POST("/signin", authentication.UsernamePasswordSignInRoute)
+	auth0Group := authGroup.Group("/auth0")
+	auth0Group.POST("/validate", auth0routes.ValidateAuth0TokenRoute)
+
+	authGroup.POST("/signin", authenticationroutes.UsernamePasswordSignInRoute)
 
 	emailGroup := authGroup.Group("/email")
 
 	emailGroup.POST("/verify",
-		authentication.EmailAddressVerifiedRoute,
+		authenticationroutes.EmailAddressVerifiedRoute,
 		validateJwtMiddleware)
 
 	// with the correct token, performs the update
-	emailGroup.POST("/reset", authentication.SendResetEmailEmailRoute, validateJwtMiddleware)
+	emailGroup.POST("/reset", authenticationroutes.SendResetEmailEmailRoute, validateJwtMiddleware)
 	// with the correct token, performs the update
-	emailGroup.POST("/update", authentication.UpdateEmailRoute, validateJwtMiddleware)
+	emailGroup.POST("/update", authenticationroutes.UpdateEmailRoute, validateJwtMiddleware)
 
 	passwordGroup := authGroup.Group("/passwords")
 
 	// sends a reset link
-	passwordGroup.POST("/reset", authentication.SendResetPasswordFromUsernameEmailRoute)
+	passwordGroup.POST("/reset", authenticationroutes.SendResetPasswordFromUsernameEmailRoute)
 
 	// with the correct token, updates a password
-	passwordGroup.POST("/update", authentication.UpdatePasswordRoute, validateJwtMiddleware)
+	passwordGroup.POST("/update", authenticationroutes.UpdatePasswordRoute, validateJwtMiddleware)
 
 	passwordlessGroup := authGroup.Group("/passwordless")
 
 	passwordlessGroup.POST("/email", func(c echo.Context) error {
-		return authentication.PasswordlessSigninEmailRoute(c, nil)
+		return authenticationroutes.PasswordlessSigninEmailRoute(c, nil)
 	})
 
 	passwordlessGroup.POST("/signin",
-		authentication.PasswordlessSignInRoute,
+		authenticationroutes.PasswordlessSignInRoute,
 		validateJwtMiddleware)
 
 	tokenGroup := authGroup.Group("/tokens")
@@ -304,18 +308,18 @@ func main() {
 		sr.SessionPasswordlessValidateSignInRoute,
 		validateJwtMiddleware)
 
-	sessionGroup.GET("/signout", authentication.SessionSignOutRoute)
+	sessionGroup.GET("/signout", authenticationroutes.SessionSignOutRoute)
 
 	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
 	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authentication.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access", authenticationroutes.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authentication.SessionUserRoute)
+	sessionUsersGroup.GET("", authenticationroutes.SessionUserRoute)
 
 	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
 
