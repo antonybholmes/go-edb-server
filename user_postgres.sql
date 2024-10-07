@@ -94,7 +94,7 @@ CREATE TABLE users (
     password VARCHAR(255),
     first_name VARCHAR(255),
     last_name VARCHAR(255),
-    email_verified_at TIMESTAMP,
+    email_verified_at TIMESTAMP DEFAULT 'epoch' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_public_id_idx ON users (public_id);

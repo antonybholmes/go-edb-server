@@ -161,7 +161,7 @@ func main() {
 	}
 
 	// We cache options regarding ttl so some session routes need to be in an object
-	sr := authenticationroutes.NewSessionRoutes()
+	sessionRoutes := authenticationroutes.NewSessionRoutes()
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
@@ -202,6 +202,22 @@ func main() {
 	// check jwt key and put in user field. This should be
 	// called before any other jwt checks
 	validateJwtMiddleware := echojwt.WithConfig(config)
+
+	// lets create one for validating auth0 tokens
+
+	config = echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return &auth.Auth0TokenClaims{}
+		},
+
+		// Have to tell it to use the public key for verification
+		KeyFunc: func(token *jwt.Token) (interface{}, error) {
+			return consts.JWT_AUTH0_RSA_PUBLIC_KEY, nil
+		},
+	}
+	// check jwt key and put in user field. This should be
+	// called before any other jwt checks
+	validateAuth0JwtMiddleware := echojwt.WithConfig(config)
 
 	rdfMiddlware := RDFMiddleware()
 
@@ -246,7 +262,7 @@ func main() {
 	authGroup := e.Group("/auth")
 
 	auth0Group := authGroup.Group("/auth0")
-	auth0Group.POST("/validate", auth0routes.ValidateAuth0TokenRoute)
+	auth0Group.POST("/validate", auth0routes.ValidateAuth0TokenRoute, validateAuth0JwtMiddleware)
 
 	authGroup.POST("/signin", authenticationroutes.UsernamePasswordSignInRoute)
 
@@ -302,10 +318,11 @@ func main() {
 
 	//sessionAuthGroup := sessionGroup.Group("/auth")
 
-	sessionGroup.POST("/signin", sr.SessionUsernamePasswordSignInRoute)
+	sessionGroup.POST("/signin", sessionRoutes.SessionUsernamePasswordSignInRoute)
+	sessionGroup.POST("/auth0/signin", sessionRoutes.SessionSignInUsingAuth0Route, validateAuth0JwtMiddleware)
 
 	sessionGroup.POST("/passwordless/signin",
-		sr.SessionPasswordlessValidateSignInRoute,
+		sessionRoutes.SessionPasswordlessValidateSignInRoute,
 		validateJwtMiddleware)
 
 	sessionGroup.GET("/signout", authenticationroutes.SessionSignOutRoute)
