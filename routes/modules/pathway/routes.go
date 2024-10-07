@@ -5,6 +5,7 @@ import (
 	pathway "github.com/antonybholmes/go-pathway"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type ReqOverlapParams struct {
@@ -80,6 +81,8 @@ func DatasetRoute(c echo.Context) error {
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
+
+	log.Debug().Msgf("params %v", params)
 
 	datasets, err := pathwaydbcache.MakePublicDataset(params.Organization, params.Name)
 

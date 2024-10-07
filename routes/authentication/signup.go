@@ -1,4 +1,4 @@
-package authentication
+package authenticationroutes
 
 import (
 	"fmt"
@@ -69,7 +69,7 @@ func EmailAddressVerifiedRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 
 		// if verified, stop and just return true
-		if authUser.EmailIsVerified {
+		if authUser.EmailVerifiedAt == 0 {
 			return routes.MakeOkPrettyResp(c, "")
 		}
 

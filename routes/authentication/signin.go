@@ -1,4 +1,4 @@
-package authentication
+package authenticationroutes
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.UserDoesNotExistReq()
 		}
 
-		if !authUser.EmailIsVerified {
+		if authUser.EmailVerifiedAt == 0 {
 			return routes.EmailNotVerifiedReq()
 		}
 

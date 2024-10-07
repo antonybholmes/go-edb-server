@@ -2,10 +2,10 @@ package authorization
 
 import (
 	"github.com/antonybholmes/go-auth"
-	tokengen "github.com/antonybholmes/go-auth/tokengen"
+	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -72,7 +72,7 @@ func TokenInfoRoute(c echo.Context) error {
 }
 
 func NewAccessTokenRoute(c echo.Context) error {
-	return authentication.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *authentication.Validator) error {
+	return authenticationroutes.NewValidator(c).CheckIsValidRefreshToken().Success(func(validator *authenticationroutes.Validator) error {
 
 		// Generate encoded token and send it as response.
 		accessToken, err := tokengen.AccessToken(c, validator.Claims.PublicId, validator.Claims.Roles)

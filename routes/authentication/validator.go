@@ -1,4 +1,4 @@
-package authentication
+package authenticationroutes
 
 import (
 	"net/mail"
@@ -211,7 +211,7 @@ func (validator *Validator) CheckUserHasVerifiedEmailAddress() *Validator {
 		return validator
 	}
 
-	if !validator.AuthUser.EmailIsVerified {
+	if validator.AuthUser.EmailVerifiedAt == 0 {
 		validator.Err = routes.ErrorReq("email address not verified")
 	}
 

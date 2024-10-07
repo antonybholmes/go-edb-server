@@ -5,7 +5,7 @@ import (
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/rdb"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
 )
@@ -67,7 +67,7 @@ func RolesRoute(c echo.Context) error {
 
 func UpdateUserRoute(c echo.Context) error {
 
-	return authentication.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *authentication.Validator) error {
+	return authenticationroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *authenticationroutes.Validator) error {
 
 		//db, err := userdbcache.NewConn()
 
@@ -118,7 +118,7 @@ func UpdateUserRoute(c echo.Context) error {
 
 func AddUserRoute(c echo.Context) error {
 
-	return authentication.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *authentication.Validator) error {
+	return authenticationroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *authenticationroutes.Validator) error {
 
 		// assume email is not verified
 		authUser, err := userdbcache.Instance().CreateUser(validator.Req.Username,

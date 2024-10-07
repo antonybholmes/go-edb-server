@@ -20,6 +20,7 @@ var VERSION string
 var COPYRIGHT string
 var JWT_RSA_PRIVATE_KEY *rsa.PrivateKey //[]byte
 var JWT_RSA_PUBLIC_KEY *rsa.PublicKey   //[]byte
+var JWT_AUTH0_RSA_PUBLIC_KEY *rsa.PublicKey
 var SESSION_SECRET string
 var SESSION_NAME string
 var UPDATED string
@@ -51,6 +52,11 @@ func init() {
 	SESSION_SECRET = os.Getenv("SESSION_SECRET")
 	SESSION_NAME = os.Getenv("SESSION_NAME")
 
+	PASSWORDLESS_TOKEN_TTL_MINS = env.GetMin("PASSWORDLESS_TOKEN_TTL_MINS", auth.TTL_10_MINS)
+	ACCESS_TOKEN_TTL_MINS = env.GetMin("ACCESS_TOKEN_TTL_MINS", auth.TTL_15_MINS)
+	OTP_TOKEN_TTL_MINS = env.GetMin("OTP_TOKEN_TTL_MINS", auth.TTL_20_MINS)
+	SHORT_TTL_MINS = env.GetMin("SHORT_TTL_MINS", auth.TTL_10_MINS)
+
 	bytes, err := os.ReadFile("jwtRS256.key")
 	if err != nil {
 		log.Fatal().Msgf("%s", err)
@@ -71,8 +77,14 @@ func init() {
 		log.Fatal().Msgf("%s", err)
 	}
 
-	PASSWORDLESS_TOKEN_TTL_MINS = env.GetMin("PASSWORDLESS_TOKEN_TTL_MINS", auth.TTL_10_MINS)
-	ACCESS_TOKEN_TTL_MINS = env.GetMin("ACCESS_TOKEN_TTL_MINS", auth.TTL_15_MINS)
-	OTP_TOKEN_TTL_MINS = env.GetMin("OTP_TOKEN_TTL_MINS", auth.TTL_20_MINS)
-	SHORT_TTL_MINS = env.GetMin("SHORT_TTL_MINS", auth.TTL_10_MINS)
+	bytes, err = os.ReadFile("auth0.key.pub")
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
+	JWT_AUTH0_RSA_PUBLIC_KEY, err = jwt.ParseRSAPublicKeyFromPEM(bytes)
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
 }

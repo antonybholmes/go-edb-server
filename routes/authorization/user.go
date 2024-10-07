@@ -5,7 +5,8 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/rdb"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-edb-server/routes/authentication"
+	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
+
 	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -21,7 +22,7 @@ func UserUpdatedResp(c echo.Context) error {
 
 func UpdateUserRoute(c echo.Context) error {
 
-	return authentication.NewValidator(c).ParseLoginRequestBody().LoadTokenClaims().Success(func(validator *authentication.Validator) error {
+	return authenticationroutes.NewValidator(c).ParseLoginRequestBody().LoadTokenClaims().Success(func(validator *authenticationroutes.Validator) error {
 
 		//db, err := userdbcache.AutoConn(nil) //not clear on what is needed for the user and password
 
@@ -59,9 +60,9 @@ func UpdateUserRoute(c echo.Context) error {
 }
 
 func UserRoute(c echo.Context) error {
-	return authentication.NewValidator(c).
+	return authenticationroutes.NewValidator(c).
 		LoadAuthUserFromToken().
-		Success(func(validator *authentication.Validator) error {
+		Success(func(validator *authenticationroutes.Validator) error {
 			return routes.MakeDataPrettyResp(c, "", validator.AuthUser)
 		})
 }
@@ -70,7 +71,7 @@ func SendUserInfoUpdatedEmail(c echo.Context, authUser *auth.AuthUser) error {
 
 	file := "templates/email/account/updated.html"
 
-	go authentication.SendEmailWithToken("Account Updated",
+	go authenticationroutes.SendEmailWithToken("Account Updated",
 		authUser,
 		file,
 		"",

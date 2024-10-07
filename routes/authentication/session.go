@@ -1,7 +1,8 @@
-package authentication
+package authenticationroutes
 
 import (
 	"net/http"
+	"net/mail"
 	"os"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/antonybholmes/go-auth/userdbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -69,7 +71,7 @@ func init() {
 }
 
 type SessionRoutes struct {
-	options *sessions.Options
+	sessionOptions *sessions.Options
 }
 
 func NewSessionRoutes() *SessionRoutes {
@@ -93,7 +95,7 @@ func NewSessionRoutes() *SessionRoutes {
 		SameSite: http.SameSiteNoneMode,
 	}
 
-	return &SessionRoutes{options: &options}
+	return &SessionRoutes{sessionOptions: &options}
 }
 
 func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) error {
@@ -132,7 +134,7 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 		return routes.UserDoesNotExistReq()
 	}
 
-	if !authUser.EmailIsVerified {
+	if authUser.EmailVerifiedAt == 0 {
 		return routes.EmailNotVerifiedReq()
 	}
 
@@ -160,7 +162,7 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 	}
 
 	if validator.Req.StaySignedIn {
-		sess.Options = sr.options
+		sess.Options = sr.sessionOptions
 	} else {
 		sess.Options = SESSION_OPT_ZERO
 	}
@@ -177,7 +179,7 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 // Validate the passwordless token we generated and create
 // a user session. The session acts as a refresh token and
 // can be used to generate access tokens to use resources
-func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
+func (sessionRoutes *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
 
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
@@ -209,7 +211,7 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 
 		// set session options such as if cookie secure and how long it
 		// persists
-		sess.Options = sr.options //SESSION_OPT_30_DAYS
+		sess.Options = sessionRoutes.sessionOptions //SESSION_OPT_30_DAYS
 		sess.Values[SESSION_PUBLICID] = authUser.PublicId
 		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
 
@@ -217,6 +219,61 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 
 		return UserSignedInResp(c)
 	})
+}
+
+func (sessionRoutes *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	tokenClaims := user.Claims.(*auth.Auth0TokenClaims)
+
+	//myClaims := user.Claims.(*auth.TokenClaims) //hmm.Claims.(*TokenClaims)
+
+	//user := c.Get("user").(*jwt.Token)
+	//claims := user.Claims.(*TokenClaims)
+
+	log.Debug().Msgf("auth0 claims %v", tokenClaims)
+
+	log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
+
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return routes.ErrorReq("error creating session")
+	}
+
+	email, err := mail.ParseAddress(tokenClaims.Email)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	authUser, err := userdbcache.CreateUserFromAuth0(tokenClaims.Name, email)
+
+	if err != nil {
+		log.Debug().Msgf("err %s", err)
+		return routes.ErrorReq(err)
+	}
+
+	roles, err := userdbcache.UserRoleList(authUser)
+
+	if err != nil {
+		return routes.ErrorReq("error getting user roles")
+	}
+
+	roleClaim := auth.MakeClaim(roles)
+
+	//log.Debug().Msgf("user %v", authUser)
+
+	if !auth.CanLogin(roleClaim) {
+		return routes.UserNotAllowedToSignIn()
+	}
+
+	sess.Options = sessionRoutes.sessionOptions //SESSION_OPT_30_DAYS
+	sess.Values[SESSION_PUBLICID] = authUser.PublicId
+	sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
+
+	sess.Save(c.Request(), c.Response())
+
+	return UserSignedInResp(c)
 }
 
 func SessionSignOutRoute(c echo.Context) error {
