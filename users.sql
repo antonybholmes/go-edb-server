@@ -67,7 +67,8 @@ CREATE TABLE users (
     password TEXT NOT NULL DEFAULT '',
     first_name TEXT NOT NULL DEFAULT '',
     last_name TEXT NOT NULL DEFAULT '',
-    email_is_verified BOOLEAN NOT NULL DEFAULT 0,
+    -- use the epoch as a default no --
+    email_verified_at TIMESTAMP DEFAULT '1970-01-01' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_public_id_idx ON users (public_id);
