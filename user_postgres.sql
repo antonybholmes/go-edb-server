@@ -1,4 +1,4 @@
-CREATE FUNCTION updated_at_updated()
+CREATE OR REPLACE FUNCTION updated_at_updated()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
@@ -6,6 +6,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS user_roles_permissions;
 DROP TABLE IF EXISTS user_permissions;
 DROP TABLE IF EXISTS user_roles;
@@ -84,16 +85,16 @@ INSERT INTO user_roles_permissions (role_id, permission_id) VALUES(4, 4);
 -- rdf
 INSERT INTO user_roles_permissions (role_id, permission_id) VALUES(5, 5);
 
-
+ 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY, 
     public_id VARCHAR(255) NOT NULL UNIQUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL DEFAULT '',
-    first_name VARCHAR(255) NOT NULL DEFAULT '',
-    last_name VARCHAR(255) NOT NULL DEFAULT '',
-    email_is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    password VARCHAR(255),
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    email_verified_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
 CREATE INDEX users_public_id_idx ON users (public_id);
@@ -107,7 +108,7 @@ CREATE TRIGGER users_updated_trigger
     FOR EACH ROW
 EXECUTE PROCEDURE updated_at_updated();
  
-DROP TABLE IF EXISTS users_roles;
+
 CREATE TABLE users_roles (
     id SERIAL PRIMARY KEY, 
     user_id INTEGER NOT NULL,
