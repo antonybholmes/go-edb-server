@@ -24,8 +24,6 @@
 
 # vendor/
 
-su.sql
-
 data
 logs
 deployments/*
