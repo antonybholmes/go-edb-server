@@ -46,13 +46,13 @@ func GexValueTypesRoute(c echo.Context) error {
 		return err
 	}
 
-	datasets, err := gexdbcache.GexValueTypes(params.Platform)
+	valueTypes, err := gexdbcache.GexValueTypes(params.Platform)
 
 	if err != nil {
 		return err
 	}
 
-	return routes.MakeDataPrettyResp(c, "", datasets)
+	return routes.MakeDataPrettyResp(c, "", valueTypes)
 }
 
 func GexDatasetsRoute(c echo.Context) error {

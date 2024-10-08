@@ -399,7 +399,7 @@ func main() {
 
 	gexGroup := moduleGroup.Group("/gex")
 	gexGroup.GET("/platforms", gexroutes.PlaformsRoute)
-	gexGroup.POST("/types", gexroutes.GexValueTypesRoute)
+	//gexGroup.GET("/types", gexroutes.GexValueTypesRoute)
 	gexGroup.POST("/datasets", gexroutes.GexDatasetsRoute)
 	gexGroup.POST("/exp", gexroutes.GexGeneExpRoute,
 		validateJwtMiddleware,
