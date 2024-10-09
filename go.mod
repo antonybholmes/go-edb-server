@@ -26,13 +26,13 @@ replace github.com/antonybholmes/go-gex => ../go-gex
 
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20240825181410-a6174a39116c // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20240906031005-7e79fcf536ca
+	github.com/antonybholmes/go-dna v0.0.0-20241007150544-1b58eb1162ce
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20241002002645-ddd213b3b802
+	github.com/antonybholmes/go-auth v0.0.0-20241007175356-0cbe626d4290
 	github.com/antonybholmes/go-genes v0.0.0-20240910173959-42d74d983e8b
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -42,7 +42,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20240906031012-5d39dbb10c01
+	github.com/antonybholmes/go-mailer v0.0.0-20241007150543-6b1570c6da90
 	github.com/antonybholmes/go-sys v0.0.0-20240927192250-5d2fd7cd5f40
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.1

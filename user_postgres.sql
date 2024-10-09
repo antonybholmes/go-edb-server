@@ -91,9 +91,9 @@ CREATE TABLE users (
     public_id VARCHAR(255) NOT NULL UNIQUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255),
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
+    password VARCHAR(255) NOT NULL DEFAULT '',
+    first_name VARCHAR(255) NOT NULL DEFAULT '',
+    last_name VARCHAR(255) NOT NULL DEFAULT '',
     email_verified_at TIMESTAMP DEFAULT 'epoch' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);
@@ -126,4 +126,14 @@ CREATE TRIGGER users_roles_updated_trigger
     FOR EACH ROW
 EXECUTE PROCEDURE updated_at_updated();
 
- 
+
+-- the superuser me --
+INSERT INTO users (public_id, username, email, email_verified_at) VALUES (
+    '25bhmb459eg7',
+    'root',
+    'antony@antonyholmes.dev',
+    now()
+);
+
+-- su group --
+INSERT INTO users_roles (user_id, role_id) VALUES (1, 1);
