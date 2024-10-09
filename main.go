@@ -181,7 +181,13 @@ func main() {
 	//e.Use(middleware.CORS())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"https://edb.rdf-lab.org", "http://localhost:3000", "http://localhost:8000", "https://dev.edb-app-astro.pages.dev", "https://edb-client-nextjs.pages.dev"},
+		AllowOrigins: []string{
+			"http://localhost:3000",
+			"http://localhost:8000",
+			"https://edb.rdf-lab.org",
+			"https://dev.edb-app-astro.pages.dev",
+			"https://edb-client-nextjs.pages.dev",
+			"https://edb-client-nextjs-dev.pages.dev"},
 		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
 		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
