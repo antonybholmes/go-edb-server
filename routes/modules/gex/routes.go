@@ -8,7 +8,7 @@ import (
 )
 
 type GexParams struct {
-	Platform     *gex.Platform     `json:"platform"`
+	Platform     *gex.ValueType    `json:"platform"`
 	GexValueType *gex.GexValueType `json:"gexValueType"`
 	Genes        []string          `json:"genes"`
 	Datasets     []int             `json:"datasets"`
@@ -46,7 +46,7 @@ func GexValueTypesRoute(c echo.Context) error {
 		return err
 	}
 
-	valueTypes, err := gexdbcache.GexValueTypes(params.Platform)
+	valueTypes, err := gexdbcache.GexValueTypes(params.Platform.Id)
 
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func GexDatasetsRoute(c echo.Context) error {
 		return err
 	}
 
-	datasets, err := gexdbcache.Datasets(params.Platform)
+	datasets, err := gexdbcache.Datasets(params.Platform.Id)
 
 	if err != nil {
 		return err
