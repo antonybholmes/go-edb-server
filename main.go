@@ -186,8 +186,7 @@ func main() {
 			"http://localhost:8000",
 			"https://edb.rdf-lab.org",
 			"https://dev.edb-app-astro.pages.dev",
-			"https://edb-client-nextjs.pages.dev",
-			"https://edb-client-nextjs-dev.pages.dev"},
+			"https://edb-client-astro.pages.dev"},
 		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
 		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
