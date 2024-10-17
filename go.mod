@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20241007232612-6e7f7c3f3521
+	github.com/antonybholmes/go-auth v0.0.0-20241010005842-f9014d132f8a
 	github.com/antonybholmes/go-genes v0.0.0-20241008211602-df4c0aaba3bd
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/antonybholmes/go-motifs v0.0.0-20241007150546-b67cb6466441
 	github.com/antonybholmes/go-mutations v0.0.0-20241008211559-3b0ab30c604d
 	github.com/antonybholmes/go-pathway v0.0.0-20241008211557-3790cc5c1240
-	github.com/redis/go-redis/v9 v9.6.2
+	github.com/redis/go-redis/v9 v9.7.0
 )
 
 require (
