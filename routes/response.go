@@ -11,13 +11,13 @@ type StatusResp struct {
 }
 
 type StatusMessageResp struct {
-	Status  int    `json:"status"`
 	Message string `json:"message"`
+	Status  int    `json:"status"`
 }
 
 type DataResp struct {
-	StatusMessageResp
 	Data interface{} `json:"data"`
+	StatusMessageResp
 }
 
 type SuccessResp struct {
