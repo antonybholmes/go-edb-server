@@ -53,7 +53,7 @@ require (
 	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
 	github.com/antonybholmes/go-motifs v0.0.0-20241007150546-b67cb6466441
 	github.com/antonybholmes/go-mutations v0.0.0-20241008211559-3b0ab30c604d
-	github.com/antonybholmes/go-pathway v0.0.0-20241008211557-3790cc5c1240
+	github.com/antonybholmes/go-pathway v0.0.0-20241010005838-5d898f72a1cc
 	github.com/redis/go-redis/v9 v9.7.0
 )
 
