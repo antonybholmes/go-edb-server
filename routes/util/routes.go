@@ -1,6 +1,8 @@
 package utilroutes
 
 import (
+	b64 "encoding/base64"
+
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-sys"
 	"github.com/labstack/echo/v4"
@@ -9,7 +11,7 @@ import (
 type XlsxReq struct {
 	Header   int    `json:"header"`
 	IndexCol int    `json:"indexCol"`
-	Xlsx     []byte `json:"xslx"`
+	Xlsx     string `json:"xlsx"`
 }
 
 type XlsxResp struct {
@@ -26,7 +28,15 @@ func XlsxToTextRoute(c echo.Context) error {
 		return err
 	}
 
-	table, err := sys.XlsxToText(req.Xlsx, req.IndexCol, req.Header)
+	//log.Debug().Msgf("m:%s", req.Xlsx)
+
+	xlsxb, err := b64.StdEncoding.DecodeString(req.Xlsx)
+
+	if err != nil {
+		return err
+	}
+
+	table, err := sys.XlsxToText(xlsxb, req.IndexCol, req.Header)
 
 	if err != nil {
 		return err
@@ -35,5 +45,4 @@ func XlsxToTextRoute(c echo.Context) error {
 	resp := XlsxResp{Table: table}
 
 	return routes.MakeDataPrettyResp(c, "", resp)
-
 }
