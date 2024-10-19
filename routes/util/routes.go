@@ -11,7 +11,7 @@ import (
 type XlsxReq struct {
 	Header   int    `json:"header"`
 	IndexCol int    `json:"indexCol"`
-	Xlsx     string `json:"xlsx"`
+	Xlsx     string `json:"b64xlsx"`
 }
 
 type XlsxResp struct {
