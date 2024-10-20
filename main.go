@@ -438,12 +438,12 @@ func main() {
 	// Util routes
 	//
 
-	utilGroup := e.Group("/util")
+	utilsGroup := e.Group("/utils")
 	//moduleGroup.Use(jwtMiddleWare,JwtIsAccessTokenMiddleware)
 
-	convertGroup := utilGroup.Group("/convert")
-
-	convertGroup.POST("/xlsx", utilroutes.XlsxToTextRoute)
+	xlsxGroup := utilsGroup.Group("/xlsx")
+	xlsxGroup.POST("/sheets", utilroutes.XlsxSheetsRoute)
+	xlsxGroup.POST("/convert", utilroutes.XlsxToTextRoute)
 
 	//
 	// Util routes end
