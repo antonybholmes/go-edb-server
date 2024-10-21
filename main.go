@@ -26,6 +26,7 @@ import (
 	motifroutes "github.com/antonybholmes/go-edb-server/routes/modules/motifs"
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
+	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
 	"github.com/antonybholmes/go-gex/gexdbcache"
@@ -431,6 +432,21 @@ func main() {
 
 	//
 	// module groups: end
+	//
+
+	//
+	// Util routes
+	//
+
+	utilsGroup := e.Group("/utils")
+	//moduleGroup.Use(jwtMiddleWare,JwtIsAccessTokenMiddleware)
+
+	xlsxGroup := utilsGroup.Group("/xlsx")
+	xlsxGroup.POST("/sheets", utilroutes.XlsxSheetsRoute)
+	xlsxGroup.POST("/to/:format", utilroutes.XlsxToRoute)
+
+	//
+	// Util routes end
 	//
 
 	httpPort := os.Getenv("PORT")

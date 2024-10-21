@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20241007232612-6e7f7c3f3521
+	github.com/antonybholmes/go-auth v0.0.0-20241010005842-f9014d132f8a
 	github.com/antonybholmes/go-genes v0.0.0-20241008211602-df4c0aaba3bd
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -53,8 +53,8 @@ require (
 	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
 	github.com/antonybholmes/go-motifs v0.0.0-20241007150546-b67cb6466441
 	github.com/antonybholmes/go-mutations v0.0.0-20241008211559-3b0ab30c604d
-	github.com/antonybholmes/go-pathway v0.0.0-20241008211557-3790cc5c1240
-	github.com/redis/go-redis/v9 v9.6.2
+	github.com/antonybholmes/go-pathway v0.0.0-20241010005838-5d898f72a1cc
+	github.com/redis/go-redis/v9 v9.7.0
 )
 
 require (
@@ -65,6 +65,12 @@ require (
 	github.com/jackc/pgx/v5 v5.7.1 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/matoous/go-nanoid/v2 v2.1.0 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/richardlehane/mscfb v1.0.4 // indirect
+	github.com/richardlehane/msoleps v1.0.4 // indirect
+	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
+	github.com/xuri/excelize/v2 v2.9.0 // indirect
+	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
