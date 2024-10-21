@@ -443,7 +443,7 @@ func main() {
 
 	xlsxGroup := utilsGroup.Group("/xlsx")
 	xlsxGroup.POST("/sheets", utilroutes.XlsxSheetsRoute)
-	xlsxGroup.POST("/convert", utilroutes.XlsxToTextRoute)
+	xlsxGroup.POST("/to/:format", utilroutes.XlsxToRoute)
 
 	//
 	// Util routes end

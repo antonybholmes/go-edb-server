@@ -3,6 +3,7 @@ package utilroutes
 import (
 	"bytes"
 	b64 "encoding/base64"
+	"fmt"
 
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-sys"
@@ -66,26 +67,32 @@ func XlsxSheetsRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", resp)
 }
 
-func XlsxToTextRoute(c echo.Context) error {
+func XlsxToRoute(c echo.Context) error {
+
+	format := c.Param("format")
+
+	if format != "json" {
+		return routes.ErrorReq(fmt.Errorf("unsupported format: %s", format))
+	}
 
 	var req XlsxReq
 
 	err := c.Bind(&req)
 
 	if err != nil {
-		return err
+		return routes.ErrorReq(err)
 	}
 
 	reader, err := makeXlsxReader(req.Xlsx)
 
 	if err != nil {
-		return err
+		return routes.ErrorReq(err)
 	}
 
-	table, err := sys.XlsxToText(reader, req.Sheet, req.Indexes, req.Headers, req.SkipRows)
+	table, err := sys.XlsxToJson(reader, req.Sheet, req.Indexes, req.Headers, req.SkipRows)
 
 	if err != nil {
-		return err
+		return routes.ErrorReq(err)
 	}
 
 	resp := XlsxResp{Table: table}
