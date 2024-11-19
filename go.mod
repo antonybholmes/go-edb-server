@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20241010005842-f9014d132f8a
+	github.com/antonybholmes/go-auth v0.0.0-20241022154234-65b9f487c031
 	github.com/antonybholmes/go-genes v0.0.0-20241008211602-df4c0aaba3bd
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -43,7 +43,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-mailer v0.0.0-20241007150543-6b1570c6da90
-	github.com/antonybholmes/go-sys v0.0.0-20240927192250-5d2fd7cd5f40
+	github.com/antonybholmes/go-sys v0.0.0-20241021142915-13ff92cbbcdc
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.1
 )
@@ -85,10 +85,10 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xyproto/randomstring v1.0.5 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/crypto v0.29.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
