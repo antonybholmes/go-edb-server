@@ -33,11 +33,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-auth v0.0.0-20241022154234-65b9f487c031
-<<<<<<< HEAD
 	github.com/antonybholmes/go-genes v0.0.0-20241008211602-df4c0aaba3bd
-=======
-	github.com/antonybholmes/go-genes v0.0.0-20241018214057-74bdb6aa6946
->>>>>>> 338f20d78a6073e5821399103f515d9d90b69089
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.2.0
