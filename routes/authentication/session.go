@@ -134,7 +134,7 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 		return routes.UserDoesNotExistReq()
 	}
 
-	if authUser.EmailVerifiedAt == 0 {
+	if authUser.EmailVerifiedAt == auth.EMAIL_NOT_VERIFIED_TIME_S {
 		return routes.EmailNotVerifiedReq()
 	}
 
