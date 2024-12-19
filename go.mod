@@ -33,10 +33,10 @@ require (
 
 require (
 	github.com/antonybholmes/go-auth v0.0.0-20241022154234-65b9f487c031
-	github.com/antonybholmes/go-genes v0.0.0-20241008211602-df4c0aaba3bd
+	github.com/antonybholmes/go-genes v0.0.0-20241018214057-74bdb6aa6946
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/labstack/echo-jwt/v4 v4.2.0
+	github.com/labstack/echo-jwt/v4 v4.3.0
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/rs/zerolog v1.33.0
 )
@@ -85,7 +85,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xyproto/randomstring v1.2.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
