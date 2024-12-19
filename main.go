@@ -435,10 +435,11 @@ func main() {
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
 	tracksGroup := moduleGroup.Group("/tracks")
+	tracksGroup.GET("/alltracks", trackroutes.AllTracksRoute)
 	tracksGroup.GET("/platforms", trackroutes.PlatformRoute)
 	tracksGroup.GET("/:platform/genomes", trackroutes.GenomeRoute)
 	tracksGroup.GET("/:platform/:genome/tracks", trackroutes.TracksRoute)
-	tracksGroup.POST("/bins", trackroutes.BinRoute)
+	tracksGroup.POST("/bins", trackroutes.BinsRoute)
 
 	//
 	// module groups: end

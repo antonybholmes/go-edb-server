@@ -3,6 +3,7 @@ package trackroutes
 import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-tracks"
 	"github.com/antonybholmes/go-tracks/tracksdbcache"
@@ -70,9 +71,22 @@ func TracksRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", tracks)
 }
 
-func BinRoute(c echo.Context) error {
+func AllTracksRoute(c echo.Context) error {
+
+	tracks, err := tracksdbcache.AllTracks()
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", tracks)
+}
+
+func BinsRoute(c echo.Context) error {
 
 	params, err := ParseTrackParamsFromPost(c)
+
+	log.Debug().Msgf("err %s", err)
 
 	if err != nil {
 		return routes.ErrorReq(err)
