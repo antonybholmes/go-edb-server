@@ -24,6 +24,8 @@ replace github.com/antonybholmes/go-pathway => ../go-pathway
 
 replace github.com/antonybholmes/go-gex => ../go-gex
 
+replace github.com/antonybholmes/go-tracks => ../go-tracks
+
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20240825181410-a6174a39116c // indirect
 	github.com/antonybholmes/go-dna v0.0.0-20241007150544-1b58eb1162ce
@@ -59,6 +61,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/antonybholmes/go-tracks v0.0.0-20241218223550-2e5029b0e37f // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect

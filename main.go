@@ -26,6 +26,7 @@ import (
 	motifroutes "github.com/antonybholmes/go-edb-server/routes/modules/motifs"
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
+	trackroutes "github.com/antonybholmes/go-edb-server/routes/modules/track"
 	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -34,6 +35,7 @@ import (
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
 	"github.com/antonybholmes/go-sys/env"
+	"github.com/antonybholmes/go-tracks/tracksdbcache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -92,6 +94,8 @@ func init() {
 	motifsdb.InitCache("data/modules/motifs/motifs.db")
 
 	pathwaydbcache.InitCache("data/modules/pathway/pathway-v2.db")
+
+	tracksdbcache.InitCache("data/modules/tracks/")
 }
 
 func main() {
@@ -429,6 +433,12 @@ func main() {
 	pathwayGroup.POST("/dataset", pathwayroutes.DatasetRoute)
 	pathwayGroup.GET("/datasets", pathwayroutes.DatasetsRoute)
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
+
+	tracksGroup := moduleGroup.Group("/tracks")
+	tracksGroup.GET("/platforms", trackroutes.PlatformRoute)
+	tracksGroup.GET("/:platform/genomes", trackroutes.GenomeRoute)
+	tracksGroup.GET("/:platform/:genome/tracks", trackroutes.TracksRoute)
+	tracksGroup.POST("/bins", trackroutes.BinRoute)
 
 	//
 	// module groups: end
