@@ -56,12 +56,12 @@ require (
 	github.com/antonybholmes/go-motifs v0.0.0-20241019032547-082676e3625a
 	github.com/antonybholmes/go-mutations v0.0.0-20241008211559-3b0ab30c604d
 	github.com/antonybholmes/go-pathway v0.0.0-20241022154233-27225f703cfd
+	github.com/antonybholmes/go-tracks v0.0.0-20241218223550-2e5029b0e37f
 	github.com/redis/go-redis/v9 v9.7.0
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/antonybholmes/go-tracks v0.0.0-20241218223550-2e5029b0e37f // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
