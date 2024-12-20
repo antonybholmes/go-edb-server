@@ -26,7 +26,7 @@ import (
 	motifroutes "github.com/antonybholmes/go-edb-server/routes/modules/motifs"
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
-	trackroutes "github.com/antonybholmes/go-edb-server/routes/modules/track"
+	tracksroutes "github.com/antonybholmes/go-edb-server/routes/modules/tracks"
 	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -435,11 +435,11 @@ func main() {
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
 	tracksGroup := moduleGroup.Group("/tracks")
-	tracksGroup.GET("/alltracks", trackroutes.AllTracksRoute)
-	tracksGroup.GET("/platforms", trackroutes.PlatformRoute)
-	tracksGroup.GET("/:platform/genomes", trackroutes.GenomeRoute)
-	tracksGroup.GET("/:platform/:genome/tracks", trackroutes.TracksRoute)
-	tracksGroup.POST("/bins", trackroutes.BinsRoute)
+	tracksGroup.GET("/alltracks", tracksroutes.AllTracksRoute)
+	tracksGroup.GET("/platforms", tracksroutes.PlatformRoute)
+	tracksGroup.GET("/:platform/genomes", tracksroutes.GenomeRoute)
+	tracksGroup.GET("/:platform/:genome/tracks", tracksroutes.TracksRoute)
+	tracksGroup.POST("/bins", tracksroutes.BinsRoute)
 
 	//
 	// module groups: end

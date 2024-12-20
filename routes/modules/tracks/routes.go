@@ -29,12 +29,14 @@ func ParseTrackParamsFromPost(c echo.Context) (*TracksParams, error) {
 	err := c.Bind(&params)
 
 	if err != nil {
+		log.Debug().Msgf("bind err %s", err)
 		return nil, err
 	}
 
 	location, err := dna.ParseLocation(params.Location)
 
 	if err != nil {
+		log.Debug().Msgf("loc err %s", err)
 		return nil, err
 	}
 
@@ -86,16 +88,21 @@ func BinsRoute(c echo.Context) error {
 
 	params, err := ParseTrackParamsFromPost(c)
 
-	log.Debug().Msgf("err %s", err)
-
 	if err != nil {
+		log.Debug().Msgf("bins param err %s", err)
 		return routes.ErrorReq(err)
 	}
 
 	ret := make([]*tracks.BinCounts, 0, len(params.Tracks))
 
 	for _, track := range params.Tracks {
-		reader := tracksdbcache.Reader(track, params.BinWidth)
+		log.Debug().Msgf("track %v", track)
+
+		reader, err := tracksdbcache.Reader(track, params.BinWidth)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
 
 		binCounts, err := reader.BinCounts(params.Location)
 
