@@ -11,15 +11,15 @@ import (
 )
 
 type ReqTracksParams struct {
-	Location string         `json:"location"`
-	BinWidth uint           `json:"binWidth"`
-	Tracks   []tracks.Track `json:"tracks"`
+	Location string   `json:"location"`
+	BinWidth uint     `json:"binWidth"`
+	Tracks   []string `json:"tracks"`
 }
 
 type TracksParams struct {
-	Location *dna.Location  `json:"location"`
-	BinWidth uint           `json:"binWidth"`
-	Tracks   []tracks.Track `json:"tracks"`
+	Location *dna.Location `json:"location"`
+	BinWidth uint          `json:"binWidth"`
+	Tracks   []string      `json:"tracks"`
 }
 
 func ParseTrackParamsFromPost(c echo.Context) (*TracksParams, error) {
@@ -98,7 +98,7 @@ func BinsRoute(c echo.Context) error {
 	for _, track := range params.Tracks {
 		log.Debug().Msgf("track %v", track)
 
-		reader, err := tracksdbcache.Reader(track, params.BinWidth)
+		reader, err := tracksdbcache.ReaderFromTrackId(track, params.BinWidth)
 
 		if err != nil {
 			return routes.ErrorReq(err)
