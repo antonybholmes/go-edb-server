@@ -388,6 +388,8 @@ func main() {
 
 	genesGroup.POST("/annotate/:assembly", generoutes.AnnotateRoute)
 
+	genesGroup.POST("/overlap/:assembly", generoutes.OverlappingGenesRoute)
+
 	// mutationsGroup := moduleGroup.Group("/mutations",
 	// 	jwtMiddleWare,
 	// 	JwtIsAccessTokenMiddleware,

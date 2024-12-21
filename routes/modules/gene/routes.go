@@ -64,6 +64,32 @@ func AssembliesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", genedbcache.GetInstance().List())
 }
 
+func OverlappingGenesRoute(c echo.Context) error {
+	locations, err := dnaroutes.ParseLocationsFromPost(c) // dnaroutes.ParseLocationsFromPost(c)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	if len(locations) == 0 {
+		return routes.ErrorReq(fmt.Errorf("must supply at least 1 location"))
+	}
+
+	features, err := query.Db.OverlappingGenes(locations[0])
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", &features)
+}
+
 func WithinGenesRoute(c echo.Context) error {
 	locations, err := dnaroutes.ParseLocationsFromPost(c) // dnaroutes.ParseLocationsFromPost(c)
 
@@ -92,6 +118,7 @@ func WithinGenesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &data)
 }
 
+// Find the n closest genes to a location
 func ClosestGeneRoute(c echo.Context) error {
 	locations, err := dnaroutes.ParseLocationsFromPost(c)
 
