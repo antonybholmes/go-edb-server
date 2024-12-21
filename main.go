@@ -13,12 +13,14 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-cytobands/cytobandsdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
 	auth0routes "github.com/antonybholmes/go-edb-server/routes/auth0"
 	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
+	cytobandroutes "github.com/antonybholmes/go-edb-server/routes/modules/cytobands"
 	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
 	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
 	geneconvroutes "github.com/antonybholmes/go-edb-server/routes/modules/geneconv"
@@ -96,6 +98,8 @@ func init() {
 	pathwaydbcache.InitCache("data/modules/pathway/pathway-v2.db")
 
 	tracksdbcache.InitCache("data/modules/tracks/")
+
+	cytobandsdbcache.InitCache("data/modules/cytobands/")
 }
 
 func main() {
@@ -442,6 +446,9 @@ func main() {
 	tracksGroup.GET("/:platform/genomes", tracksroutes.GenomeRoute)
 	tracksGroup.GET("/:platform/:genome/tracks", tracksroutes.TracksRoute)
 	tracksGroup.POST("/bins", tracksroutes.BinsRoute)
+
+	cytobandsGroup := moduleGroup.Group("/cytobands")
+	cytobandsGroup.GET("/:assembly/:chr", cytobandroutes.CytobandsRoute)
 
 	//
 	// module groups: end

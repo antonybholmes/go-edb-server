@@ -26,6 +26,8 @@ replace github.com/antonybholmes/go-gex => ../go-gex
 
 replace github.com/antonybholmes/go-tracks => ../go-tracks
 
+replace github.com/antonybholmes/go-cytobands => ../go-cytobands
+
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20240825181410-a6174a39116c // indirect
 	github.com/antonybholmes/go-dna v0.0.0-20241007150544-1b58eb1162ce
@@ -76,6 +78,7 @@ require (
 )
 
 require (
+	github.com/antonybholmes/go-cytobands v0.0.0-20241221200531-3053a0d497a7
 	github.com/antonybholmes/go-gex v0.0.0-20241009210106-9c16df39c4d0
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
