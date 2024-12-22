@@ -1,6 +1,8 @@
 package trackroutes
 
 import (
+	"fmt"
+
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/rs/zerolog/log"
@@ -43,21 +45,26 @@ func ParseTrackParamsFromPost(c echo.Context) (*TracksParams, error) {
 	return &TracksParams{Location: location, BinWidth: params.BinWidth, Tracks: params.Tracks}, nil
 }
 
-func PlatformRoute(c echo.Context) error {
-
-	return routes.MakeDataPrettyResp(c, "", tracksdbcache.Platforms())
-}
-
 func GenomeRoute(c echo.Context) error {
-	platform := c.Param("platform")
-
-	genomes, err := tracksdbcache.Genomes(platform)
+	platforms, err := tracksdbcache.Genomes()
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	return routes.MakeDataPrettyResp(c, "", genomes)
+	return routes.MakeDataPrettyResp(c, "", platforms)
+}
+
+func PlatformRoute(c echo.Context) error {
+	genome := c.Param("assembly")
+
+	platforms, err := tracksdbcache.Platforms(genome)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", platforms)
 }
 
 func TracksRoute(c echo.Context) error {
@@ -73,9 +80,16 @@ func TracksRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", tracks)
 }
 
-func AllTracksRoute(c echo.Context) error {
+func SearchTracksRoute(c echo.Context) error {
+	genome := c.Param("assembly")
 
-	tracks, err := tracksdbcache.AllTracks()
+	if genome == "" {
+		return routes.ErrorReq(fmt.Errorf("must supply a genome"))
+	}
+
+	query := c.QueryParam("search")
+
+	tracks, err := tracksdbcache.Search(genome, query)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -98,7 +112,7 @@ func BinsRoute(c echo.Context) error {
 	for _, track := range params.Tracks {
 		log.Debug().Msgf("track %v", track)
 
-		reader, err := tracksdbcache.ReaderFromTrackId(track, params.BinWidth)
+		reader, err := tracksdbcache.ReaderFromId(track, params.BinWidth)
 
 		if err != nil {
 			return routes.ErrorReq(err)

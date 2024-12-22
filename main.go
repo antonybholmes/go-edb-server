@@ -442,19 +442,20 @@ func main() {
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
 	tracksGroup := moduleGroup.Group("/tracks")
-	tracksGroup.GET("/all", tracksroutes.AllTracksRoute)
-	tracksGroup.GET("/platforms", tracksroutes.PlatformRoute)
-	tracksGroup.GET("/:platform/genomes", tracksroutes.GenomeRoute)
-	tracksGroup.GET("/:platform/:assembly/tracks", tracksroutes.TracksRoute)
+
+	tracksGroup.GET("/:assembly/platforms", tracksroutes.PlatformRoute)
+	tracksGroup.GET("/genomes", tracksroutes.GenomeRoute)
+	//tracksGroup.GET("/:platform/:assembly/tracks", tracksroutes.TracksRoute)
+	tracksGroup.GET("/search/:assembly", tracksroutes.SearchTracksRoute)
 	tracksGroup.POST("/bins", tracksroutes.BinsRoute)
 
 	cytobandsGroup := moduleGroup.Group("/cytobands")
 	cytobandsGroup.GET("/:assembly/:chr", cytobandroutes.CytobandsRoute)
 
 	bedsGroup := moduleGroup.Group("/beds")
-	bedsGroup.GET("/all/:assembly", bedroutes.AllBedsRoute)
-	bedsGroup.GET("/platforms", bedroutes.PlatformRoute)
-	bedsGroup.GET("/:platform/genomes", bedroutes.GenomeRoute)
+	bedsGroup.GET("/genomes", bedroutes.GenomeRoute)
+	bedsGroup.GET("/:assembly/platforms", bedroutes.PlatformRoute)
+	bedsGroup.GET("/search/:assembly", bedroutes.SearchBedsRoute)
 	bedsGroup.POST("/features", bedroutes.BedFeaturesRoute)
 
 	//

@@ -42,8 +42,8 @@ func ParseBedParamsFromPost(c echo.Context) (*BedsParams, error) {
 	return &BedsParams{Location: location, Beds: params.Beds}, nil
 }
 
-func PlatformRoute(c echo.Context) error {
-	platforms, err := bedsdbcache.Platforms()
+func GenomeRoute(c echo.Context) error {
+	platforms, err := bedsdbcache.Genomes()
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -52,26 +52,28 @@ func PlatformRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", platforms)
 }
 
-func GenomeRoute(c echo.Context) error {
-	platform := c.Param("platform")
+func PlatformRoute(c echo.Context) error {
+	genome := c.Param("assembly")
 
-	genomes, err := bedsdbcache.Genomes(platform)
+	platforms, err := bedsdbcache.Platforms(genome)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	return routes.MakeDataPrettyResp(c, "", genomes)
+	return routes.MakeDataPrettyResp(c, "", platforms)
 }
 
-func AllBedsRoute(c echo.Context) error {
+func SearchBedsRoute(c echo.Context) error {
 	genome := c.Param("assembly")
 
 	if genome == "" {
 		return routes.ErrorReq(fmt.Errorf("must supply a genome"))
 	}
 
-	tracks, err := bedsdbcache.AllBeds(genome)
+	query := c.QueryParam("search")
+
+	tracks, err := bedsdbcache.Search(genome, query)
 
 	if err != nil {
 		return routes.ErrorReq(err)
