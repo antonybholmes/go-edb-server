@@ -401,11 +401,8 @@ func main() {
 	// 	NewJwtPermissionsMiddleware("rdf"))
 
 	mutationsGroup := moduleGroup.Group("/mutations")
-
 	mutationsGroup.POST("/datasets/:assembly", mutationroutes.MutationDatasetsRoute)
-
 	mutationsGroup.POST("/:assembly/:name", mutationroutes.MutationsRoute)
-
 	mutationsGroup.POST("/maf/:assembly", mutationroutes.PileupRoute)
 
 	mutationsGroup.POST("/pileup/:assembly",
