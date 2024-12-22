@@ -28,6 +28,8 @@ replace github.com/antonybholmes/go-tracks => ../go-tracks
 
 replace github.com/antonybholmes/go-cytobands => ../go-cytobands
 
+replace github.com/antonybholmes/go-beds => ../go-beds
+
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20240825181410-a6174a39116c // indirect
 	github.com/antonybholmes/go-dna v0.0.0-20241007150544-1b58eb1162ce
@@ -53,6 +55,7 @@ require (
 )
 
 require (
+	github.com/antonybholmes/go-beds v0.0.0-20241222024600-2ec3c3ccc38a
 	github.com/antonybholmes/go-geneconv v0.0.0-20241018214059-3aa39a68396d
 	github.com/antonybholmes/go-math v0.0.0-20240825181410-a6174a39116c
 	github.com/antonybholmes/go-motifs v0.0.0-20241019032547-082676e3625a

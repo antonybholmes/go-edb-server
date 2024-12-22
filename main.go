@@ -13,6 +13,7 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-beds/bedsdbcache"
 	"github.com/antonybholmes/go-cytobands/cytobandsdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
@@ -20,6 +21,7 @@ import (
 	auth0routes "github.com/antonybholmes/go-edb-server/routes/auth0"
 	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
+	bedroutes "github.com/antonybholmes/go-edb-server/routes/modules/beds"
 	cytobandroutes "github.com/antonybholmes/go-edb-server/routes/modules/cytobands"
 	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
 	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
@@ -100,6 +102,8 @@ func init() {
 	tracksdbcache.InitCache("data/modules/tracks/")
 
 	cytobandsdbcache.InitCache("data/modules/cytobands/")
+
+	bedsdbcache.InitCache("data/modules/beds/")
 }
 
 func main() {
@@ -438,14 +442,20 @@ func main() {
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
 	tracksGroup := moduleGroup.Group("/tracks")
-	tracksGroup.GET("/alltracks", tracksroutes.AllTracksRoute)
+	tracksGroup.GET("/all", tracksroutes.AllTracksRoute)
 	tracksGroup.GET("/platforms", tracksroutes.PlatformRoute)
 	tracksGroup.GET("/:platform/genomes", tracksroutes.GenomeRoute)
-	tracksGroup.GET("/:platform/:genome/tracks", tracksroutes.TracksRoute)
+	tracksGroup.GET("/:platform/:assembly/tracks", tracksroutes.TracksRoute)
 	tracksGroup.POST("/bins", tracksroutes.BinsRoute)
 
 	cytobandsGroup := moduleGroup.Group("/cytobands")
 	cytobandsGroup.GET("/:assembly/:chr", cytobandroutes.CytobandsRoute)
+
+	bedsGroup := moduleGroup.Group("/beds")
+	bedsGroup.GET("/all/:assembly", bedroutes.AllBedsRoute)
+	bedsGroup.GET("/platforms", bedroutes.PlatformRoute)
+	bedsGroup.GET("/:platform/genomes", bedroutes.GenomeRoute)
+	bedsGroup.POST("/features", bedroutes.BedFeaturesRoute)
 
 	//
 	// module groups: end

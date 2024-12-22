@@ -62,7 +62,7 @@ func GenomeRoute(c echo.Context) error {
 
 func TracksRoute(c echo.Context) error {
 	platform := c.Param("platform")
-	genome := c.Param("genome")
+	genome := c.Param("assembly")
 
 	tracks, err := tracksdbcache.Tracks(platform, genome)
 
