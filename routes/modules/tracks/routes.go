@@ -14,12 +14,14 @@ import (
 
 type ReqTracksParams struct {
 	Location string   `json:"location"`
+	Scale    float64  `json:"scale"`
 	BinWidth uint     `json:"binWidth"`
 	Tracks   []string `json:"tracks"`
 }
 
 type TracksParams struct {
 	Location *dna.Location `json:"location"`
+	Scale    float64       `json:"scale"`
 	BinWidth uint          `json:"binWidth"`
 	Tracks   []string      `json:"tracks"`
 }
@@ -42,7 +44,9 @@ func ParseTrackParamsFromPost(c echo.Context) (*TracksParams, error) {
 		return nil, err
 	}
 
-	return &TracksParams{Location: location, BinWidth: params.BinWidth, Tracks: params.Tracks}, nil
+	log.Debug().Msgf("scale %f", params.Scale)
+
+	return &TracksParams{Location: location, BinWidth: params.BinWidth, Tracks: params.Tracks, Scale: params.Scale}, nil
 }
 
 func GenomeRoute(c echo.Context) error {
@@ -110,9 +114,9 @@ func BinsRoute(c echo.Context) error {
 	ret := make([]*tracks.BinCounts, 0, len(params.Tracks))
 
 	for _, track := range params.Tracks {
-		log.Debug().Msgf("track %v", track)
+		log.Debug().Msgf("track %v %f", track, params.Scale)
 
-		reader, err := tracksdbcache.ReaderFromId(track, params.BinWidth)
+		reader, err := tracksdbcache.ReaderFromId(track, params.BinWidth, params.Scale)
 
 		if err != nil {
 			return routes.ErrorReq(err)
