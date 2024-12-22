@@ -385,14 +385,11 @@ func main() {
 	genesGroup := moduleGroup.Group("/genes")
 
 	genesGroup.POST("/assemblies", generoutes.AssembliesRoute)
-
 	genesGroup.POST("/within/:assembly", generoutes.WithinGenesRoute)
-
 	genesGroup.POST("/closest/:assembly", generoutes.ClosestGeneRoute)
-
 	genesGroup.POST("/annotate/:assembly", generoutes.AnnotateRoute)
-
 	genesGroup.POST("/overlap/:assembly", generoutes.OverlappingGenesRoute)
+	genesGroup.GET("/info/:assembly", generoutes.GeneInfoRoute)
 
 	// mutationsGroup := moduleGroup.Group("/mutations",
 	// 	jwtMiddleWare,

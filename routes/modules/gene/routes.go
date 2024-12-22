@@ -90,6 +90,28 @@ func OverlappingGenesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &features)
 }
 
+func GeneInfoRoute(c echo.Context) error {
+	search := c.QueryParam("search") // dnaroutes.ParseLocationsFromPost(c)
+
+	if search == "" {
+		return routes.ErrorReq(fmt.Errorf("search cannot be empty"))
+	}
+
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	features, err := query.Db.GeneInfo(search, query.Level)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", &features)
+}
+
 func WithinGenesRoute(c echo.Context) error {
 	locations, err := dnaroutes.ParseLocationsFromPost(c) // dnaroutes.ParseLocationsFromPost(c)
 
