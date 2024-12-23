@@ -30,7 +30,7 @@ import (
 	motifroutes "github.com/antonybholmes/go-edb-server/routes/modules/motifs"
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
-	seqroutes "github.com/antonybholmes/go-edb-server/routes/modules/seq"
+	seqroutes "github.com/antonybholmes/go-edb-server/routes/modules/seqs"
 	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -38,7 +38,7 @@ import (
 	"github.com/antonybholmes/go-motifs/motifsdb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
-	"github.com/antonybholmes/go-seq/seqdbcache"
+	"github.com/antonybholmes/go-seqs/seqsdbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -99,7 +99,7 @@ func init() {
 
 	pathwaydbcache.InitCache("data/modules/pathway/pathway-v2.db")
 
-	seqdbcache.InitCache("data/modules/seq/")
+	seqsdbcache.InitCache("data/modules/seqs/")
 
 	cytobandsdbcache.InitCache("data/modules/cytobands/")
 
@@ -438,12 +438,12 @@ func main() {
 	pathwayGroup.GET("/datasets", pathwayroutes.DatasetsRoute)
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
-	seqGroup := moduleGroup.Group("/seq")
-	seqGroup.GET("/:assembly/platforms", seqroutes.PlatformRoute)
-	seqGroup.GET("/genomes", seqroutes.GenomeRoute)
+	seqsGroup := moduleGroup.Group("/seqs")
+	seqsGroup.GET("/:assembly/platforms", seqroutes.PlatformRoute)
+	seqsGroup.GET("/genomes", seqroutes.GenomeRoute)
 	//tracksGroup.GET("/:platform/:assembly/tracks", seqroutes.TracksRoute)
-	seqGroup.GET("/search/:assembly", seqroutes.SearchSeqRoute)
-	seqGroup.POST("/bins", seqroutes.BinsRoute)
+	seqsGroup.GET("/search/:assembly", seqroutes.SearchSeqRoute)
+	seqsGroup.POST("/bins", seqroutes.BinsRoute)
 
 	cytobandsGroup := moduleGroup.Group("/cytobands")
 	cytobandsGroup.GET("/:assembly/:chr", cytobandroutes.CytobandsRoute)

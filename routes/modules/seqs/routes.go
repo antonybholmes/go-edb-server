@@ -5,10 +5,10 @@ import (
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/antonybholmes/go-seq"
+	seq "github.com/antonybholmes/go-seqs"
 	"github.com/rs/zerolog/log"
 
-	"github.com/antonybholmes/go-seq/seqdbcache"
+	"github.com/antonybholmes/go-seqs/seqsdbcache"
 	"github.com/labstack/echo/v4"
 )
 
@@ -50,7 +50,7 @@ func ParseSeqParamsFromPost(c echo.Context) (*SeqParams, error) {
 }
 
 func GenomeRoute(c echo.Context) error {
-	platforms, err := seqdbcache.Genomes()
+	platforms, err := seqsdbcache.Genomes()
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -62,7 +62,7 @@ func GenomeRoute(c echo.Context) error {
 func PlatformRoute(c echo.Context) error {
 	genome := c.Param("assembly")
 
-	platforms, err := seqdbcache.Platforms(genome)
+	platforms, err := seqsdbcache.Platforms(genome)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -75,7 +75,7 @@ func TracksRoute(c echo.Context) error {
 	platform := c.Param("platform")
 	genome := c.Param("assembly")
 
-	tracks, err := seqdbcache.Tracks(platform, genome)
+	tracks, err := seqsdbcache.Tracks(platform, genome)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -93,7 +93,7 @@ func SearchSeqRoute(c echo.Context) error {
 
 	query := c.QueryParam("search")
 
-	tracks, err := seqdbcache.Search(genome, query)
+	tracks, err := seqsdbcache.Search(genome, query)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -115,7 +115,7 @@ func BinsRoute(c echo.Context) error {
 
 	for _, track := range params.Tracks {
 
-		reader, err := seqdbcache.ReaderFromId(track, params.BinWidth, params.Scale)
+		reader, err := seqsdbcache.ReaderFromId(track, params.BinWidth, params.Scale)
 
 		if err != nil {
 			return routes.ErrorReq(err)
