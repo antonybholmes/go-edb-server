@@ -1,34 +1,34 @@
-package trackroutes
+package seqroutes
 
 import (
 	"fmt"
 
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
+	"github.com/antonybholmes/go-seq"
 	"github.com/rs/zerolog/log"
 
-	"github.com/antonybholmes/go-tracks"
-	"github.com/antonybholmes/go-tracks/tracksdbcache"
+	"github.com/antonybholmes/go-seq/seqdbcache"
 	"github.com/labstack/echo/v4"
 )
 
-type ReqTracksParams struct {
+type ReqSeqParams struct {
 	Location string   `json:"location"`
 	Scale    float64  `json:"scale"`
 	BinWidth uint     `json:"binWidth"`
 	Tracks   []string `json:"tracks"`
 }
 
-type TracksParams struct {
+type SeqParams struct {
 	Location *dna.Location `json:"location"`
 	Scale    float64       `json:"scale"`
 	BinWidth uint          `json:"binWidth"`
 	Tracks   []string      `json:"tracks"`
 }
 
-func ParseTrackParamsFromPost(c echo.Context) (*TracksParams, error) {
+func ParseSeqParamsFromPost(c echo.Context) (*SeqParams, error) {
 
-	var params ReqTracksParams
+	var params ReqSeqParams
 
 	err := c.Bind(&params)
 
@@ -46,11 +46,11 @@ func ParseTrackParamsFromPost(c echo.Context) (*TracksParams, error) {
 
 	log.Debug().Msgf("scale %f", params.Scale)
 
-	return &TracksParams{Location: location, BinWidth: params.BinWidth, Tracks: params.Tracks, Scale: params.Scale}, nil
+	return &SeqParams{Location: location, BinWidth: params.BinWidth, Tracks: params.Tracks, Scale: params.Scale}, nil
 }
 
 func GenomeRoute(c echo.Context) error {
-	platforms, err := tracksdbcache.Genomes()
+	platforms, err := seqdbcache.Genomes()
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -62,7 +62,7 @@ func GenomeRoute(c echo.Context) error {
 func PlatformRoute(c echo.Context) error {
 	genome := c.Param("assembly")
 
-	platforms, err := tracksdbcache.Platforms(genome)
+	platforms, err := seqdbcache.Platforms(genome)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -75,7 +75,7 @@ func TracksRoute(c echo.Context) error {
 	platform := c.Param("platform")
 	genome := c.Param("assembly")
 
-	tracks, err := tracksdbcache.Tracks(platform, genome)
+	tracks, err := seqdbcache.Tracks(platform, genome)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -84,7 +84,7 @@ func TracksRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", tracks)
 }
 
-func SearchTracksRoute(c echo.Context) error {
+func SearchSeqRoute(c echo.Context) error {
 	genome := c.Param("assembly")
 
 	if genome == "" {
@@ -93,7 +93,7 @@ func SearchTracksRoute(c echo.Context) error {
 
 	query := c.QueryParam("search")
 
-	tracks, err := tracksdbcache.Search(genome, query)
+	tracks, err := seqdbcache.Search(genome, query)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -104,19 +104,18 @@ func SearchTracksRoute(c echo.Context) error {
 
 func BinsRoute(c echo.Context) error {
 
-	params, err := ParseTrackParamsFromPost(c)
+	params, err := ParseSeqParamsFromPost(c)
 
 	if err != nil {
 		log.Debug().Msgf("bins param err %s", err)
 		return routes.ErrorReq(err)
 	}
 
-	ret := make([]*tracks.BinCounts, 0, len(params.Tracks))
+	ret := make([]*seq.BinCounts, 0, len(params.Tracks))
 
 	for _, track := range params.Tracks {
-		log.Debug().Msgf("track %v %f", track, params.Scale)
 
-		reader, err := tracksdbcache.ReaderFromId(track, params.BinWidth, params.Scale)
+		reader, err := seqdbcache.ReaderFromId(track, params.BinWidth, params.Scale)
 
 		if err != nil {
 			return routes.ErrorReq(err)

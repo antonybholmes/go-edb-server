@@ -24,7 +24,7 @@ replace github.com/antonybholmes/go-pathway => ../go-pathway
 
 replace github.com/antonybholmes/go-gex => ../go-gex
 
-replace github.com/antonybholmes/go-tracks => ../go-tracks
+replace github.com/antonybholmes/go-seq => ../go-seq
 
 replace github.com/antonybholmes/go-cytobands => ../go-cytobands
 
@@ -61,7 +61,7 @@ require (
 	github.com/antonybholmes/go-motifs v0.0.0-20241019032547-082676e3625a
 	github.com/antonybholmes/go-mutations v0.0.0-20241008211559-3b0ab30c604d
 	github.com/antonybholmes/go-pathway v0.0.0-20241022154233-27225f703cfd
-	github.com/antonybholmes/go-tracks v0.0.0-20241218223550-2e5029b0e37f
+	github.com/antonybholmes/go-seq v0.0.0-20241218223550-2e5029b0e37f
 	github.com/redis/go-redis/v9 v9.7.0
 )
 

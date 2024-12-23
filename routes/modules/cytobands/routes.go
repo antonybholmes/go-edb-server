@@ -1,4 +1,4 @@
-package trackroutes
+package seqroutes
 
 import (
 	"github.com/antonybholmes/go-edb-server/routes"
