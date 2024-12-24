@@ -15,14 +15,14 @@ import (
 type ReqSeqParams struct {
 	Location string   `json:"location"`
 	Scale    float64  `json:"scale"`
-	BinWidth uint     `json:"binWidth"`
+	BinSize  uint     `json:"bin"`
 	Tracks   []string `json:"tracks"`
 }
 
 type SeqParams struct {
 	Location *dna.Location `json:"location"`
 	Scale    float64       `json:"scale"`
-	BinWidth uint          `json:"binWidth"`
+	BinSize  uint          `json:"bin"`
 	Tracks   []string      `json:"tracks"`
 }
 
@@ -46,7 +46,7 @@ func ParseSeqParamsFromPost(c echo.Context) (*SeqParams, error) {
 
 	log.Debug().Msgf("scale %f", params.Scale)
 
-	return &SeqParams{Location: location, BinWidth: params.BinWidth, Tracks: params.Tracks, Scale: params.Scale}, nil
+	return &SeqParams{Location: location, BinSize: params.BinSize, Tracks: params.Tracks, Scale: params.Scale}, nil
 }
 
 func GenomeRoute(c echo.Context) error {
@@ -115,7 +115,7 @@ func BinsRoute(c echo.Context) error {
 
 	for _, track := range params.Tracks {
 
-		reader, err := seqsdbcache.ReaderFromId(track, params.BinWidth, params.Scale)
+		reader, err := seqsdbcache.ReaderFromId(track, params.BinSize, params.Scale)
 
 		if err != nil {
 			return routes.ErrorReq(err)
