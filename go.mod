@@ -51,7 +51,7 @@ require (
 	github.com/antonybholmes/go-mailer v0.0.0-20241007150543-6b1570c6da90
 	github.com/antonybholmes/go-sys v0.0.0-20241021142915-13ff92cbbcdc
 	github.com/gorilla/sessions v1.4.0
-	github.com/labstack/echo-contrib v0.17.1
+	github.com/labstack/echo-contrib v0.17.2
 )
 
 require (
