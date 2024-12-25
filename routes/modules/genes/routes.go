@@ -103,11 +103,11 @@ func GeneInfoRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	features, err := query.Db.GeneInfo(search, query.Level)
+	features, _ := query.Db.GeneInfo(search, query.Level)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	// if err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
 
 	return routes.MakeDataPrettyResp(c, "", &features)
 }

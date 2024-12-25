@@ -121,11 +121,14 @@ func BinsRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		binCounts, err := reader.BinCounts(params.Location)
+		// guarantees something is returned even with error
+		// so we can ignore the errors for now to make the api
+		// more robus
+		binCounts, _ := reader.BinCounts(params.Location)
 
-		if err != nil {
-			return routes.ErrorReq(err)
-		}
+		// if err != nil {
+		// 	return routes.ErrorReq(err)
+		// }
 
 		ret = append(ret, binCounts)
 	}

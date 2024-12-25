@@ -97,7 +97,7 @@ func BedFeaturesRoute(c echo.Context) error {
 
 	bed := params.Beds[0]
 
-	log.Debug().Msgf("bed %s", bed)
+	log.Debug().Msgf("bed id %s", bed)
 
 	reader, err := bedsdbcache.ReaderFromId(bed)
 
@@ -105,11 +105,11 @@ func BedFeaturesRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	features, err := reader.BedFeatures(params.Location)
+	features, _ := reader.BedFeatures(params.Location)
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	// if err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
 
 	return routes.MakeDataPrettyResp(c, "", features)
 }

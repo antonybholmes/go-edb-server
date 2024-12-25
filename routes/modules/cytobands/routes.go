@@ -9,11 +9,11 @@ import (
 
 func CytobandsRoute(c echo.Context) error {
 
-	cytobands, err := cytobandsdbcache.Cytobands(c.Param("assembly"), c.Param("chr"))
+	cytobands, _ := cytobandsdbcache.Cytobands(c.Param("assembly"), c.Param("chr"))
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+	// if err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
 
 	return routes.MakeDataPrettyResp(c, "", cytobands)
 }
