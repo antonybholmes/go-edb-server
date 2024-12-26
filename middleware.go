@@ -111,7 +111,7 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		user := c.Get("user").(*jwt.Token)
 		claims := user.Claims.(*auth.TokenClaims)
 
-		if !auth.CanLogin((claims.Roles)) {
+		if !auth.CanSignin((claims.Roles)) {
 			return routes.AuthErrorReq("user is not allowed to login")
 		}
 
@@ -119,6 +119,7 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// basic check that session exists and seems to be populated with the user
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	sessionName := consts.SESSION_NAME
 

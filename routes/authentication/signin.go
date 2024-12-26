@@ -46,7 +46,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 
 		roleClaim := auth.MakeClaim(roles)
 
-		if !auth.CanLogin(roleClaim) {
+		if !auth.CanSignin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -138,7 +138,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 
 		roleClaim := auth.MakeClaim(roles)
 
-		if !auth.CanLogin(roleClaim) {
+		if !auth.CanSignin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 

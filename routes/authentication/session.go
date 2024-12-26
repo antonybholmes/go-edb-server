@@ -137,7 +137,7 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 
 	roleClaim := auth.MakeClaim(roles)
 
-	if !auth.CanLogin(roleClaim) {
+	if !auth.CanSignin(roleClaim) {
 		return routes.UserNotAllowedToSignIn()
 	}
 
@@ -194,7 +194,7 @@ func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
 
 	roleClaim := auth.MakeClaim(roles)
 
-	if !auth.CanLogin(roleClaim) {
+	if !auth.CanSignin(roleClaim) {
 		return routes.UserNotAllowedToSignIn()
 	}
 
@@ -318,7 +318,7 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 
 		//log.Debug().Msgf("user %v", authUser)
 
-		if !auth.CanLogin(roleClaim) {
+		if !auth.CanSignin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
@@ -368,7 +368,7 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 
 	//log.Debug().Msgf("user %v", authUser)
 
-	if !auth.CanLogin(roleClaim) {
+	if !auth.CanSignin(roleClaim) {
 		return routes.UserNotAllowedToSignIn()
 	}
 
@@ -408,7 +408,7 @@ func NewAccessTokenFromSessionRoute(c echo.Context) error {
 	roles, _ := sess.Values[SESSION_ROLES].(string)
 
 	if publicId == "" {
-		return fmt.Errorf("empty public id")
+		return routes.ErrorReq(fmt.Errorf("public id cannot be empty"))
 	}
 
 	// generate a new token from what is stored in the sesssion
@@ -426,7 +426,7 @@ func UserFromSessionRoute(c echo.Context) error {
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 
 	if publicId == "" {
-		return fmt.Errorf("empty public id")
+		return routes.ErrorReq(fmt.Errorf("public id cannot be empty"))
 	}
 
 	authUser, err := userdbcache.FindUserByPublicId(publicId)

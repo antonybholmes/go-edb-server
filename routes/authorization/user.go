@@ -28,9 +28,15 @@ func UpdateUserRoute(c echo.Context) error {
 
 		publicId := validator.Claims.PublicId
 
+		authUser, err := userdbcache.FindUserByPublicId(publicId)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
 		log.Debug().Msgf("update pub %s", publicId)
 
-		err := userdbcache.SetUserInfo(publicId,
+		err = userdbcache.SetUserInfo(authUser,
 			validator.LoginBodyReq.Username,
 			validator.LoginBodyReq.FirstName,
 			validator.LoginBodyReq.LastName)
@@ -42,7 +48,7 @@ func UpdateUserRoute(c echo.Context) error {
 		//return SendUserInfoUpdatedEmail(c, authUser)
 
 		// reload user details
-		authUser, err := userdbcache.FindUserByPublicId(publicId)
+		authUser, err = userdbcache.FindUserByPublicId(publicId)
 
 		if err != nil {
 			return routes.ErrorReq(err)
