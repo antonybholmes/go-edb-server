@@ -24,7 +24,7 @@ const (
 	SESSION_PUBLICID   string = "publicId"
 	SESSION_ROLES      string = "roles"
 	SESSION_CREATED_AT string = "createdAt"
-	SESSION_EXPIRES    string = "expires"
+	SESSION_EXPIRES_AT string = "expiresAt"
 )
 
 const (
@@ -100,7 +100,7 @@ func NewSessionRoutes() *SessionRoutes {
 		MaxAge:   maxAge,
 		HttpOnly: true,
 		Secure:   true,
-		//SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteNoneMode,
 	}
 
 	return &SessionRoutes{sessionOptions: &options}
@@ -220,7 +220,7 @@ type SessionDataResp struct {
 	Roles     string `json:"roles"`
 	IsValid   bool   `json:"valid"`
 	CreatedAt string `json:"createdAt"`
-	Expires   string `json:"expires"`
+	ExpiresAt string `json:"expiresAt"`
 }
 
 // initialize a session with default age and ids
@@ -239,7 +239,7 @@ func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles stri
 
 	now := time.Now().UTC()
 	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
-	sess.Values[SESSION_EXPIRES] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
+	sess.Values[SESSION_EXPIRES_AT] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
 
 	err = sess.Save(c.Request(), c.Response())
 
@@ -273,14 +273,14 @@ func readSession(c echo.Context) (*SessionDataResp, error) {
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)
 	createdAt, _ := sess.Values[SESSION_CREATED_AT].(string)
-	expires, _ := sess.Values[SESSION_EXPIRES].(string)
+	expires, _ := sess.Values[SESSION_EXPIRES_AT].(string)
 	isValid := publicId != ""
 
 	return &SessionDataResp{PublicId: publicId,
 			Roles:     roles,
 			IsValid:   isValid,
 			CreatedAt: createdAt,
-			Expires:   expires},
+			ExpiresAt: expires},
 		nil
 }
 
@@ -394,7 +394,7 @@ func SessionSignOutRoute(c echo.Context) error {
 	sess.Values[SESSION_PUBLICID] = ""
 	sess.Values[SESSION_ROLES] = ""
 	sess.Values[SESSION_CREATED_AT] = ""
-	sess.Values[SESSION_EXPIRES] = ""
+	sess.Values[SESSION_EXPIRES_AT] = ""
 	sess.Options.MaxAge = -1
 
 	sess.Save(c.Request(), c.Response())
