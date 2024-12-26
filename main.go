@@ -344,7 +344,7 @@ func main() {
 		sessionRoutes.SessionPasswordlessValidateSignInRoute,
 		validateJwtMiddleware)
 
-	sessionGroup.GET("/api/key/signin/:key", sessionRoutes.SessionApiKeySignInRoute)
+	sessionGroup.POST("/api/key/signin", sessionRoutes.SessionApiKeySignInRoute)
 
 	sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
 	sessionGroup.GET("/read", sessionRoutes.ReadSessionRoute)

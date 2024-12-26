@@ -100,7 +100,7 @@ func NewSessionRoutes() *SessionRoutes {
 		MaxAge:   maxAge,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		//SameSite: http.SameSiteNoneMode,
 	}
 
 	return &SessionRoutes{sessionOptions: &options}
@@ -170,9 +170,13 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 }
 
 func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
-	key := c.Param("key")
+	validator, err := NewValidator(c).ParseLoginRequestBody().Ok()
 
-	authUser, err := userdbcache.FindUserByApiKey(key)
+	if err != nil {
+		return err
+	}
+
+	authUser, err := userdbcache.FindUserByApiKey(validator.LoginBodyReq.Key)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()

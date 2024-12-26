@@ -18,13 +18,13 @@ import (
 //
 
 type Validator struct {
-	c              echo.Context
-	Address        *mail.Address
-	LoginBodyReq   *auth.LoginBodyReq
-	ApiKeyLoginReq *auth.ApiKeyLoginReq
-	AuthUser       *auth.AuthUser
-	Claims         *auth.TokenClaims
-	Err            *echo.HTTPError
+	c            echo.Context
+	Address      *mail.Address
+	LoginBodyReq *auth.LoginBodyReq
+
+	AuthUser *auth.AuthUser
+	Claims   *auth.TokenClaims
+	Err      *echo.HTTPError
 }
 
 func NewValidator(c echo.Context) *Validator {
