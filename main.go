@@ -200,7 +200,8 @@ func main() {
 			"https://edb.rdf-lab.org",
 			"https://dev.edb-app-astro.pages.dev",
 			"https://edb-client-astro.pages.dev"},
-		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
+		AllowMethods: []string{http.MethodGet, http.MethodPost},
+		//AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "Set-Cookie"},
 		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
 	}))
@@ -343,9 +344,9 @@ func main() {
 		sessionRoutes.SessionPasswordlessValidateSignInRoute,
 		validateJwtMiddleware)
 
-	sessionGroup.POST("/signin/api/:key", sessionRoutes.SessionApiKeySignInRoute)
+	sessionGroup.GET("/api/key/signin/:key", sessionRoutes.SessionApiKeySignInRoute)
 
-	sessionGroup.GET("/init", sessionRoutes.InitSessionRoute)
+	sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
 	sessionGroup.GET("/read", sessionRoutes.ReadSessionRoute)
 
 	sessionGroup.GET("/signout", authenticationroutes.SessionSignOutRoute)
@@ -354,12 +355,12 @@ func main() {
 
 	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authenticationroutes.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access", authenticationroutes.NewAccessTokenFromSessionRoute, SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authenticationroutes.SessionUserRoute)
+	sessionUsersGroup.GET("", authenticationroutes.UserFromSessionRoute)
 
 	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
 

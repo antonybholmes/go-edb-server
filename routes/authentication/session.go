@@ -27,6 +27,10 @@ const (
 	SESSION_EXPIRES    string = "expires"
 )
 
+const (
+	ERROR_CREATING_SESSION string = "error creating session"
+)
+
 var SESSION_OPT_ZERO *sessions.Options
 
 //var SESSION_OPT_24H *sessions.Options
@@ -91,9 +95,10 @@ func NewSessionRoutes() *SessionRoutes {
 	}
 
 	options := sessions.Options{
-		Path:     "/",
+		Path: "/",
+		//Domain:   consts.APP_DOMAIN,
 		MaxAge:   maxAge,
-		HttpOnly: false,
+		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
@@ -192,11 +197,18 @@ func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
 	err = sr.initSession(c, authUser.PublicId, roleClaim)
 
 	if err != nil {
-		return routes.ErrorReq(err)
+		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
 	}
 
-	return UserSignedInResp(c)
-	//return c.NoContent(http.StatusOK)
+	return c.String(http.StatusOK, "Session set")
+
+	// resp, err := readSession(c)
+
+	// if err != nil {
+	// 	return routes.ErrorReq(ERROR_CREATING_SESSION)
+	// }
+
+	// return routes.MakeDataPrettyResp(c, "", resp)
 }
 
 type SessionDataResp struct {
@@ -207,35 +219,12 @@ type SessionDataResp struct {
 	Expires   string `json:"expires"`
 }
 
-// empty session for testing
-func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
-
-	sess, err := session.Get(consts.SESSION_NAME, c)
-
-	if err != nil {
-		return routes.ErrorReq("error creating session")
-	}
-
-	// set session options
-	sess.Options = sr.sessionOptions
-
-	sess.Values[SESSION_PUBLICID] = ""
-	sess.Values[SESSION_ROLES] = "" //auth.MakeClaim(authUser.Roles)
-
-	now := time.Now().UTC()
-	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
-	sess.Values[SESSION_EXPIRES] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
-
-	sess.Save(c.Request(), c.Response())
-
-	return c.NoContent(http.StatusOK)
-}
-
+// initialize a session with default age and ids
 func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles string) error {
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
-		return fmt.Errorf("error creating session")
+		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
 	}
 
 	// set session options
@@ -248,15 +237,33 @@ func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles stri
 	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
 	sess.Values[SESSION_EXPIRES] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
 
-	return sess.Save(c.Request(), c.Response())
+	err = sess.Save(c.Request(), c.Response())
+
+	if err != nil {
+		log.Debug().Msgf("silly %s", err)
+		return err
+	}
+
+	return nil
 }
 
-// Read the user session. Can also be used to determin if session is valid
-func (sr *SessionRoutes) ReadSessionRoute(c echo.Context) error {
+// create empty session for testing
+func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
+
+	err := sr.initSession(c, "", "")
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func readSession(c echo.Context) (*SessionDataResp, error) {
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
-		return routes.ErrorReq("error creating session")
+		return nil, routes.ErrorReq(ERROR_CREATING_SESSION)
 	}
 
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
@@ -265,8 +272,23 @@ func (sr *SessionRoutes) ReadSessionRoute(c echo.Context) error {
 	expires, _ := sess.Values[SESSION_EXPIRES].(string)
 	isValid := publicId != ""
 
-	return routes.MakeDataPrettyResp(c, "", &SessionDataResp{PublicId: publicId,
-		Roles: roles, IsValid: isValid, CreatedAt: createdAt, Expires: expires})
+	return &SessionDataResp{PublicId: publicId,
+			Roles:     roles,
+			IsValid:   isValid,
+			CreatedAt: createdAt,
+			Expires:   expires},
+		nil
+}
+
+// Read the user session. Can also be used to determin if session is valid
+func (sr *SessionRoutes) ReadSessionRoute(c echo.Context) error {
+	sess, err := readSession(c)
+
+	if err != nil {
+		return routes.ErrorReq(ERROR_CREATING_SESSION)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", sess)
 }
 
 // Validate the passwordless token we generated and create
@@ -285,7 +307,7 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 		roles, err := userdbcache.UserRoleList(authUser)
 
 		if err != nil {
-			return routes.ErrorReq("error getting user roles")
+			return routes.ErrorReq(err)
 		}
 
 		roleClaim := auth.MakeClaim(roles)
@@ -335,7 +357,7 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 	roles, err := userdbcache.UserRoleList(authUser)
 
 	if err != nil {
-		return routes.ErrorReq("error getting user roles")
+		return routes.ErrorReq("user roles not found")
 	}
 
 	roleClaim := auth.MakeClaim(roles)
@@ -359,7 +381,7 @@ func SessionSignOutRoute(c echo.Context) error {
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
-		return routes.ErrorReq("error creating session")
+		return routes.ErrorReq(ERROR_CREATING_SESSION)
 	}
 
 	log.Debug().Msgf("invalidate session")
@@ -373,13 +395,17 @@ func SessionSignOutRoute(c echo.Context) error {
 
 	sess.Save(c.Request(), c.Response())
 
-	return routes.MakeOkPrettyResp(c, "user was signed out")
+	return routes.MakeOkPrettyResp(c, "user has been signed out")
 }
 
-func SessionNewAccessTokenRoute(c echo.Context) error {
+func NewAccessTokenFromSessionRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)
+
+	if publicId == "" {
+		return fmt.Errorf("empty public id")
+	}
 
 	// generate a new token from what is stored in the sesssion
 	t, err := tokengen.AccessToken(c, publicId, roles)
@@ -391,9 +417,13 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
 }
 
-func SessionUserRoute(c echo.Context) error {
+func UserFromSessionRoute(c echo.Context) error {
 	sess, _ := session.Get(consts.SESSION_NAME, c)
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+
+	if publicId == "" {
+		return fmt.Errorf("empty public id")
+	}
 
 	authUser, err := userdbcache.FindUserByPublicId(publicId)
 
