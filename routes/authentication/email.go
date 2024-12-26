@@ -142,7 +142,7 @@ func EmailUpdatedResp(c echo.Context) error {
 func SendResetEmailEmailRoute(c echo.Context) error {
 	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 		authUser := validator.AuthUser
-		req := validator.Req
+		req := validator.LoginBodyReq
 
 		newEmail, err := mail.ParseAddress(req.Email)
 

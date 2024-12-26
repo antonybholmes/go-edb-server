@@ -1,6 +1,7 @@
 package authenticationroutes
 
 import (
+	"fmt"
 	"net/http"
 	"net/mail"
 	"os"
@@ -20,8 +21,10 @@ import (
 )
 
 const (
-	SESSION_PUBLICID string = "publicId"
-	SESSION_ROLES    string = "roles"
+	SESSION_PUBLICID   string = "publicId"
+	SESSION_ROLES      string = "roles"
+	SESSION_CREATED_AT string = "createdAt"
+	SESSION_EXPIRES    string = "expires"
 )
 
 var SESSION_OPT_ZERO *sessions.Options
@@ -105,30 +108,13 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 		return err
 	}
 
-	if validator.Req.Password == "" {
+	if validator.LoginBodyReq.Password == "" {
 		return PasswordlessSigninEmailRoute(c, validator)
 	}
 
-	user := validator.Req.Username
+	user := validator.LoginBodyReq.Username
 
 	authUser, err := userdbcache.FindUserByUsername(user)
-
-	// if err != nil {
-	// 	//
-	// 	email, err := mail.ParseAddress(user)
-
-	// 	if err != nil {
-	// 		return routes.InvalidEmailReq()
-	// 	}
-
-	// 	// also check if username is valid email and try to login
-	// 	// with that
-	// 	authUser, err = userdbcache.FindUserByEmail(email)
-
-	// 	if err != nil {
-	// 		return routes.UserDoesNotExistReq()
-	// 	}
-	// }
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
@@ -150,18 +136,20 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	err = authUser.CheckPasswordsMatch(validator.Req.Password)
+	err = authUser.CheckPasswordsMatch(validator.LoginBodyReq.Password)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
 	sess, err := session.Get(consts.SESSION_NAME, c)
+
 	if err != nil {
-		return routes.ErrorReq("error creating session")
+		return routes.ErrorReq(err)
 	}
 
-	if validator.Req.StaySignedIn {
+	// set session options
+	if validator.LoginBodyReq.StaySignedIn {
 		sess.Options = sr.sessionOptions
 	} else {
 		sess.Options = SESSION_OPT_ZERO
@@ -176,10 +164,115 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 	//return c.NoContent(http.StatusOK)
 }
 
+func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
+	key := c.Param("key")
+
+	authUser, err := userdbcache.FindUserByApiKey(key)
+
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+	}
+
+	if authUser.EmailVerifiedAt == auth.EMAIL_NOT_VERIFIED_TIME_S {
+		return routes.EmailNotVerifiedReq()
+	}
+
+	roles, err := userdbcache.UserRoleList(authUser)
+
+	if err != nil {
+		return routes.AuthErrorReq("could not get user roles")
+	}
+
+	roleClaim := auth.MakeClaim(roles)
+
+	if !auth.CanLogin(roleClaim) {
+		return routes.UserNotAllowedToSignIn()
+	}
+
+	err = sr.initSession(c, authUser.PublicId, roleClaim)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return UserSignedInResp(c)
+	//return c.NoContent(http.StatusOK)
+}
+
+type SessionDataResp struct {
+	PublicId  string `json:"publicId"`
+	Roles     string `json:"roles"`
+	IsValid   bool   `json:"valid"`
+	CreatedAt string `json:"createdAt"`
+	Expires   string `json:"expires"`
+}
+
+// empty session for testing
+func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
+
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return routes.ErrorReq("error creating session")
+	}
+
+	// set session options
+	sess.Options = sr.sessionOptions
+
+	sess.Values[SESSION_PUBLICID] = ""
+	sess.Values[SESSION_ROLES] = "" //auth.MakeClaim(authUser.Roles)
+
+	now := time.Now().UTC()
+	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
+	sess.Values[SESSION_EXPIRES] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
+
+	sess.Save(c.Request(), c.Response())
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles string) error {
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return fmt.Errorf("error creating session")
+	}
+
+	// set session options
+	sess.Options = sr.sessionOptions
+
+	sess.Values[SESSION_PUBLICID] = publicId
+	sess.Values[SESSION_ROLES] = roles //auth.MakeClaim(authUser.Roles)
+
+	now := time.Now().UTC()
+	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
+	sess.Values[SESSION_EXPIRES] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
+
+	return sess.Save(c.Request(), c.Response())
+}
+
+// Read the user session. Can also be used to determin if session is valid
+func (sr *SessionRoutes) ReadSessionRoute(c echo.Context) error {
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return routes.ErrorReq("error creating session")
+	}
+
+	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	roles, _ := sess.Values[SESSION_ROLES].(string)
+	createdAt, _ := sess.Values[SESSION_CREATED_AT].(string)
+	expires, _ := sess.Values[SESSION_EXPIRES].(string)
+	isValid := publicId != ""
+
+	return routes.MakeDataPrettyResp(c, "", &SessionDataResp{PublicId: publicId,
+		Roles: roles, IsValid: isValid, CreatedAt: createdAt, Expires: expires})
+}
+
 // Validate the passwordless token we generated and create
 // a user session. The session acts as a refresh token and
 // can be used to generate access tokens to use resources
-func (sessionRoutes *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
+func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
 
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
@@ -203,25 +296,17 @@ func (sessionRoutes *SessionRoutes) SessionPasswordlessValidateSignInRoute(c ech
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		sess, err := session.Get(consts.SESSION_NAME, c)
+		err = sr.initSession(c, authUser.PublicId, roleClaim)
 
 		if err != nil {
-			return routes.ErrorReq("error creating session")
+			return routes.ErrorReq(err)
 		}
-
-		// set session options such as if cookie secure and how long it
-		// persists
-		sess.Options = sessionRoutes.sessionOptions //SESSION_OPT_30_DAYS
-		sess.Values[SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
-
-		sess.Save(c.Request(), c.Response())
 
 		return UserSignedInResp(c)
 	})
 }
 
-func (sessionRoutes *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
+func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	tokenClaims := user.Claims.(*auth.Auth0TokenClaims)
 
@@ -233,12 +318,6 @@ func (sessionRoutes *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context)
 	log.Debug().Msgf("auth0 claims %v", tokenClaims)
 
 	log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
-
-	sess, err := session.Get(consts.SESSION_NAME, c)
-
-	if err != nil {
-		return routes.ErrorReq("error creating session")
-	}
 
 	email, err := mail.ParseAddress(tokenClaims.Email)
 
@@ -267,11 +346,11 @@ func (sessionRoutes *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context)
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	sess.Options = sessionRoutes.sessionOptions //SESSION_OPT_30_DAYS
-	sess.Values[SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
+	err = sr.initSession(c, authUser.PublicId, roleClaim)
 
-	sess.Save(c.Request(), c.Response())
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
 
 	return UserSignedInResp(c)
 }
@@ -288,6 +367,8 @@ func SessionSignOutRoute(c echo.Context) error {
 	// invalidate by time
 	sess.Values[SESSION_PUBLICID] = ""
 	sess.Values[SESSION_ROLES] = ""
+	sess.Values[SESSION_CREATED_AT] = ""
+	sess.Values[SESSION_EXPIRES] = ""
 	sess.Options.MaxAge = -1
 
 	sess.Save(c.Request(), c.Response())
@@ -300,6 +381,7 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	roles, _ := sess.Values[SESSION_ROLES].(string)
 
+	// generate a new token from what is stored in the sesssion
 	t, err := tokengen.AccessToken(c, publicId, roles)
 
 	if err != nil {
@@ -321,90 +403,3 @@ func SessionUserRoute(c echo.Context) error {
 
 	return routes.MakeDataPrettyResp(c, "", *authUser)
 }
-
-// // Start passwordless login by sending an email
-// func SessionSendResetPasswordEmailRoute(c echo.Context) error {
-
-// 	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
-
-// 		authUser := validator.AuthUser
-// 		req := validator.Req
-
-// 		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		var file string
-
-// 		if req.CallbackUrl != "" {
-// 			file = "templates/email/password/reset/web.html"
-// 		} else {
-// 			file = "templates/email/password/reset/api.html"
-// 		}
-
-// 		go SendEmailWithToken("Password Reset",
-// 			authUser,
-// 			file,
-// 			otpJwt,
-// 			req.CallbackUrl,
-// 			req.VisitUrl)
-
-// 		//if err != nil {
-// 		//	return routes.ErrorReq(err)
-// 		//}
-
-// 		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
-// 	})
-// }
-
-// func SessionUpdatePasswordRoute(c echo.Context) error {
-
-// 	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
-
-// 		err := userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		return SendEmailChangedEmail(c, validator.AuthUser, validator.Req.Password)
-// 	})
-// }
-
-// func SessionSendResetEmailEmailRoute(c echo.Context) error {
-
-// 	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
-
-// 		req := validator.Req
-
-// 		newEmail, err := mail.ParseAddress(req.Email)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		otpJwt, err := tokengen.ResetEmailToken(c, validator.AuthUser, newEmail)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		file := "templates/email/email/reset/web.html"
-
-// 		go BaseSendEmailWithToken("Change Your Email Address",
-// 			validator.AuthUser,
-// 			newEmail,
-// 			file,
-// 			otpJwt,
-// 			req.CallbackUrl,
-// 			req.VisitUrl)
-
-// 		//if err != nil {
-// 		//	return routes.ErrorReq(err)
-// 		//}
-
-// 		return routes.MakeOkPrettyResp(c, "check your email for a change email link")
-// 	})
-// }

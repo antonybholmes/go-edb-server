@@ -96,6 +96,16 @@ CREATE TABLE users_roles (
 CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 
+DROP TABLE IF EXISTS api_keys;
+CREATE TABLE api_keys (
+    id INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT, 
+    user_id INTEGER NOT NULL,
+    api_key VARCHAR(255) NOT NULL, 
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE(user_id, api_key),
+    FOREIGN KEY(user_id) REFERENCES users(id));
+CREATE INDEX api_keys_api_key_idx ON api_keys (api_key);
  
 
 -- the superuser me --
@@ -109,7 +119,7 @@ INSERT INTO users (public_id, username, email, email_verified_at) VALUES (
 -- su group --
 INSERT INTO users_roles (user_id, role_id) VALUES (1, 1);
 
-INSERT INTO users (public_id, username, email) VALUES (
-    '25bhmb459ez7',
-    'ssss',
-    'antony@antonyholmess.dev');
+-- default key --
+INSERT INTO api_keys (user_id, api_key) VALUES (1, '4715057f-0b11-49d0-8a7b-296a2248046d');
+
+ 

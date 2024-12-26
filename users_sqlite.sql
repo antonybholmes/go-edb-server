@@ -101,3 +101,14 @@ CREATE TABLE users_sessions(
 );
 CREATE INDEX users_sessions_public_id_idx ON users_sessions (public_id);
 CREATE INDEX users_sessions_session_id_idx ON users_sessions (session_id);
+
+
+DROP TABLE IF EXISTS api_keys;
+CREATE TABLE api_keys (
+    id INTEGER PRIMARY KEY ASC, 
+    user_id INTEGER NOT NULL,
+    key TEXT NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE(user_id, key),
+    FOREIGN KEY(user_id) REFERENCES users(id));
+CREATE INDEX api_keys_key_idx ON api_keys (key);

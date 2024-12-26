@@ -18,16 +18,17 @@ import (
 //
 
 type Validator struct {
-	c        echo.Context
-	Address  *mail.Address
-	Req      *auth.LoginReq
-	AuthUser *auth.AuthUser
-	Claims   *auth.TokenClaims
-	Err      *echo.HTTPError
+	c              echo.Context
+	Address        *mail.Address
+	LoginBodyReq   *auth.LoginBodyReq
+	ApiKeyLoginReq *auth.ApiKeyLoginReq
+	AuthUser       *auth.AuthUser
+	Claims         *auth.TokenClaims
+	Err            *echo.HTTPError
 }
 
 func NewValidator(c echo.Context) *Validator {
-	return &Validator{c: c, Address: nil, Req: nil, AuthUser: nil, Claims: nil, Err: nil}
+	return &Validator{c: c, Address: nil, LoginBodyReq: nil, AuthUser: nil, Claims: nil, Err: nil}
 
 }
 
@@ -56,15 +57,15 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 		return validator
 	}
 
-	if validator.Req == nil {
-		var req auth.LoginReq
+	if validator.LoginBodyReq == nil {
+		var req auth.LoginBodyReq
 
 		err := validator.c.Bind(&req)
 
 		if err != nil {
 			validator.Err = routes.ErrorReq(err)
 		} else {
-			validator.Req = &req
+			validator.LoginBodyReq = &req
 		}
 	}
 
@@ -80,7 +81,7 @@ func (validator *Validator) CheckUsernameIsWellFormed() *Validator {
 
 	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
 
-	err := auth.CheckUsername(validator.Req.Username)
+	err := auth.CheckUsername(validator.LoginBodyReq.Username)
 
 	if err != nil {
 		validator.Err = routes.ErrorReq(err)
@@ -98,7 +99,7 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 
 	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
 
-	address, err := mail.ParseAddress(validator.Req.Email)
+	address, err := mail.ParseAddress(validator.LoginBodyReq.Email)
 
 	if err != nil {
 		validator.Err = routes.ErrorReq(err)
@@ -115,7 +116,7 @@ func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
+	authUser, err := userdbcache.FindUserByPublicId(validator.LoginBodyReq.PublicId)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
@@ -153,7 +154,7 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
+	authUser, err := userdbcache.FindUserByUsername(validator.LoginBodyReq.Username)
 
 	//log.Debug().Msgf("beep2 %s", authUser.Username)
 

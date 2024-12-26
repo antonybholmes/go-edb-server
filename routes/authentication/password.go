@@ -22,7 +22,7 @@ func PasswordUpdatedResp(c echo.Context) error {
 func SendResetPasswordFromUsernameEmailRoute(c echo.Context) error {
 	return NewValidator(c).LoadAuthUserFromUsername().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 		authUser := validator.AuthUser
-		req := validator.Req
+		req := validator.LoginBodyReq
 
 		otpToken, err := tokengen.ResetPasswordToken(c, authUser)
 
@@ -77,7 +77,7 @@ func UpdatePasswordRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password)
+		err = userdbcache.SetPassword(authUser.PublicId, validator.LoginBodyReq.Password)
 
 		if err != nil {
 			return routes.ErrorReq(err)

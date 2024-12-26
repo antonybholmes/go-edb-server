@@ -82,7 +82,7 @@ func SearchBedsRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", tracks)
 }
 
-func BedFeaturesRoute(c echo.Context) error {
+func BedRegionsRoute(c echo.Context) error {
 
 	params, err := ParseBedParamsFromPost(c)
 
@@ -105,7 +105,7 @@ func BedFeaturesRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	features, _ := reader.BedFeatures(params.Location)
+	features, _ := reader.BedRegions(params.Location)
 
 	// if err != nil {
 	// 	return routes.ErrorReq(err)

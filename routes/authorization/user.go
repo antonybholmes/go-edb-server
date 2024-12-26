@@ -31,9 +31,9 @@ func UpdateUserRoute(c echo.Context) error {
 		log.Debug().Msgf("update pub %s", publicId)
 
 		err := userdbcache.SetUserInfo(publicId,
-			validator.Req.Username,
-			validator.Req.FirstName,
-			validator.Req.LastName)
+			validator.LoginBodyReq.Username,
+			validator.LoginBodyReq.FirstName,
+			validator.LoginBodyReq.LastName)
 
 		if err != nil {
 			return routes.ErrorReq(err)

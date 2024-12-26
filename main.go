@@ -343,6 +343,11 @@ func main() {
 		sessionRoutes.SessionPasswordlessValidateSignInRoute,
 		validateJwtMiddleware)
 
+	sessionGroup.POST("/signin/api/:key", sessionRoutes.SessionApiKeySignInRoute)
+
+	sessionGroup.GET("/init", sessionRoutes.InitSessionRoute)
+	sessionGroup.GET("/read", sessionRoutes.ReadSessionRoute)
+
 	sessionGroup.GET("/signout", authenticationroutes.SessionSignOutRoute)
 
 	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
@@ -452,7 +457,7 @@ func main() {
 	bedsGroup.GET("/genomes", bedroutes.GenomeRoute)
 	bedsGroup.GET("/:assembly/platforms", bedroutes.PlatformRoute)
 	bedsGroup.GET("/search/:assembly", bedroutes.SearchBedsRoute)
-	bedsGroup.POST("/features", bedroutes.BedFeaturesRoute)
+	bedsGroup.POST("/regions", bedroutes.BedRegionsRoute)
 
 	//
 	// module groups: end
