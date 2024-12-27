@@ -355,7 +355,9 @@ func main() {
 
 	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authenticationroutes.NewAccessTokenFromSessionRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access",
+		authenticationroutes.NewAccessTokenFromSessionRoute,
+		SessionIsValidMiddleware)
 
 	sessionUsersGroup := sessionGroup.Group("/users")
 	sessionUsersGroup.Use(SessionIsValidMiddleware)
@@ -444,7 +446,11 @@ func main() {
 	pathwayGroup.GET("/datasets", pathwayroutes.DatasetsRoute)
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
 
-	seqsGroup := moduleGroup.Group("/seqs")
+	seqsGroup := moduleGroup.Group("/seqs",
+		validateJwtMiddleware,
+		JwtIsAccessTokenMiddleware,
+		rdfMiddlware)
+
 	seqsGroup.GET("/:assembly/platforms", seqroutes.PlatformRoute)
 	seqsGroup.GET("/genomes", seqroutes.GenomeRoute)
 	//tracksGroup.GET("/:platform/:assembly/tracks", seqroutes.TracksRoute)
@@ -454,7 +460,9 @@ func main() {
 	cytobandsGroup := moduleGroup.Group("/cytobands")
 	cytobandsGroup.GET("/:assembly/:chr", cytobandroutes.CytobandsRoute)
 
-	bedsGroup := moduleGroup.Group("/beds")
+	bedsGroup := moduleGroup.Group("/beds", validateJwtMiddleware,
+		JwtIsAccessTokenMiddleware,
+		rdfMiddlware)
 	bedsGroup.GET("/genomes", bedroutes.GenomeRoute)
 	bedsGroup.GET("/:assembly/platforms", bedroutes.PlatformRoute)
 	bedsGroup.GET("/search/:assembly", bedroutes.SearchBedsRoute)

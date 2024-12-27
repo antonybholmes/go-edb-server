@@ -85,20 +85,20 @@ func UpdateUserRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		err := userdbcache.SetUserInfo(authUser, validator.LoginBodyReq.Username, validator.LoginBodyReq.FirstName, validator.LoginBodyReq.LastName)
+		err := userdbcache.SetUserInfo(authUser, validator.LoginBodyReq.Username, validator.LoginBodyReq.FirstName, validator.LoginBodyReq.LastName, true)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address)
+		err = userdbcache.SetEmailAddress(authUser, validator.Address, true)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
 		if validator.LoginBodyReq.Password != "" {
-			err = userdbcache.SetPassword(authUser.PublicId, validator.LoginBodyReq.Password)
+			err = userdbcache.SetPassword(authUser, validator.LoginBodyReq.Password)
 
 			if err != nil {
 				return routes.ErrorReq(err)
@@ -106,7 +106,7 @@ func UpdateUserRoute(c echo.Context) error {
 		}
 
 		// set roles
-		err = userdbcache.SetUserRoles(authUser, validator.LoginBodyReq.Roles)
+		err = userdbcache.SetUserRoles(authUser, validator.LoginBodyReq.Roles, true)
 
 		if err != nil {
 			return routes.ErrorReq(err)
