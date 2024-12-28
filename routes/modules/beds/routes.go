@@ -3,6 +3,7 @@ package bedroutes
 import (
 	"fmt"
 
+	"github.com/antonybholmes/go-beds"
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/rs/zerolog/log"
@@ -95,21 +96,22 @@ func BedRegionsRoute(c echo.Context) error {
 		return routes.ErrorReq(fmt.Errorf("at least 1 bed id must be supplied"))
 	}
 
-	bed := params.Beds[0]
+	ret := make([][]*beds.BedRegion, 0, len(params.Beds))
 
-	log.Debug().Msgf("bed id %s", bed)
+	for _, bed := range params.Beds {
 
-	reader, err := bedsdbcache.ReaderFromId(bed)
+		//log.Debug().Msgf("bed id %s", bed)
 
-	if err != nil {
-		return routes.ErrorReq(err)
+		reader, err := bedsdbcache.ReaderFromId(bed)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		features, _ := reader.OverlappingRegions(params.Location)
+
+		ret = append(ret, features)
 	}
 
-	features, _ := reader.BedRegions(params.Location)
-
-	// if err != nil {
-	// 	return routes.ErrorReq(err)
-	// }
-
-	return routes.MakeDataPrettyResp(c, "", features)
+	return routes.MakeDataPrettyResp(c, "", ret)
 }

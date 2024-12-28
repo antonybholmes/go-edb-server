@@ -107,7 +107,7 @@ func BinsRoute(c echo.Context) error {
 	params, err := ParseSeqParamsFromPost(c)
 
 	if err != nil {
-		log.Debug().Msgf("bins param err %s", err)
+
 		return routes.ErrorReq(err)
 	}
 

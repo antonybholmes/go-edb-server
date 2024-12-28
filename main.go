@@ -349,7 +349,7 @@ func main() {
 	sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
 	sessionGroup.GET("/read", sessionRoutes.ReadSessionRoute)
 
-	sessionGroup.GET("/signout", authenticationroutes.SessionSignOutRoute)
+	sessionGroup.POST("/signout", authenticationroutes.SessionSignOutRoute)
 
 	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
