@@ -85,20 +85,20 @@ func UpdateUserRoute(c echo.Context) error {
 
 		authUser := validator.AuthUser
 
-		err := userdbcache.SetUserInfo(authUser.PublicId, validator.Req.Username, validator.Req.FirstName, validator.Req.LastName)
+		err := userdbcache.SetUserInfo(authUser, validator.LoginBodyReq.Username, validator.LoginBodyReq.FirstName, validator.LoginBodyReq.LastName, true)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		err = userdbcache.SetEmailAddress(authUser.PublicId, validator.Address)
+		err = userdbcache.SetEmailAddress(authUser, validator.Address, true)
 
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
 
-		if validator.Req.Password != "" {
-			err = userdbcache.SetPassword(authUser.PublicId, validator.Req.Password)
+		if validator.LoginBodyReq.Password != "" {
+			err = userdbcache.SetPassword(authUser, validator.LoginBodyReq.Password)
 
 			if err != nil {
 				return routes.ErrorReq(err)
@@ -106,7 +106,7 @@ func UpdateUserRoute(c echo.Context) error {
 		}
 
 		// set roles
-		err = userdbcache.SetUserRoles(authUser, validator.Req.Roles)
+		err = userdbcache.SetUserRoles(authUser, validator.LoginBodyReq.Roles, true)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -121,12 +121,12 @@ func AddUserRoute(c echo.Context) error {
 	return authenticationroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().Success(func(validator *authenticationroutes.Validator) error {
 
 		// assume email is not verified
-		authUser, err := userdbcache.Instance().CreateUser(validator.Req.Username,
+		authUser, err := userdbcache.Instance().CreateUser(validator.LoginBodyReq.Username,
 			validator.Address,
-			validator.Req.Password,
-			validator.Req.FirstName,
-			validator.Req.LastName,
-			validator.Req.EmailIsVerified)
+			validator.LoginBodyReq.Password,
+			validator.LoginBodyReq.FirstName,
+			validator.LoginBodyReq.LastName,
+			validator.LoginBodyReq.EmailIsVerified)
 
 		if err != nil {
 			return routes.ErrorReq(err)

@@ -16,6 +16,7 @@ import (
 var NAME string
 var APP_NAME string
 var APP_URL string
+var APP_DOMAIN string
 var VERSION string
 var COPYRIGHT string
 var JWT_RSA_PRIVATE_KEY *rsa.PrivateKey //[]byte
@@ -41,6 +42,7 @@ func init() {
 	NAME = os.Getenv("NAME")
 	APP_NAME = os.Getenv("APP_NAME")
 	APP_URL = os.Getenv("APP_URL")
+	APP_DOMAIN = os.Getenv("APP_DOMAIN")
 	VERSION = os.Getenv("VERSION")
 	UPDATED = os.Getenv("UPDATED")
 	COPYRIGHT = os.Getenv("COPYRIGHT")

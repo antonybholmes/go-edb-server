@@ -11,7 +11,6 @@ import (
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 func UserSignedInResp(c echo.Context) error {
@@ -25,11 +24,11 @@ func PasswordlessEmailSentResp(c echo.Context) error {
 func UsernamePasswordSignInRoute(c echo.Context) error {
 	return NewValidator(c).ParseLoginRequestBody().Success(func(validator *Validator) error {
 
-		if validator.Req.Password == "" {
+		if validator.LoginBodyReq.Password == "" {
 			return PasswordlessSigninEmailRoute(c, validator)
 		}
 
-		authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
+		authUser, err := userdbcache.FindUserByUsername(validator.LoginBodyReq.Username)
 
 		if err != nil {
 			return routes.UserDoesNotExistReq()
@@ -47,11 +46,11 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 
 		roleClaim := auth.MakeClaim(roles)
 
-		if !auth.CanLogin(roleClaim) {
+		if !auth.CanSignin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		err = authUser.CheckPasswordsMatch(validator.Req.Password)
+		err = authUser.CheckPasswordsMatch(validator.LoginBodyReq.Password)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -83,7 +82,7 @@ func PasswordlessSigninEmailRoute(c echo.Context, validator *Validator) error {
 
 		authUser := validator.AuthUser
 
-		passwordlessToken, err := tokengen.PasswordlessToken(c, authUser.PublicId, validator.Req.VisitUrl)
+		passwordlessToken, err := tokengen.PasswordlessToken(c, authUser.PublicId, validator.LoginBodyReq.VisitUrl)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -104,14 +103,12 @@ func PasswordlessSigninEmailRoute(c echo.Context, validator *Validator) error {
 		// 	validator.Req.CallbackUrl,
 		// 	validator.Req.VisitUrl)
 
-		log.Debug().Msgf("sendy %v", authUser.Email)
-
 		email := mailer.RedisQueueEmail{Name: authUser.FirstName,
 			To:          authUser.Email,
 			Token:       passwordlessToken,
 			EmailType:   mailer.REDIS_EMAIL_TYPE_PASSWORDLESS,
 			Ttl:         fmt.Sprintf("%d minutes", int(consts.PASSWORDLESS_TOKEN_TTL_MINS.Minutes())),
-			CallBackUrl: validator.Req.CallbackUrl,
+			CallBackUrl: validator.LoginBodyReq.CallbackUrl,
 			//VisitUrl:    validator.Req.VisitUrl
 		}
 		rdb.PublishEmail(&email)
@@ -141,7 +138,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 
 		roleClaim := auth.MakeClaim(roles)
 
-		if !auth.CanLogin(roleClaim) {
+		if !auth.CanSignin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 

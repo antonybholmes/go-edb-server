@@ -142,7 +142,7 @@ func EmailUpdatedResp(c echo.Context) error {
 func SendResetEmailEmailRoute(c echo.Context) error {
 	return NewValidator(c).ParseLoginRequestBody().LoadAuthUserFromToken().Success(func(validator *Validator) error {
 		authUser := validator.AuthUser
-		req := validator.Req
+		req := validator.LoginBodyReq
 
 		newEmail, err := mail.ParseAddress(req.Email)
 
@@ -205,7 +205,7 @@ func UpdateEmailRoute(c echo.Context) error {
 		authUser := validator.AuthUser
 		publicId := authUser.PublicId
 
-		err = userdbcache.SetEmailAddress(publicId, validator.Address)
+		err = userdbcache.SetEmailAddress(authUser, validator.Address, false)
 
 		if err != nil {
 			return routes.ErrorReq(err)
