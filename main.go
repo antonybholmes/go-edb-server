@@ -31,6 +31,7 @@ import (
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
 	seqroutes "github.com/antonybholmes/go-edb-server/routes/modules/seqs"
+	toolsroutes "github.com/antonybholmes/go-edb-server/routes/tools"
 	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -255,6 +256,9 @@ func main() {
 	e.GET("/info", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
+
+	toolsGroup := e.Group("/tools")
+	toolsGroup.GET("/passwords/hash", toolsroutes.HashedPasswordRoute)
 
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(validateJwtMiddleware,
