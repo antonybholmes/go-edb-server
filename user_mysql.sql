@@ -121,10 +121,11 @@ INSERT INTO users (public_id, username, email, is_locked, email_verified_at) VAL
     now()
 );
 
-INSERT INTO users (public_id, username, email, is_locked, email_verified_at) VALUES (
+INSERT INTO users (public_id, username, email, password, is_locked, email_verified_at) VALUES (
     'fr87kybn5q14',
     'rdf',
     'rdf@antonyholmes.dev',
+    '$2a$10$su3OksRXYrpx6JYoYyN0heK8UnOXjCDorYvqlYAZ5Kov8y7L5Ze4O',
     true,
     now()
 );
