@@ -176,7 +176,7 @@ func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
 		return err
 	}
 
-	authUser, err := userdbcache.FindUserByApiKey(validator.LoginBodyReq.Key)
+	authUser, err := userdbcache.FindUserByApiKey(validator.LoginBodyReq.ApiKey)
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()

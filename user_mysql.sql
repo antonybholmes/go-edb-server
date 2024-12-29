@@ -113,10 +113,11 @@ CREATE INDEX api_keys_api_key_idx ON api_keys (api_key);
  
 
 -- the superuser me --
-INSERT INTO users (public_id, username, email, email_verified_at) VALUES (
+INSERT INTO users (public_id, username, email, is_locked, email_verified_at) VALUES (
     '25bhmb459eg7',
     'root',
     'antony@antonyholmes.dev',
+    true,
     now()
 );
 
