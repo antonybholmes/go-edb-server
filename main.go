@@ -74,7 +74,7 @@ func init() {
 	// 	auth.MAX_AGE_7_DAYS_SECS,
 	// 	[]byte(consts.SESSION_SECRET)))
 
-	store = sessions.NewCookieStore([]byte(consts.SESSION_SECRET))
+	store = sessions.NewCookieStore([]byte(consts.SESSION_KEY), []byte(consts.SESSION_ENCRYPTION_KEY))
 	// store.Options = &sessions.Options{
 	// 	Path:     "/",
 	// 	MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
@@ -259,6 +259,7 @@ func main() {
 
 	toolsGroup := e.Group("/tools")
 	toolsGroup.GET("/passwords/hash", toolsroutes.HashedPasswordRoute)
+	toolsGroup.GET("/key", toolsroutes.RandomKeyRoute)
 
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(validateJwtMiddleware,
@@ -363,12 +364,12 @@ func main() {
 		authenticationroutes.NewAccessTokenFromSessionRoute,
 		SessionIsValidMiddleware)
 
-	sessionUsersGroup := sessionGroup.Group("/users")
-	sessionUsersGroup.Use(SessionIsValidMiddleware)
+	sessionUserGroup := sessionGroup.Group("/user")
+	sessionUserGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authenticationroutes.UserFromSessionRoute)
+	sessionUserGroup.GET("", authenticationroutes.UserFromSessionRoute)
 
-	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
+	sessionUserGroup.POST("/update", authorization.SessionUpdateUserRoute)
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
 	// sessionPasswordGroup.Use(SessionIsValidMiddleware)

@@ -1,6 +1,7 @@
 package authenticationroutes
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -21,8 +22,9 @@ import (
 )
 
 const (
-	SESSION_PUBLICID   string = "publicId"
-	SESSION_ROLES      string = "roles"
+	//SESSION_PUBLICID   string = "publicId"
+	//SESSION_ROLES      string = "roles"
+	SESSION_USER       string = "user"
 	SESSION_CREATED_AT string = "createdAt"
 	SESSION_EXPIRES_AT string = "expiresAt"
 )
@@ -160,8 +162,8 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 		sess.Options = SESSION_OPT_ZERO
 	}
 
-	sess.Values[SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
+	//sess.Values[SESSION_PUBLICID] = authUser.PublicId
+	//sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
 
 	sess.Save(c.Request(), c.Response())
 
@@ -198,7 +200,7 @@ func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	err = sr.initSession(c, authUser.PublicId, roleClaim)
+	err = sr.initSession(c, authUser) //, roleClaim)
 
 	if err != nil {
 		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
@@ -255,7 +257,7 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	err = sr.initSession(c, authUser.PublicId, roleClaim)
+	err = sr.initSession(c, authUser) // roleClaim)
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -264,16 +266,21 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 	return UserSignedInResp(c)
 }
 
-type SessionDataResp struct {
-	PublicId  string `json:"publicId"`
-	Roles     string `json:"roles"`
-	IsValid   bool   `json:"valid"`
-	CreatedAt string `json:"createdAt"`
-	ExpiresAt string `json:"expiresAt"`
+type SessionData struct {
+	AuthUser  *auth.AuthUser `json:"user"`
+	IsValid   bool           `json:"valid"`
+	CreatedAt string         `json:"createdAt"`
+	ExpiresAt string         `json:"expiresAt"`
 }
 
 // initialize a session with default age and ids
-func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles string) error {
+func (sr *SessionRoutes) initSession(c echo.Context, authUser *auth.AuthUser) error {
+	userData, err := json.Marshal(authUser)
+
+	if err != nil {
+		return err
+	}
+
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
@@ -283,8 +290,9 @@ func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles stri
 	// set session options
 	sess.Options = sr.sessionOptions
 
-	sess.Values[SESSION_PUBLICID] = publicId
-	sess.Values[SESSION_ROLES] = roles //auth.MakeClaim(authUser.Roles)
+	//sess.Values[SESSION_PUBLICID] = authUser.PublicId
+	//sess.Values[SESSION_ROLES] = roles //auth.MakeClaim(authUser.Roles)
+	sess.Values[SESSION_USER] = string(userData)
 
 	now := time.Now().UTC()
 	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
@@ -293,7 +301,6 @@ func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles stri
 	err = sess.Save(c.Request(), c.Response())
 
 	if err != nil {
-		log.Debug().Msgf("silly %s", err)
 		return err
 	}
 
@@ -303,7 +310,7 @@ func (sr *SessionRoutes) initSession(c echo.Context, publicId string, roles stri
 // create empty session for testing
 func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
 
-	err := sr.initSession(c, "", "")
+	err := sr.initSession(c, &auth.AuthUser{})
 
 	if err != nil {
 		return routes.ErrorReq(err)
@@ -312,22 +319,28 @@ func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func readSession(c echo.Context) (*SessionDataResp, error) {
+func ReadSession(c echo.Context) (*SessionData, error) {
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
-		return nil, routes.ErrorReq(ERROR_CREATING_SESSION)
+		return nil, fmt.Errorf(ERROR_CREATING_SESSION)
 	}
 
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
-	roles, _ := sess.Values[SESSION_ROLES].(string)
+	userData, _ := sess.Values[SESSION_USER].(string)
+
+	var user auth.AuthUser
+
+	if err := json.Unmarshal([]byte(userData), &user); err != nil {
+		return nil, err
+	}
+
+	//publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	//roles, _ := sess.Values[SESSION_ROLES].(string)
 	createdAt, _ := sess.Values[SESSION_CREATED_AT].(string)
 	expires, _ := sess.Values[SESSION_EXPIRES_AT].(string)
-	isValid := publicId != ""
+	//isValid := publicId != ""
 
-	return &SessionDataResp{PublicId: publicId,
-			Roles:     roles,
-			IsValid:   isValid,
+	return &SessionData{AuthUser: &user,
 			CreatedAt: createdAt,
 			ExpiresAt: expires},
 		nil
@@ -335,10 +348,10 @@ func readSession(c echo.Context) (*SessionDataResp, error) {
 
 // Read the user session. Can also be used to determin if session is valid
 func (sr *SessionRoutes) ReadSessionRoute(c echo.Context) error {
-	sess, err := readSession(c)
+	sess, err := ReadSession(c)
 
 	if err != nil {
-		return routes.ErrorReq(ERROR_CREATING_SESSION)
+		return routes.ErrorReq(err)
 	}
 
 	return routes.MakeDataPrettyResp(c, "", sess)
@@ -371,7 +384,7 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		err = sr.initSession(c, authUser.PublicId, roleClaim)
+		err = sr.initSession(c, authUser) //, roleClaim)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -391,8 +404,8 @@ func SessionSignOutRoute(c echo.Context) error {
 	log.Debug().Msgf("invalidate session")
 
 	// invalidate by time
-	sess.Values[SESSION_PUBLICID] = ""
-	sess.Values[SESSION_ROLES] = ""
+	sess.Values[SESSION_USER] = ""
+	//sess.Values[SESSION_ROLES] = ""
 	sess.Values[SESSION_CREATED_AT] = ""
 	sess.Values[SESSION_EXPIRES_AT] = ""
 	sess.Options.MaxAge = -1
@@ -403,16 +416,32 @@ func SessionSignOutRoute(c echo.Context) error {
 }
 
 func NewAccessTokenFromSessionRoute(c echo.Context) error {
-	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
-	roles, _ := sess.Values[SESSION_ROLES].(string)
+	// sess, _ := session.Get(consts.SESSION_NAME, c)
 
-	if publicId == "" {
-		return routes.ErrorReq(fmt.Errorf("public id cannot be empty"))
-	}
+	// userData, ok := sess.Values["user"].(string)
+
+	// if !ok {
+	// 	return routes.ErrorReq(fmt.Errorf("malformed user info"))
+	// }
+
+	// var user auth.AuthUser
+	// if err := json.Unmarshal([]byte(userData), &user); err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
+
+	//log.Debug().Msgf("poop %v", c.Get("user"))
+
+	user := c.Get("user").(*auth.AuthUser)
+
+	//publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	//r//oles, _ := sess.Values[SESSION_ROLES].(string)
+
+	// if publicId == "" {
+	// 	return routes.ErrorReq(fmt.Errorf("public id cannot be empty"))
+	// }
 
 	// generate a new token from what is stored in the sesssion
-	t, err := tokengen.AccessToken(c, publicId, roles)
+	t, err := tokengen.AccessToken(c, user.PublicId, auth.MakeClaim(user.Roles))
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -422,18 +451,7 @@ func NewAccessTokenFromSessionRoute(c echo.Context) error {
 }
 
 func UserFromSessionRoute(c echo.Context) error {
-	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	user := c.Get("user").(*auth.AuthUser)
 
-	if publicId == "" {
-		return routes.ErrorReq(fmt.Errorf("public id cannot be empty"))
-	}
-
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
-
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
-
-	return routes.MakeDataPrettyResp(c, "", *authUser)
+	return routes.MakeDataPrettyResp(c, "", user)
 }

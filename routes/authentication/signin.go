@@ -56,7 +56,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.ErrorReq(err)
 		}
 
-		refreshToken, err := tokengen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		refreshToken, err := tokengen.RefreshToken(c, authUser) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -142,7 +142,7 @@ func PasswordlessSignInRoute(c echo.Context) error {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		t, err := tokengen.RefreshToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		t, err := tokengen.RefreshToken(c, authUser) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()

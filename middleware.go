@@ -4,12 +4,11 @@ import (
 	"strings"
 
 	"github.com/antonybholmes/go-auth"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
+	"github.com/rs/zerolog/log"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
@@ -121,22 +120,17 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 // basic check that session exists and seems to be populated with the user
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	sessionName := consts.SESSION_NAME
 
 	return func(c echo.Context) error {
-		sess, err := session.Get(sessionName, c)
+		sessData, err := authenticationroutes.ReadSession(c)
 
 		if err != nil {
-			return err
-		}
-
-		//log.Debug().Msgf("validate session %s", sess.ID)
-
-		_, ok := sess.Values[authenticationroutes.SESSION_PUBLICID].(string)
-
-		if !ok {
 			return routes.AuthErrorReq("cannot get user id from session")
 		}
+
+		log.Debug().Msgf("aha %v", sessData.AuthUser)
+
+		c.Set("user", sessData.AuthUser)
 
 		return next(c)
 	}
