@@ -215,6 +215,55 @@ func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
 	// return routes.MakeDataPrettyResp(c, "", resp)
 }
 
+func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	tokenClaims := user.Claims.(*auth.Auth0TokenClaims)
+
+	//myClaims := user.Claims.(*auth.TokenClaims) //hmm.Claims.(*TokenClaims)
+
+	//user := c.Get("user").(*jwt.Token)
+	//claims := user.Claims.(*TokenClaims)
+
+	log.Debug().Msgf("auth0 claims %v", tokenClaims)
+
+	log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
+
+	email, err := mail.ParseAddress(tokenClaims.Email)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	authUser, err := userdbcache.CreateUserFromAuth0(tokenClaims.Name, email)
+
+	if err != nil {
+		log.Debug().Msgf("err %s", err)
+		return routes.ErrorReq(err)
+	}
+
+	roles, err := userdbcache.UserRoleList(authUser)
+
+	if err != nil {
+		return routes.ErrorReq("user roles not found")
+	}
+
+	roleClaim := auth.MakeClaim(roles)
+
+	//log.Debug().Msgf("user %v", authUser)
+
+	if !auth.CanSignin(roleClaim) {
+		return routes.UserNotAllowedToSignIn()
+	}
+
+	err = sr.initSession(c, authUser.PublicId, roleClaim)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return UserSignedInResp(c)
+}
+
 type SessionDataResp struct {
 	PublicId  string `json:"publicId"`
 	Roles     string `json:"roles"`
@@ -330,55 +379,6 @@ func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) 
 
 		return UserSignedInResp(c)
 	})
-}
-
-func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	tokenClaims := user.Claims.(*auth.Auth0TokenClaims)
-
-	//myClaims := user.Claims.(*auth.TokenClaims) //hmm.Claims.(*TokenClaims)
-
-	//user := c.Get("user").(*jwt.Token)
-	//claims := user.Claims.(*TokenClaims)
-
-	log.Debug().Msgf("auth0 claims %v", tokenClaims)
-
-	log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
-
-	email, err := mail.ParseAddress(tokenClaims.Email)
-
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
-
-	authUser, err := userdbcache.CreateUserFromAuth0(tokenClaims.Name, email)
-
-	if err != nil {
-		log.Debug().Msgf("err %s", err)
-		return routes.ErrorReq(err)
-	}
-
-	roles, err := userdbcache.UserRoleList(authUser)
-
-	if err != nil {
-		return routes.ErrorReq("user roles not found")
-	}
-
-	roleClaim := auth.MakeClaim(roles)
-
-	//log.Debug().Msgf("user %v", authUser)
-
-	if !auth.CanSignin(roleClaim) {
-		return routes.UserNotAllowedToSignIn()
-	}
-
-	err = sr.initSession(c, authUser.PublicId, roleClaim)
-
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
-
-	return UserSignedInResp(c)
 }
 
 func SessionSignOutRoute(c echo.Context) error {
