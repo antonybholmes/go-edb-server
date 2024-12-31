@@ -100,7 +100,7 @@ func NewSessionRoutes() *SessionRoutes {
 		Path: "/",
 		//Domain:   consts.APP_DOMAIN,
 		MaxAge:   maxAge,
-		HttpOnly: true,
+		HttpOnly: false,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
