@@ -399,11 +399,11 @@ func main() {
 
 	dnaGroup.POST("/:assembly", dnaroutes.DNARoute)
 
-	dnaGroup.POST("/assemblies", dnaroutes.AssembliesRoute)
+	dnaGroup.GET("/assemblies", dnaroutes.AssembliesRoute)
 
 	genesGroup := moduleGroup.Group("/genes")
 
-	genesGroup.POST("/assemblies", generoutes.AssembliesRoute)
+	genesGroup.GET("/assemblies", generoutes.AssembliesRoute)
 	genesGroup.POST("/within/:assembly", generoutes.WithinGenesRoute)
 	genesGroup.POST("/closest/:assembly", generoutes.ClosestGeneRoute)
 	genesGroup.POST("/annotate/:assembly", generoutes.AnnotateRoute)
@@ -416,7 +416,7 @@ func main() {
 	// 	NewJwtPermissionsMiddleware("rdf"))
 
 	mutationsGroup := moduleGroup.Group("/mutations")
-	mutationsGroup.POST("/datasets/:assembly", mutationroutes.MutationDatasetsRoute)
+	mutationsGroup.GET("/datasets/:assembly", mutationroutes.MutationDatasetsRoute)
 	mutationsGroup.POST("/:assembly/:name", mutationroutes.MutationsRoute)
 	mutationsGroup.POST("/maf/:assembly", mutationroutes.PileupRoute)
 

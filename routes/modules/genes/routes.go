@@ -27,6 +27,8 @@ type GeneQuery struct {
 	Level    genes.Level
 	Db       *genes.GeneDB
 	Assembly string
+	// only show canonical genes
+	Canonical bool
 }
 
 type GenesRes struct {
@@ -51,13 +53,15 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 
 	log.Debug().Msgf("genes level:%s", level)
 
+	canonical := strings.HasPrefix(strings.ToLower(c.QueryParam("canonical")), "t")
+
 	db, err := genedbcache.GeneDB(assembly)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
 	}
 
-	return &GeneQuery{Assembly: assembly, Db: db, Level: level}, nil
+	return &GeneQuery{Assembly: assembly, Db: db, Level: level, Canonical: canonical}, nil
 }
 
 func AssembliesRoute(c echo.Context) error {
@@ -81,7 +85,7 @@ func OverlappingGenesRoute(c echo.Context) error {
 		return routes.ErrorReq(fmt.Errorf("must supply at least 1 location"))
 	}
 
-	features, err := query.Db.OverlappingGenes(locations[0])
+	features, err := query.Db.OverlappingGenes(locations[0], query.Canonical)
 
 	if err != nil {
 		return routes.ErrorReq(err)
