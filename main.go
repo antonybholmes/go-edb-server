@@ -458,8 +458,8 @@ func main() {
 		JwtIsAccessTokenMiddleware,
 		rdfMiddlware)
 
-	seqsGroup.GET("/:assembly/platforms", seqroutes.PlatformRoute)
 	seqsGroup.GET("/genomes", seqroutes.GenomeRoute)
+	seqsGroup.GET("/platforms/:assembly", seqroutes.PlatformRoute)
 	//tracksGroup.GET("/:platform/:assembly/tracks", seqroutes.TracksRoute)
 	seqsGroup.GET("/search/:assembly", seqroutes.SearchSeqRoute)
 	seqsGroup.POST("/bins", seqroutes.BinsRoute)
@@ -471,7 +471,7 @@ func main() {
 		JwtIsAccessTokenMiddleware,
 		rdfMiddlware)
 	bedsGroup.GET("/genomes", bedroutes.GenomeRoute)
-	bedsGroup.GET("/:assembly/platforms", bedroutes.PlatformRoute)
+	bedsGroup.GET("/platforms/:assembly", bedroutes.PlatformRoute)
 	bedsGroup.GET("/search/:assembly", bedroutes.SearchBedsRoute)
 	bedsGroup.POST("/regions", bedroutes.BedRegionsRoute)
 
