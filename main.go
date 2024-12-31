@@ -403,7 +403,7 @@ func main() {
 
 	genesGroup := moduleGroup.Group("/genes")
 
-	genesGroup.POST("/assemblies", generoutes.AssembliesRoute)
+	genesGroup.GET("/assemblies", generoutes.AssembliesRoute)
 	genesGroup.POST("/within/:assembly", generoutes.WithinGenesRoute)
 	genesGroup.POST("/closest/:assembly", generoutes.ClosestGeneRoute)
 	genesGroup.POST("/annotate/:assembly", generoutes.AnnotateRoute)
