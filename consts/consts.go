@@ -22,8 +22,9 @@ var COPYRIGHT string
 var JWT_RSA_PRIVATE_KEY *rsa.PrivateKey //[]byte
 var JWT_RSA_PUBLIC_KEY *rsa.PublicKey   //[]byte
 var JWT_AUTH0_RSA_PUBLIC_KEY *rsa.PublicKey
-var SESSION_SECRET string
 var SESSION_NAME string
+var SESSION_KEY string
+var SESSION_ENCRYPTION_KEY string
 var UPDATED string
 
 var REDIS_ADDR string
@@ -51,8 +52,9 @@ func init() {
 
 	//JWT_PRIVATE_KEY = []byte(os.Getenv("JWT_SECRET"))
 	//JWT_PUBLIC_KEY = []byte(os.Getenv("JWT_SECRET"))
-	SESSION_SECRET = os.Getenv("SESSION_SECRET")
 	SESSION_NAME = os.Getenv("SESSION_NAME")
+	SESSION_KEY = os.Getenv("SESSION_KEY")
+	SESSION_ENCRYPTION_KEY = os.Getenv("SESSION_ENCRYPTION_KEY")
 
 	PASSWORDLESS_TOKEN_TTL_MINS = env.GetMin("PASSWORDLESS_TOKEN_TTL_MINS", auth.TTL_10_MINS)
 	ACCESS_TOKEN_TTL_MINS = env.GetMin("ACCESS_TOKEN_TTL_MINS", auth.TTL_15_MINS)

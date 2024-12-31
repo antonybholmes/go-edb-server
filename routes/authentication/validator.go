@@ -5,10 +5,8 @@ import (
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
@@ -175,20 +173,14 @@ func (validator *Validator) LoadAuthUserFromSession() *Validator {
 		return validator
 	}
 
-	sess, _ := session.Get(consts.SESSION_NAME, validator.c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
-
-	if validator.Err != nil {
-		return validator
-	}
-
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
+	sessionData, err := ReadSessionInfo(validator.c)
 
 	if err != nil {
-		validator.Err = routes.UserDoesNotExistReq()
-	} else {
-		validator.AuthUser = authUser
+		validator.Err = routes.ErrorReq("user not in session")
+		validator.CheckIsValidRefreshToken().CheckUsernameIsWellFormed()
 	}
+
+	validator.AuthUser = sessionData.AuthUser
 
 	return validator
 }

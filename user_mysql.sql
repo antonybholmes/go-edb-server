@@ -100,7 +100,7 @@ CREATE TABLE users_roles (
 CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 
- 
+DROP TABLE IF EXISTS api_keys; 
 CREATE TABLE api_keys (
     id INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT, 
     user_id INTEGER NOT NULL,
@@ -108,22 +108,24 @@ CREATE TABLE api_keys (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(user_id, api_key),
-    FOREIGN KEY(user_id) REFERENCES users(id));
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
 CREATE INDEX api_keys_api_key_idx ON api_keys (api_key);
  
 
 -- the superuser me --
-INSERT INTO users (public_id, username, email, email_verified_at) VALUES (
+INSERT INTO users (public_id, username, email, is_locked, email_verified_at) VALUES (
     '25bhmb459eg7',
     'root',
     'antony@antonyholmes.dev',
+    true,
     now()
 );
 
-INSERT INTO users (public_id, username, email, is_locked, email_verified_at) VALUES (
+INSERT INTO users (public_id, username, email, password, is_locked, email_verified_at) VALUES (
     'fr87kybn5q14',
     'rdf',
     'rdf@antonyholmes.dev',
+    '$2a$10$su3OksRXYrpx6JYoYyN0heK8UnOXjCDorYvqlYAZ5Kov8y7L5Ze4O',
     true,
     now()
 );
@@ -140,5 +142,5 @@ INSERT INTO api_keys (user_id, api_key) VALUES (1, '4715057f-0b11-49d0-8a7b-296a
 
 -- RDF api key --
 INSERT INTO api_keys (user_id, api_key) VALUES (2, 'f80e8d48-112b-4760-8efa-9754d3469f6b');
-
+INSERT INTO api_keys (user_id, api_key) VALUES (2, '887af980-995b-46c3-80d7-6223491e398f'); 
  

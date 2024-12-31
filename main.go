@@ -31,6 +31,7 @@ import (
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
 	seqroutes "github.com/antonybholmes/go-edb-server/routes/modules/seqs"
+	toolsroutes "github.com/antonybholmes/go-edb-server/routes/tools"
 	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -73,7 +74,9 @@ func init() {
 	// 	auth.MAX_AGE_7_DAYS_SECS,
 	// 	[]byte(consts.SESSION_SECRET)))
 
-	store = sessions.NewCookieStore([]byte(consts.SESSION_SECRET))
+	// follow https://github.com/gorilla/sessions/blob/main/store.go#L55
+	// SESSION_KEY should be 64 bytes/chars and SESSION_ENCRYPTION_KEY should be 32 bytes/chars
+	store = sessions.NewCookieStore([]byte(consts.SESSION_KEY), []byte(consts.SESSION_ENCRYPTION_KEY))
 	// store.Options = &sessions.Options{
 	// 	Path:     "/",
 	// 	MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
@@ -256,6 +259,10 @@ func main() {
 		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
+	toolsGroup := e.Group("/tools")
+	toolsGroup.GET("/passwords/hash", toolsroutes.HashedPasswordRoute)
+	toolsGroup.GET("/key", toolsroutes.RandomKeyRoute)
+
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(validateJwtMiddleware,
 		JwtIsAccessTokenMiddleware,
@@ -347,7 +354,7 @@ func main() {
 	sessionGroup.POST("/api/keys/signin", sessionRoutes.SessionApiKeySignInRoute)
 
 	sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
-	sessionGroup.GET("/read", sessionRoutes.ReadSessionRoute)
+	sessionGroup.GET("/info", sessionRoutes.SessionInfoRoute)
 
 	sessionGroup.POST("/signout", authenticationroutes.SessionSignOutRoute)
 
@@ -359,12 +366,12 @@ func main() {
 		authenticationroutes.NewAccessTokenFromSessionRoute,
 		SessionIsValidMiddleware)
 
-	sessionUsersGroup := sessionGroup.Group("/users")
-	sessionUsersGroup.Use(SessionIsValidMiddleware)
+	sessionUserGroup := sessionGroup.Group("/user")
+	sessionUserGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authenticationroutes.UserFromSessionRoute)
+	sessionUserGroup.GET("", authenticationroutes.UserFromSessionRoute)
 
-	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
+	sessionUserGroup.POST("/update", authorization.SessionUpdateUserRoute)
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
 	// sessionPasswordGroup.Use(SessionIsValidMiddleware)
