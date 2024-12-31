@@ -8,7 +8,7 @@ import (
 )
 
 func SessionUpdateUserRoute(c echo.Context) error {
-	sessionData, err := authenticationroutes.ReadSession(c)
+	sessionData, err := authenticationroutes.ReadSessionInfo(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)

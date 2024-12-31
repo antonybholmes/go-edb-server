@@ -122,7 +122,7 @@ func JwtHasLoginPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		sessData, err := authenticationroutes.ReadSession(c)
+		sessData, err := authenticationroutes.ReadSessionInfo(c)
 
 		if err != nil {
 			return routes.AuthErrorReq("cannot get user id from session")

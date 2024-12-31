@@ -74,6 +74,8 @@ func init() {
 	// 	auth.MAX_AGE_7_DAYS_SECS,
 	// 	[]byte(consts.SESSION_SECRET)))
 
+	// follow https://github.com/gorilla/sessions/blob/main/store.go#L55
+	// SESSION_KEY should be 64 bytes/chars and SESSION_ENCRYPTION_KEY should be 32 bytes/chars
 	store = sessions.NewCookieStore([]byte(consts.SESSION_KEY), []byte(consts.SESSION_ENCRYPTION_KEY))
 	// store.Options = &sessions.Options{
 	// 	Path:     "/",
@@ -352,7 +354,7 @@ func main() {
 	sessionGroup.POST("/api/keys/signin", sessionRoutes.SessionApiKeySignInRoute)
 
 	sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
-	sessionGroup.GET("/read", sessionRoutes.ReadSessionRoute)
+	sessionGroup.GET("/info", sessionRoutes.SessionInfoRoute)
 
 	sessionGroup.POST("/signout", authenticationroutes.SessionSignOutRoute)
 

@@ -266,7 +266,7 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 	return UserSignedInResp(c)
 }
 
-type SessionData struct {
+type SessionInfo struct {
 	AuthUser  *auth.AuthUser `json:"user"`
 	IsValid   bool           `json:"valid"`
 	CreatedAt string         `json:"createdAt"`
@@ -319,7 +319,7 @@ func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func ReadSession(c echo.Context) (*SessionData, error) {
+func ReadSessionInfo(c echo.Context) (*SessionInfo, error) {
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
@@ -340,21 +340,21 @@ func ReadSession(c echo.Context) (*SessionData, error) {
 	expires, _ := sess.Values[SESSION_EXPIRES_AT].(string)
 	//isValid := publicId != ""
 
-	return &SessionData{AuthUser: &user,
+	return &SessionInfo{AuthUser: &user,
 			CreatedAt: createdAt,
 			ExpiresAt: expires},
 		nil
 }
 
 // Read the user session. Can also be used to determin if session is valid
-func (sr *SessionRoutes) ReadSessionRoute(c echo.Context) error {
-	sess, err := ReadSession(c)
+func (sr *SessionRoutes) SessionInfoRoute(c echo.Context) error {
+	sessionInfo, err := ReadSessionInfo(c)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
-	return routes.MakeDataPrettyResp(c, "", sess)
+	return routes.MakeDataPrettyResp(c, "", sessionInfo)
 }
 
 // Validate the passwordless token we generated and create

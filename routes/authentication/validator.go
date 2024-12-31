@@ -173,7 +173,7 @@ func (validator *Validator) LoadAuthUserFromSession() *Validator {
 		return validator
 	}
 
-	sessionData, err := ReadSession(validator.c)
+	sessionData, err := ReadSessionInfo(validator.c)
 
 	if err != nil {
 		validator.Err = routes.ErrorReq("user not in session")
