@@ -108,13 +108,13 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	return validator
 }
 
-func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
+func (validator *Validator) LoadAuthUserFromUuid() *Validator {
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.LoginBodyReq.PublicId)
+	authUser, err := userdbcache.FindUserByUuid(validator.LoginBodyReq.Uuid)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
@@ -238,7 +238,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
+	authUser, err := userdbcache.FindUserByUuid(validator.Claims.Uuid)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()

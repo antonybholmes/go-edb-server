@@ -439,7 +439,7 @@ func NewAccessTokenFromSessionRoute(c echo.Context) error {
 	// }
 
 	// generate a new token from what is stored in the sesssion
-	t, err := tokengen.AccessToken(c, user.PublicId, auth.MakeClaim(user.Roles))
+	t, err := tokengen.AccessToken(c, user.Uuid, auth.MakeClaim(user.Roles))
 
 	if err != nil {
 		return routes.TokenErrorReq()

@@ -67,7 +67,7 @@ func RolesRoute(c echo.Context) error {
 
 func UpdateUserRoute(c echo.Context) error {
 
-	return authenticationroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromPublicId().Success(func(validator *authenticationroutes.Validator) error {
+	return authenticationroutes.NewValidator(c).CheckUsernameIsWellFormed().CheckEmailIsWellFormed().LoadAuthUserFromUuid().Success(func(validator *authenticationroutes.Validator) error {
 
 		//db, err := userdbcache.NewConn()
 
@@ -148,9 +148,9 @@ func AddUserRoute(c echo.Context) error {
 }
 
 func DeleteUserRoute(c echo.Context) error {
-	publicId := c.Param("publicId")
+	uuid := c.Param("uuid")
 
-	err := userdbcache.DeleteUser(publicId)
+	err := userdbcache.DeleteUser(uuid)
 
 	if err != nil {
 		return routes.ErrorReq(err)
