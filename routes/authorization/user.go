@@ -9,7 +9,6 @@ import (
 
 	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type NameReq struct {
@@ -33,8 +32,6 @@ func UpdateUserRoute(c echo.Context) error {
 		if err != nil {
 			return routes.ErrorReq(err)
 		}
-
-		log.Debug().Msgf("update pub %s", publicId)
 
 		err = userdbcache.SetUserInfo(authUser,
 			validator.LoginBodyReq.Username,

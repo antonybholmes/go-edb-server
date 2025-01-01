@@ -6,7 +6,6 @@ import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
 	seq "github.com/antonybholmes/go-seqs"
-	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-seqs/seqsdbcache"
 	"github.com/labstack/echo/v4"
@@ -33,18 +32,14 @@ func ParseSeqParamsFromPost(c echo.Context) (*SeqParams, error) {
 	err := c.Bind(&params)
 
 	if err != nil {
-		log.Debug().Msgf("bind err %s", err)
 		return nil, err
 	}
 
 	location, err := dna.ParseLocation(params.Location)
 
 	if err != nil {
-		log.Debug().Msgf("loc err %s", err)
 		return nil, err
 	}
-
-	log.Debug().Msgf("scale %f", params.Scale)
 
 	return &SeqParams{Location: location, BinSize: params.BinSize, Tracks: params.Tracks, Scale: params.Scale}, nil
 }

@@ -226,9 +226,8 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 	//user := c.Get("user").(*jwt.Token)
 	//claims := user.Claims.(*TokenClaims)
 
-	log.Debug().Msgf("auth0 claims %v", tokenClaims)
-
-	log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
+	//log.Debug().Msgf("auth0 claims %v", tokenClaims)
+	//log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
 
 	email, err := mail.ParseAddress(tokenClaims.Email)
 
@@ -239,7 +238,7 @@ func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
 	authUser, err := userdbcache.CreateUserFromAuth0(tokenClaims.Name, email)
 
 	if err != nil {
-		log.Debug().Msgf("err %s", err)
+
 		return routes.ErrorReq(err)
 	}
 
@@ -275,6 +274,7 @@ type SessionInfo struct {
 
 // initialize a session with default age and ids
 func (sr *SessionRoutes) initSession(c echo.Context, authUser *auth.AuthUser) error {
+	log.Debug().Msgf("user init %v", authUser)
 	userData, err := json.Marshal(authUser)
 
 	if err != nil {
@@ -428,8 +428,6 @@ func NewAccessTokenFromSessionRoute(c echo.Context) error {
 	// if err := json.Unmarshal([]byte(userData), &user); err != nil {
 	// 	return routes.ErrorReq(err)
 	// }
-
-	//log.Debug().Msgf("poop %v", c.Get("user"))
 
 	user := c.Get("user").(*auth.AuthUser)
 

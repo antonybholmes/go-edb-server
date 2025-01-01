@@ -203,7 +203,7 @@ func main() {
 			"https://edb.rdf-lab.org",
 			"https://dev.edb-app-astro.pages.dev",
 			"https://edb-client-astro.pages.dev"},
-		AllowMethods: []string{http.MethodGet, http.MethodPost},
+		//AllowMethods: []string{http.MethodGet, http.MethodPost},
 		//AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "Set-Cookie"},
 		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
