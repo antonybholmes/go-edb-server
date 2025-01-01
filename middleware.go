@@ -127,7 +127,7 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return routes.AuthErrorReq("cannot get user id from session")
 		}
 
-		c.Set("user", sessData.AuthUser)
+		c.Set("authUser", sessData.AuthUser)
 
 		return next(c)
 	}

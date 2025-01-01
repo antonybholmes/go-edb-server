@@ -353,7 +353,7 @@ func main() {
 
 	sessionGroup.POST("/api/keys/signin", sessionRoutes.SessionApiKeySignInRoute)
 
-	sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
+	//sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
 	sessionGroup.GET("/info", sessionRoutes.SessionInfoRoute)
 
 	sessionGroup.POST("/signout", authenticationroutes.SessionSignOutRoute)
@@ -364,6 +364,10 @@ func main() {
 
 	sessionGroup.POST("/tokens/access",
 		authenticationroutes.NewAccessTokenFromSessionRoute,
+		SessionIsValidMiddleware)
+
+	sessionGroup.POST("/renew",
+		sessionRoutes.SessionRenewRoute,
 		SessionIsValidMiddleware)
 
 	sessionUserGroup := sessionGroup.Group("/user")

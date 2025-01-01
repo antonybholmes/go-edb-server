@@ -274,7 +274,7 @@ type SessionInfo struct {
 
 // initialize a session with default age and ids
 func (sr *SessionRoutes) initSession(c echo.Context, authUser *auth.AuthUser) error {
-	log.Debug().Msgf("user init %v", authUser)
+
 	userData, err := json.Marshal(authUser)
 
 	if err != nil {
@@ -357,6 +357,25 @@ func (sr *SessionRoutes) SessionInfoRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", sessionInfo)
 }
 
+func (sr *SessionRoutes) SessionRenewRoute(c echo.Context) error {
+	authUser := c.Get("authUser").(*auth.AuthUser)
+
+	// refresh user
+	authUser, err := userdbcache.FindUserById(authUser.Id)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	err = sr.initSession(c, authUser)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
 // Validate the passwordless token we generated and create
 // a user session. The session acts as a refresh token and
 // can be used to generate access tokens to use resources
@@ -429,7 +448,7 @@ func NewAccessTokenFromSessionRoute(c echo.Context) error {
 	// 	return routes.ErrorReq(err)
 	// }
 
-	user := c.Get("user").(*auth.AuthUser)
+	user := c.Get("authUser").(*auth.AuthUser)
 
 	//publicId, _ := sess.Values[SESSION_PUBLICID].(string)
 	//r//oles, _ := sess.Values[SESSION_ROLES].(string)
@@ -449,7 +468,7 @@ func NewAccessTokenFromSessionRoute(c echo.Context) error {
 }
 
 func UserFromSessionRoute(c echo.Context) error {
-	user := c.Get("user").(*auth.AuthUser)
+	user := c.Get("authUser").(*auth.AuthUser)
 
 	return routes.MakeDataPrettyResp(c, "", user)
 }
