@@ -367,10 +367,29 @@ func (sr *SessionRoutes) SessionRenewRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	err = sr.initSession(c, authUser)
+	//
+	// For the moment just update the user info
+
+	//err = sr.initSession(c, authUser)
+
+	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
-		return routes.ErrorReq(err)
+		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
+	}
+
+	userData, err := json.Marshal(authUser)
+
+	if err != nil {
+		return err
+	}
+
+	sess.Values[SESSION_USER] = string(userData)
+
+	err = sess.Save(c.Request(), c.Response())
+
+	if err != nil {
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)
