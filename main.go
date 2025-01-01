@@ -276,7 +276,7 @@ func main() {
 	adminUsersGroup.GET("/stats", adminroutes.UserStatsRoute)
 	adminUsersGroup.POST("/update", adminroutes.UpdateUserRoute)
 	adminUsersGroup.POST("/add", adminroutes.AddUserRoute)
-	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
+	adminUsersGroup.DELETE("/delete/:uuid", adminroutes.DeleteUserRoute)
 
 	// Allow users to sign up for an account
 	e.POST("/signup", authenticationroutes.SignupRoute)

@@ -73,7 +73,7 @@ func EmailAddressVerifiedRoute(c echo.Context) error {
 			return routes.MakeOkPrettyResp(c, "")
 		}
 
-		err := userdbcache.SetIsVerified(authUser.PublicId)
+		err := userdbcache.SetIsVerified(authUser.Uuid)
 
 		if err != nil {
 			return routes.MakeSuccessPrettyResp(c, "unable to verify user", false)

@@ -62,7 +62,7 @@ func UsernamePasswordSignInRoute(c echo.Context) error {
 			return routes.TokenErrorReq()
 		}
 
-		accessToken, err := tokengen.AccessToken(c, authUser.PublicId, roleClaim) //auth.MakeClaim(authUser.Roles))
+		accessToken, err := tokengen.AccessToken(c, authUser.Uuid, roleClaim) //auth.MakeClaim(authUser.Roles))
 
 		if err != nil {
 			return routes.TokenErrorReq()
@@ -82,7 +82,7 @@ func PasswordlessSigninEmailRoute(c echo.Context, validator *Validator) error {
 
 		authUser := validator.AuthUser
 
-		passwordlessToken, err := tokengen.PasswordlessToken(c, authUser.PublicId, validator.LoginBodyReq.VisitUrl)
+		passwordlessToken, err := tokengen.PasswordlessToken(c, authUser.Uuid, validator.LoginBodyReq.VisitUrl)
 
 		if err != nil {
 			return routes.ErrorReq(err)
