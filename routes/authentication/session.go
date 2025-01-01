@@ -384,6 +384,8 @@ func (sr *SessionRoutes) SessionRenewRoute(c echo.Context) error {
 		return err
 	}
 
+	log.Debug().Msgf("saving %s", string(userData))
+
 	sess.Values[SESSION_USER] = string(userData)
 
 	err = sess.Save(c.Request(), c.Response())
