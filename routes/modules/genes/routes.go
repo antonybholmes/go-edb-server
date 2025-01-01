@@ -15,7 +15,6 @@ import (
 	"github.com/antonybholmes/go-genes/genedbcache"
 	basemath "github.com/antonybholmes/go-math"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 const DEFAULT_LEVEL = genes.LEVEL_GENE
@@ -50,8 +49,6 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 	if v != "" {
 		level = genes.ParseLevel(v)
 	}
-
-	log.Debug().Msgf("genes level:%s", level)
 
 	canonical := strings.HasPrefix(strings.ToLower(c.QueryParam("canonical")), "t")
 

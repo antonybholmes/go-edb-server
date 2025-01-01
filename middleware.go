@@ -6,7 +6,6 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-edb-server/routes"
 	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
-	"github.com/rs/zerolog/log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -127,8 +126,6 @@ func SessionIsValidMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return routes.AuthErrorReq("cannot get user id from session")
 		}
-
-		log.Debug().Msgf("aha %v", sessData.AuthUser)
 
 		c.Set("user", sessData.AuthUser)
 

@@ -6,7 +6,6 @@ import (
 	"github.com/antonybholmes/go-beds"
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
-	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-beds/bedsdbcache"
 	"github.com/labstack/echo/v4"
@@ -29,14 +28,12 @@ func ParseBedParamsFromPost(c echo.Context) (*BedsParams, error) {
 	err := c.Bind(&params)
 
 	if err != nil {
-		log.Debug().Msgf("bind err %s", err)
 		return nil, err
 	}
 
 	location, err := dna.ParseLocation(params.Location)
 
 	if err != nil {
-		log.Debug().Msgf("loc err %s", err)
 		return nil, err
 	}
 
@@ -88,7 +85,6 @@ func BedRegionsRoute(c echo.Context) error {
 	params, err := ParseBedParamsFromPost(c)
 
 	if err != nil {
-		log.Debug().Msgf("bins param err %s", err)
 		return routes.ErrorReq(err)
 	}
 
