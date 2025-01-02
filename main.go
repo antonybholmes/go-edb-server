@@ -366,7 +366,7 @@ func main() {
 		authenticationroutes.NewAccessTokenFromSessionRoute,
 		SessionIsValidMiddleware)
 
-	sessionGroup.POST("/renew",
+	sessionGroup.POST("/refresh",
 		sessionRoutes.SessionRenewRoute,
 		SessionIsValidMiddleware)
 
