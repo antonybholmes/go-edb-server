@@ -11,7 +11,7 @@ import (
 )
 
 type JwtInfo struct {
-	PublicId string `json:"publicId"`
+	Uuid string `json:"uuid"`
 	//Name  string `json:"name"`
 	Type auth.TokenType `json:"type"`
 	//IpAddr  string `json:"ipAddr"`

@@ -15,7 +15,6 @@ import (
 	"github.com/antonybholmes/go-genes/genedbcache"
 	basemath "github.com/antonybholmes/go-math"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 const DEFAULT_LEVEL = genes.LEVEL_GENE
@@ -27,6 +26,8 @@ type GeneQuery struct {
 	Level    genes.Level
 	Db       *genes.GeneDB
 	Assembly string
+	// only show canonical genes
+	Canonical bool
 }
 
 type GenesRes struct {
@@ -49,7 +50,7 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 		level = genes.ParseLevel(v)
 	}
 
-	log.Debug().Msgf("genes level:%s", level)
+	canonical := strings.HasPrefix(strings.ToLower(c.QueryParam("canonical")), "t")
 
 	db, err := genedbcache.GeneDB(assembly)
 
@@ -57,11 +58,75 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 		return nil, fmt.Errorf("unable to open database for assembly %s %s", assembly, err)
 	}
 
-	return &GeneQuery{Assembly: assembly, Db: db, Level: level}, nil
+	return &GeneQuery{Assembly: assembly, Db: db, Level: level, Canonical: canonical}, nil
+}
+
+func GeneDBInfoRoute(c echo.Context) error {
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	info, _ := query.Db.GeneDBInfo()
+
+	// if err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
+
+	return routes.MakeDataPrettyResp(c, "", &info)
 }
 
 func AssembliesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", genedbcache.GetInstance().List())
+}
+
+func OverlappingGenesRoute(c echo.Context) error {
+	locations, err := dnaroutes.ParseLocationsFromPost(c) // dnaroutes.ParseLocationsFromPost(c)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	if len(locations) == 0 {
+		return routes.ErrorReq(fmt.Errorf("must supply at least 1 location"))
+	}
+
+	features, err := query.Db.OverlappingGenes(locations[0], query.Canonical)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", &features)
+}
+
+func GeneInfoRoute(c echo.Context) error {
+	search := c.QueryParam("search") // dnaroutes.ParseLocationsFromPost(c)
+
+	if search == "" {
+		return routes.ErrorReq(fmt.Errorf("search cannot be empty"))
+	}
+
+	query, err := ParseGeneQuery(c, c.Param("assembly"))
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	features, _ := query.Db.GeneInfo(search, query.Level)
+
+	// if err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
+
+	return routes.MakeDataPrettyResp(c, "", &features)
 }
 
 func WithinGenesRoute(c echo.Context) error {
@@ -92,6 +157,7 @@ func WithinGenesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &data)
 }
 
+// Find the n closest genes to a location
 func ClosestGeneRoute(c echo.Context) error {
 	locations, err := dnaroutes.ParseLocationsFromPost(c)
 

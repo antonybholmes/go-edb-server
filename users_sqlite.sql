@@ -39,8 +39,8 @@ CREATE TABLE user_roles_permissions (
     permission_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(role_id, permission_id),
-    FOREIGN KEY(role_id) REFERENCES user_roles(id),
-    FOREIGN KEY(permission_id) REFERENCES user_permissions(id));
+    FOREIGN KEY(role_id) REFERENCES user_roles(id) ON DELETE CASCADE,
+    FOREIGN KEY(permission_id) REFERENCES user_permissions(id) ON DELETE CASCADE);
 CREATE INDEX roles_permissions_role_id_idx ON user_roles_permissions (role_id, permission_id);
 
 -- super/user admin
@@ -88,8 +88,8 @@ CREATE TABLE users_roles (
     role_id INTEGER NOT NULL, 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     UNIQUE(user_id, role_id),
-    FOREIGN KEY(user_id) REFERENCES users(id),
-    FOREIGN KEY(role_id) REFERENCES user_roles(id));
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(role_id) REFERENCES user_roles(id) ON DELETE CASCADE);
 CREATE INDEX users_roles_user_id_idx ON users_roles (user_id, role_id);
 
 
@@ -101,3 +101,14 @@ CREATE TABLE users_sessions(
 );
 CREATE INDEX users_sessions_public_id_idx ON users_sessions (public_id);
 CREATE INDEX users_sessions_session_id_idx ON users_sessions (session_id);
+
+
+DROP TABLE IF EXISTS api_keys;
+CREATE TABLE api_keys (
+    id INTEGER PRIMARY KEY ASC, 
+    user_id INTEGER NOT NULL,
+    key TEXT NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE(user_id, key),
+    FOREIGN KEY(user_id) REFERENCES users(id));
+CREATE INDEX api_keys_key_idx ON api_keys (key);

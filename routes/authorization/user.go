@@ -9,7 +9,6 @@ import (
 
 	"github.com/antonybholmes/go-mailer"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 type NameReq struct {
@@ -26,14 +25,19 @@ func UpdateUserRoute(c echo.Context) error {
 
 		//db, err := userdbcache.AutoConn(nil) //not clear on what is needed for the user and password
 
-		publicId := validator.Claims.PublicId
+		uuid := validator.Claims.Uuid
 
-		log.Debug().Msgf("update pub %s", publicId)
+		authUser, err := userdbcache.FindUserByUuid(uuid)
 
-		err := userdbcache.SetUserInfo(publicId,
-			validator.Req.Username,
-			validator.Req.FirstName,
-			validator.Req.LastName)
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		err = userdbcache.SetUserInfo(authUser,
+			validator.LoginBodyReq.Username,
+			validator.LoginBodyReq.FirstName,
+			validator.LoginBodyReq.LastName,
+			false)
 
 		if err != nil {
 			return routes.ErrorReq(err)
@@ -42,7 +46,7 @@ func UpdateUserRoute(c echo.Context) error {
 		//return SendUserInfoUpdatedEmail(c, authUser)
 
 		// reload user details
-		authUser, err := userdbcache.FindUserByPublicId(publicId)
+		authUser, err = userdbcache.FindUserByUuid(uuid)
 
 		if err != nil {
 			return routes.ErrorReq(err)

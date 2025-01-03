@@ -1,6 +1,8 @@
 package authenticationroutes
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/mail"
 	"os"
@@ -20,8 +22,15 @@ import (
 )
 
 const (
-	SESSION_PUBLICID string = "publicId"
-	SESSION_ROLES    string = "roles"
+	//SESSION_PUBLICID   string = "publicId"
+	//SESSION_ROLES      string = "roles"
+	SESSION_USER       string = "user"
+	SESSION_CREATED_AT string = "createdAt"
+	SESSION_EXPIRES_AT string = "expiresAt"
+)
+
+const (
+	ERROR_CREATING_SESSION string = "error creating session"
 )
 
 var SESSION_OPT_ZERO *sessions.Options
@@ -88,7 +97,8 @@ func NewSessionRoutes() *SessionRoutes {
 	}
 
 	options := sessions.Options{
-		Path:     "/",
+		Path: "/",
+		//Domain:   consts.APP_DOMAIN,
 		MaxAge:   maxAge,
 		HttpOnly: false,
 		Secure:   true,
@@ -105,36 +115,19 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 		return err
 	}
 
-	if validator.Req.Password == "" {
+	if validator.LoginBodyReq.Password == "" {
 		return PasswordlessSigninEmailRoute(c, validator)
 	}
 
-	user := validator.Req.Username
+	user := validator.LoginBodyReq.Username
 
 	authUser, err := userdbcache.FindUserByUsername(user)
-
-	// if err != nil {
-	// 	//
-	// 	email, err := mail.ParseAddress(user)
-
-	// 	if err != nil {
-	// 		return routes.InvalidEmailReq()
-	// 	}
-
-	// 	// also check if username is valid email and try to login
-	// 	// with that
-	// 	authUser, err = userdbcache.FindUserByEmail(email)
-
-	// 	if err != nil {
-	// 		return routes.UserDoesNotExistReq()
-	// 	}
-	// }
 
 	if err != nil {
 		return routes.UserDoesNotExistReq()
 	}
 
-	if authUser.EmailVerifiedAt == 0 {
+	if authUser.EmailVerifiedAt == auth.EMAIL_NOT_VERIFIED_TIME_S {
 		return routes.EmailNotVerifiedReq()
 	}
 
@@ -146,29 +139,31 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 
 	roleClaim := auth.MakeClaim(roles)
 
-	if !auth.CanLogin(roleClaim) {
+	if !auth.CanSignin(roleClaim) {
 		return routes.UserNotAllowedToSignIn()
 	}
 
-	err = authUser.CheckPasswordsMatch(validator.Req.Password)
+	err = authUser.CheckPasswordsMatch(validator.LoginBodyReq.Password)
 
 	if err != nil {
 		return routes.ErrorReq(err)
 	}
 
 	sess, err := session.Get(consts.SESSION_NAME, c)
+
 	if err != nil {
-		return routes.ErrorReq("error creating session")
+		return routes.ErrorReq(err)
 	}
 
-	if validator.Req.StaySignedIn {
+	// set session options
+	if validator.LoginBodyReq.StaySignedIn {
 		sess.Options = sr.sessionOptions
 	} else {
 		sess.Options = SESSION_OPT_ZERO
 	}
 
-	sess.Values[SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
+	//sess.Values[SESSION_PUBLICID] = authUser.PublicId
+	//sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
 
 	sess.Save(c.Request(), c.Response())
 
@@ -176,10 +171,236 @@ func (sr *SessionRoutes) SessionUsernamePasswordSignInRoute(c echo.Context) erro
 	//return c.NoContent(http.StatusOK)
 }
 
+func (sr *SessionRoutes) SessionApiKeySignInRoute(c echo.Context) error {
+	validator, err := NewValidator(c).ParseLoginRequestBody().Ok()
+
+	if err != nil {
+		return err
+	}
+
+	authUser, err := userdbcache.FindUserByApiKey(validator.LoginBodyReq.ApiKey)
+
+	if err != nil {
+		return routes.UserDoesNotExistReq()
+	}
+
+	if authUser.EmailVerifiedAt == auth.EMAIL_NOT_VERIFIED_TIME_S {
+		return routes.EmailNotVerifiedReq()
+	}
+
+	roles, err := userdbcache.UserRoleList(authUser)
+
+	if err != nil {
+		return routes.AuthErrorReq("could not get user roles")
+	}
+
+	roleClaim := auth.MakeClaim(roles)
+
+	if !auth.CanSignin(roleClaim) {
+		return routes.UserNotAllowedToSignIn()
+	}
+
+	err = sr.initSession(c, authUser) //, roleClaim)
+
+	if err != nil {
+		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
+	}
+
+	return c.String(http.StatusOK, "Session set")
+
+	// resp, err := readSession(c)
+
+	// if err != nil {
+	// 	return routes.ErrorReq(ERROR_CREATING_SESSION)
+	// }
+
+	// return routes.MakeDataPrettyResp(c, "", resp)
+}
+
+func (sr *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	tokenClaims := user.Claims.(*auth.Auth0TokenClaims)
+
+	//myClaims := user.Claims.(*auth.TokenClaims) //hmm.Claims.(*TokenClaims)
+
+	//user := c.Get("user").(*jwt.Token)
+	//claims := user.Claims.(*TokenClaims)
+
+	//log.Debug().Msgf("auth0 claims %v", tokenClaims)
+	//log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
+
+	email, err := mail.ParseAddress(tokenClaims.Email)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	authUser, err := userdbcache.CreateUserFromAuth0(tokenClaims.Name, email)
+
+	if err != nil {
+
+		return routes.ErrorReq(err)
+	}
+
+	roles, err := userdbcache.UserRoleList(authUser)
+
+	if err != nil {
+		return routes.ErrorReq("user roles not found")
+	}
+
+	roleClaim := auth.MakeClaim(roles)
+
+	//log.Debug().Msgf("user %v", authUser)
+
+	if !auth.CanSignin(roleClaim) {
+		return routes.UserNotAllowedToSignIn()
+	}
+
+	err = sr.initSession(c, authUser) // roleClaim)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return UserSignedInResp(c)
+}
+
+type SessionInfo struct {
+	AuthUser  *auth.AuthUser `json:"user"`
+	IsValid   bool           `json:"valid"`
+	CreatedAt string         `json:"createdAt"`
+	ExpiresAt string         `json:"expiresAt"`
+}
+
+// initialize a session with default age and ids
+func (sr *SessionRoutes) initSession(c echo.Context, authUser *auth.AuthUser) error {
+
+	userData, err := json.Marshal(authUser)
+
+	if err != nil {
+		return err
+	}
+
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
+	}
+
+	// set session options
+	sess.Options = sr.sessionOptions
+
+	//sess.Values[SESSION_PUBLICID] = authUser.PublicId
+	//sess.Values[SESSION_ROLES] = roles //auth.MakeClaim(authUser.Roles)
+	sess.Values[SESSION_USER] = string(userData)
+
+	now := time.Now().UTC()
+	sess.Values[SESSION_CREATED_AT] = now.Format(time.RFC3339)
+	sess.Values[SESSION_EXPIRES_AT] = now.Add(time.Duration(sess.Options.MaxAge) * time.Second).Format(time.RFC3339)
+
+	err = sess.Save(c.Request(), c.Response())
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// create empty session for testing
+func (sr *SessionRoutes) InitSessionRoute(c echo.Context) error {
+
+	err := sr.initSession(c, &auth.AuthUser{})
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func ReadSessionInfo(c echo.Context) (*SessionInfo, error) {
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return nil, fmt.Errorf(ERROR_CREATING_SESSION)
+	}
+
+	userData, _ := sess.Values[SESSION_USER].(string)
+
+	var user auth.AuthUser
+
+	if err := json.Unmarshal([]byte(userData), &user); err != nil {
+		return nil, err
+	}
+
+	//publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	//roles, _ := sess.Values[SESSION_ROLES].(string)
+	createdAt, _ := sess.Values[SESSION_CREATED_AT].(string)
+	expires, _ := sess.Values[SESSION_EXPIRES_AT].(string)
+	//isValid := publicId != ""
+
+	return &SessionInfo{AuthUser: &user,
+			CreatedAt: createdAt,
+			ExpiresAt: expires},
+		nil
+}
+
+// Read the user session. Can also be used to determin if session is valid
+func (sr *SessionRoutes) SessionInfoRoute(c echo.Context) error {
+	sessionInfo, err := ReadSessionInfo(c)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", sessionInfo)
+}
+
+func (sr *SessionRoutes) SessionRenewRoute(c echo.Context) error {
+	authUser := c.Get("authUser").(*auth.AuthUser)
+
+	// refresh user
+	authUser, err := userdbcache.FindUserById(authUser.Id)
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	//
+	// For the moment just update the user info
+
+	//err = sr.initSession(c, authUser)
+
+	sess, err := session.Get(consts.SESSION_NAME, c)
+
+	if err != nil {
+		return fmt.Errorf("%s", ERROR_CREATING_SESSION)
+	}
+
+	userData, err := json.Marshal(authUser)
+
+	if err != nil {
+		return err
+	}
+
+	log.Debug().Msgf("saving %s", string(userData))
+
+	sess.Values[SESSION_USER] = string(userData)
+
+	err = sess.Save(c.Request(), c.Response())
+
+	if err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
 // Validate the passwordless token we generated and create
 // a user session. The session acts as a refresh token and
 // can be used to generate access tokens to use resources
-func (sessionRoutes *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
+func (sr *SessionRoutes) SessionPasswordlessValidateSignInRoute(c echo.Context) error {
 
 	return NewValidator(c).LoadAuthUserFromToken().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
 
@@ -192,115 +413,73 @@ func (sessionRoutes *SessionRoutes) SessionPasswordlessValidateSignInRoute(c ech
 		roles, err := userdbcache.UserRoleList(authUser)
 
 		if err != nil {
-			return routes.ErrorReq("error getting user roles")
+			return routes.ErrorReq(err)
 		}
 
 		roleClaim := auth.MakeClaim(roles)
 
 		//log.Debug().Msgf("user %v", authUser)
 
-		if !auth.CanLogin(roleClaim) {
+		if !auth.CanSignin(roleClaim) {
 			return routes.UserNotAllowedToSignIn()
 		}
 
-		sess, err := session.Get(consts.SESSION_NAME, c)
+		err = sr.initSession(c, authUser) //, roleClaim)
 
 		if err != nil {
-			return routes.ErrorReq("error creating session")
+			return routes.ErrorReq(err)
 		}
-
-		// set session options such as if cookie secure and how long it
-		// persists
-		sess.Options = sessionRoutes.sessionOptions //SESSION_OPT_30_DAYS
-		sess.Values[SESSION_PUBLICID] = authUser.PublicId
-		sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
-
-		sess.Save(c.Request(), c.Response())
 
 		return UserSignedInResp(c)
 	})
-}
-
-func (sessionRoutes *SessionRoutes) SessionSignInUsingAuth0Route(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	tokenClaims := user.Claims.(*auth.Auth0TokenClaims)
-
-	//myClaims := user.Claims.(*auth.TokenClaims) //hmm.Claims.(*TokenClaims)
-
-	//user := c.Get("user").(*jwt.Token)
-	//claims := user.Claims.(*TokenClaims)
-
-	log.Debug().Msgf("auth0 claims %v", tokenClaims)
-
-	log.Debug().Msgf("auth0 claims %v", tokenClaims.Email)
-
-	sess, err := session.Get(consts.SESSION_NAME, c)
-
-	if err != nil {
-		return routes.ErrorReq("error creating session")
-	}
-
-	email, err := mail.ParseAddress(tokenClaims.Email)
-
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
-
-	authUser, err := userdbcache.CreateUserFromAuth0(tokenClaims.Name, email)
-
-	if err != nil {
-		log.Debug().Msgf("err %s", err)
-		return routes.ErrorReq(err)
-	}
-
-	roles, err := userdbcache.UserRoleList(authUser)
-
-	if err != nil {
-		return routes.ErrorReq("error getting user roles")
-	}
-
-	roleClaim := auth.MakeClaim(roles)
-
-	//log.Debug().Msgf("user %v", authUser)
-
-	if !auth.CanLogin(roleClaim) {
-		return routes.UserNotAllowedToSignIn()
-	}
-
-	sess.Options = sessionRoutes.sessionOptions //SESSION_OPT_30_DAYS
-	sess.Values[SESSION_PUBLICID] = authUser.PublicId
-	sess.Values[SESSION_ROLES] = roleClaim //auth.MakeClaim(authUser.Roles)
-
-	sess.Save(c.Request(), c.Response())
-
-	return UserSignedInResp(c)
 }
 
 func SessionSignOutRoute(c echo.Context) error {
 	sess, err := session.Get(consts.SESSION_NAME, c)
 
 	if err != nil {
-		return routes.ErrorReq("error creating session")
+		return routes.ErrorReq(ERROR_CREATING_SESSION)
 	}
 
 	log.Debug().Msgf("invalidate session")
 
 	// invalidate by time
-	sess.Values[SESSION_PUBLICID] = ""
-	sess.Values[SESSION_ROLES] = ""
+	sess.Values[SESSION_USER] = ""
+	//sess.Values[SESSION_ROLES] = ""
+	sess.Values[SESSION_CREATED_AT] = ""
+	sess.Values[SESSION_EXPIRES_AT] = ""
 	sess.Options.MaxAge = -1
 
 	sess.Save(c.Request(), c.Response())
 
-	return routes.MakeOkPrettyResp(c, "user was signed out")
+	return routes.MakeOkPrettyResp(c, "user has been signed out")
 }
 
-func SessionNewAccessTokenRoute(c echo.Context) error {
-	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
-	roles, _ := sess.Values[SESSION_ROLES].(string)
+func NewAccessTokenFromSessionRoute(c echo.Context) error {
+	// sess, _ := session.Get(consts.SESSION_NAME, c)
 
-	t, err := tokengen.AccessToken(c, publicId, roles)
+	// userData, ok := sess.Values["user"].(string)
+
+	// if !ok {
+	// 	return routes.ErrorReq(fmt.Errorf("malformed user info"))
+	// }
+
+	// var user auth.AuthUser
+	// if err := json.Unmarshal([]byte(userData), &user); err != nil {
+	// 	return routes.ErrorReq(err)
+	// }
+
+	user := c.Get("authUser").(*auth.AuthUser)
+
+	//publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+	//r//oles, _ := sess.Values[SESSION_ROLES].(string)
+
+	// if publicId == "" {
+	// 	return routes.ErrorReq(fmt.Errorf("public id cannot be empty"))
+	// }
+
+	// generate a new token from what is stored in the sesssion
+	t, err := tokengen.AccessToken(c, user.Uuid, auth.MakeClaim(user.Roles))
 
 	if err != nil {
 		return routes.TokenErrorReq()
@@ -309,102 +488,8 @@ func SessionNewAccessTokenRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &routes.AccessTokenResp{AccessToken: t})
 }
 
-func SessionUserRoute(c echo.Context) error {
-	sess, _ := session.Get(consts.SESSION_NAME, c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
+func UserFromSessionRoute(c echo.Context) error {
+	user := c.Get("authUser").(*auth.AuthUser)
 
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
-
-	if err != nil {
-		return routes.UserDoesNotExistReq()
-	}
-
-	return routes.MakeDataPrettyResp(c, "", *authUser)
+	return routes.MakeDataPrettyResp(c, "", user)
 }
-
-// // Start passwordless login by sending an email
-// func SessionSendResetPasswordEmailRoute(c echo.Context) error {
-
-// 	return NewValidator(c).LoadAuthUserFromSession().CheckUserHasVerifiedEmailAddress().Success(func(validator *Validator) error {
-
-// 		authUser := validator.AuthUser
-// 		req := validator.Req
-
-// 		otpJwt, err := tokengen.ResetPasswordToken(c, authUser)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		var file string
-
-// 		if req.CallbackUrl != "" {
-// 			file = "templates/email/password/reset/web.html"
-// 		} else {
-// 			file = "templates/email/password/reset/api.html"
-// 		}
-
-// 		go SendEmailWithToken("Password Reset",
-// 			authUser,
-// 			file,
-// 			otpJwt,
-// 			req.CallbackUrl,
-// 			req.VisitUrl)
-
-// 		//if err != nil {
-// 		//	return routes.ErrorReq(err)
-// 		//}
-
-// 		return routes.MakeOkPrettyResp(c, "check your email for a password reset link")
-// 	})
-// }
-
-// func SessionUpdatePasswordRoute(c echo.Context) error {
-
-// 	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
-
-// 		err := userdbcache.SetPassword(validator.AuthUser.PublicId, validator.Req.Password)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		return SendEmailChangedEmail(c, validator.AuthUser, validator.Req.Password)
-// 	})
-// }
-
-// func SessionSendResetEmailEmailRoute(c echo.Context) error {
-
-// 	return NewValidator(c).LoadAuthUserFromSession().ParseLoginRequestBody().Success(func(validator *Validator) error {
-
-// 		req := validator.Req
-
-// 		newEmail, err := mail.ParseAddress(req.Email)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		otpJwt, err := tokengen.ResetEmailToken(c, validator.AuthUser, newEmail)
-
-// 		if err != nil {
-// 			return routes.ErrorReq(err)
-// 		}
-
-// 		file := "templates/email/email/reset/web.html"
-
-// 		go BaseSendEmailWithToken("Change Your Email Address",
-// 			validator.AuthUser,
-// 			newEmail,
-// 			file,
-// 			otpJwt,
-// 			req.CallbackUrl,
-// 			req.VisitUrl)
-
-// 		//if err != nil {
-// 		//	return routes.ErrorReq(err)
-// 		//}
-
-// 		return routes.MakeOkPrettyResp(c, "check your email for a change email link")
-// 	})
-// }

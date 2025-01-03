@@ -13,19 +13,25 @@ import (
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/tokengen"
 	"github.com/antonybholmes/go-auth/userdbcache"
+	"github.com/antonybholmes/go-beds/bedsdbcache"
+	"github.com/antonybholmes/go-cytobands/cytobandsdbcache"
 	"github.com/antonybholmes/go-dna/dnadbcache"
 	"github.com/antonybholmes/go-edb-server/consts"
 	adminroutes "github.com/antonybholmes/go-edb-server/routes/admin"
 	auth0routes "github.com/antonybholmes/go-edb-server/routes/auth0"
 	authenticationroutes "github.com/antonybholmes/go-edb-server/routes/authentication"
 	"github.com/antonybholmes/go-edb-server/routes/authorization"
+	bedroutes "github.com/antonybholmes/go-edb-server/routes/modules/beds"
+	cytobandroutes "github.com/antonybholmes/go-edb-server/routes/modules/cytobands"
 	dnaroutes "github.com/antonybholmes/go-edb-server/routes/modules/dna"
-	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/gene"
 	geneconvroutes "github.com/antonybholmes/go-edb-server/routes/modules/geneconv"
+	generoutes "github.com/antonybholmes/go-edb-server/routes/modules/genes"
 	gexroutes "github.com/antonybholmes/go-edb-server/routes/modules/gex"
 	motifroutes "github.com/antonybholmes/go-edb-server/routes/modules/motifs"
 	mutationroutes "github.com/antonybholmes/go-edb-server/routes/modules/mutation"
 	pathwayroutes "github.com/antonybholmes/go-edb-server/routes/modules/pathway"
+	seqroutes "github.com/antonybholmes/go-edb-server/routes/modules/seqs"
+	toolsroutes "github.com/antonybholmes/go-edb-server/routes/tools"
 	utilroutes "github.com/antonybholmes/go-edb-server/routes/util"
 	"github.com/antonybholmes/go-geneconv/geneconvdbcache"
 	"github.com/antonybholmes/go-genes/genedbcache"
@@ -33,6 +39,7 @@ import (
 	"github.com/antonybholmes/go-motifs/motifsdb"
 	"github.com/antonybholmes/go-mutations/mutationdbcache"
 	"github.com/antonybholmes/go-pathway/pathwaydbcache"
+	"github.com/antonybholmes/go-seqs/seqsdbcache"
 	"github.com/antonybholmes/go-sys/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
@@ -67,7 +74,9 @@ func init() {
 	// 	auth.MAX_AGE_7_DAYS_SECS,
 	// 	[]byte(consts.SESSION_SECRET)))
 
-	store = sessions.NewCookieStore([]byte(consts.SESSION_SECRET))
+	// follow https://github.com/gorilla/sessions/blob/main/store.go#L55
+	// SESSION_KEY should be 64 bytes/chars and SESSION_ENCRYPTION_KEY should be 32 bytes/chars
+	store = sessions.NewCookieStore([]byte(consts.SESSION_KEY), []byte(consts.SESSION_ENCRYPTION_KEY))
 	// store.Options = &sessions.Options{
 	// 	Path:     "/",
 	// 	MaxAge:   auth.MAX_AGE_7_DAYS_SECS,
@@ -92,6 +101,12 @@ func init() {
 	motifsdb.InitCache("data/modules/motifs/motifs.db")
 
 	pathwaydbcache.InitCache("data/modules/pathway/pathway-v2.db")
+
+	seqsdbcache.InitCache("data/modules/seqs/")
+
+	cytobandsdbcache.InitCache("data/modules/cytobands/")
+
+	bedsdbcache.InitCache("data/modules/beds/")
 }
 
 func main() {
@@ -188,7 +203,8 @@ func main() {
 			"https://edb.rdf-lab.org",
 			"https://dev.edb-app-astro.pages.dev",
 			"https://edb-client-astro.pages.dev"},
-		AllowMethods: []string{http.MethodGet, http.MethodDelete, http.MethodPost},
+		//AllowMethods: []string{http.MethodGet, http.MethodPost},
+		//AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "Set-Cookie"},
 		// for sharing session cookie for validating logins etc
 		AllowCredentials: true,
 	}))
@@ -243,6 +259,10 @@ func main() {
 		return c.JSON(http.StatusOK, InfoResp{Arch: runtime.GOARCH, IpAddr: c.RealIP()})
 	})
 
+	toolsGroup := e.Group("/tools")
+	toolsGroup.GET("/passwords/hash", toolsroutes.HashedPasswordRoute)
+	toolsGroup.GET("/key", toolsroutes.RandomKeyRoute)
+
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(validateJwtMiddleware,
 		JwtIsAccessTokenMiddleware,
@@ -256,7 +276,7 @@ func main() {
 	adminUsersGroup.GET("/stats", adminroutes.UserStatsRoute)
 	adminUsersGroup.POST("/update", adminroutes.UpdateUserRoute)
 	adminUsersGroup.POST("/add", adminroutes.AddUserRoute)
-	adminUsersGroup.DELETE("/delete/:publicId", adminroutes.DeleteUserRoute)
+	adminUsersGroup.DELETE("/delete/:uuid", adminroutes.DeleteUserRoute)
 
 	// Allow users to sign up for an account
 	e.POST("/signup", authenticationroutes.SignupRoute)
@@ -331,20 +351,31 @@ func main() {
 		sessionRoutes.SessionPasswordlessValidateSignInRoute,
 		validateJwtMiddleware)
 
-	sessionGroup.GET("/signout", authenticationroutes.SessionSignOutRoute)
+	sessionGroup.POST("/api/keys/signin", sessionRoutes.SessionApiKeySignInRoute)
+
+	//sessionGroup.POST("/init", sessionRoutes.InitSessionRoute)
+	sessionGroup.GET("/info", sessionRoutes.SessionInfoRoute)
+
+	sessionGroup.POST("/signout", authenticationroutes.SessionSignOutRoute)
 
 	//sessionGroup.POST("/email/reset", authentication.SessionSendResetEmailEmailRoute)
 
 	//sessionGroup.POST("/password/reset", authentication.SessionSendResetPasswordEmailRoute)
 
-	sessionGroup.POST("/tokens/access", authenticationroutes.SessionNewAccessTokenRoute, SessionIsValidMiddleware)
+	sessionGroup.POST("/tokens/access",
+		authenticationroutes.NewAccessTokenFromSessionRoute,
+		SessionIsValidMiddleware)
 
-	sessionUsersGroup := sessionGroup.Group("/users")
-	sessionUsersGroup.Use(SessionIsValidMiddleware)
+	sessionGroup.POST("/refresh",
+		sessionRoutes.SessionRenewRoute,
+		SessionIsValidMiddleware)
 
-	sessionUsersGroup.GET("", authenticationroutes.SessionUserRoute)
+	sessionUserGroup := sessionGroup.Group("/user")
+	sessionUserGroup.Use(SessionIsValidMiddleware)
 
-	sessionUsersGroup.POST("/update", authorization.SessionUpdateUserRoute)
+	sessionUserGroup.GET("", authenticationroutes.UserFromSessionRoute)
+
+	sessionUserGroup.POST("/update", authorization.SessionUpdateUserRoute)
 
 	// sessionPasswordGroup := sessionAuthGroup.Group("/passwords")
 	// sessionPasswordGroup.Use(SessionIsValidMiddleware)
@@ -372,17 +403,17 @@ func main() {
 
 	dnaGroup.POST("/:assembly", dnaroutes.DNARoute)
 
-	dnaGroup.POST("/assemblies", dnaroutes.AssembliesRoute)
+	dnaGroup.GET("/assemblies", dnaroutes.AssembliesRoute)
 
 	genesGroup := moduleGroup.Group("/genes")
 
-	genesGroup.POST("/assemblies", generoutes.AssembliesRoute)
-
+	genesGroup.GET("/assemblies", generoutes.AssembliesRoute)
 	genesGroup.POST("/within/:assembly", generoutes.WithinGenesRoute)
-
 	genesGroup.POST("/closest/:assembly", generoutes.ClosestGeneRoute)
-
 	genesGroup.POST("/annotate/:assembly", generoutes.AnnotateRoute)
+	genesGroup.POST("/overlap/:assembly", generoutes.OverlappingGenesRoute)
+	genesGroup.GET("/info/:assembly", generoutes.GeneInfoRoute)
+	genesGroup.GET("/db/:assembly", generoutes.GeneDBInfoRoute)
 
 	// mutationsGroup := moduleGroup.Group("/mutations",
 	// 	jwtMiddleWare,
@@ -390,11 +421,8 @@ func main() {
 	// 	NewJwtPermissionsMiddleware("rdf"))
 
 	mutationsGroup := moduleGroup.Group("/mutations")
-
-	mutationsGroup.POST("/datasets/:assembly", mutationroutes.MutationDatasetsRoute)
-
+	mutationsGroup.GET("/datasets/:assembly", mutationroutes.MutationDatasetsRoute)
 	mutationsGroup.POST("/:assembly/:name", mutationroutes.MutationsRoute)
-
 	mutationsGroup.POST("/maf/:assembly", mutationroutes.PileupRoute)
 
 	mutationsGroup.POST("/pileup/:assembly",
@@ -429,6 +457,28 @@ func main() {
 	pathwayGroup.POST("/dataset", pathwayroutes.DatasetRoute)
 	pathwayGroup.GET("/datasets", pathwayroutes.DatasetsRoute)
 	pathwayGroup.POST("/overlap", pathwayroutes.PathwayOverlapRoute)
+
+	seqsGroup := moduleGroup.Group("/seqs",
+		validateJwtMiddleware,
+		JwtIsAccessTokenMiddleware,
+		rdfMiddlware)
+
+	seqsGroup.GET("/genomes", seqroutes.GenomeRoute)
+	seqsGroup.GET("/platforms/:assembly", seqroutes.PlatformRoute)
+	//tracksGroup.GET("/:platform/:assembly/tracks", seqroutes.TracksRoute)
+	seqsGroup.GET("/search/:assembly", seqroutes.SearchSeqRoute)
+	seqsGroup.POST("/bins", seqroutes.BinsRoute)
+
+	cytobandsGroup := moduleGroup.Group("/cytobands")
+	cytobandsGroup.GET("/:assembly/:chr", cytobandroutes.CytobandsRoute)
+
+	bedsGroup := moduleGroup.Group("/beds", validateJwtMiddleware,
+		JwtIsAccessTokenMiddleware,
+		rdfMiddlware)
+	bedsGroup.GET("/genomes", bedroutes.GenomeRoute)
+	bedsGroup.GET("/platforms/:assembly", bedroutes.PlatformRoute)
+	bedsGroup.GET("/search/:assembly", bedroutes.SearchBedsRoute)
+	bedsGroup.POST("/regions", bedroutes.BedRegionsRoute)
 
 	//
 	// module groups: end

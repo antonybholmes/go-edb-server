@@ -5,10 +5,8 @@ import (
 
 	"github.com/antonybholmes/go-auth"
 	"github.com/antonybholmes/go-auth/userdbcache"
-	"github.com/antonybholmes/go-edb-server/consts"
 	"github.com/antonybholmes/go-edb-server/routes"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,16 +16,17 @@ import (
 //
 
 type Validator struct {
-	c        echo.Context
-	Address  *mail.Address
-	Req      *auth.LoginReq
+	c            echo.Context
+	Address      *mail.Address
+	LoginBodyReq *auth.LoginBodyReq
+
 	AuthUser *auth.AuthUser
 	Claims   *auth.TokenClaims
 	Err      *echo.HTTPError
 }
 
 func NewValidator(c echo.Context) *Validator {
-	return &Validator{c: c, Address: nil, Req: nil, AuthUser: nil, Claims: nil, Err: nil}
+	return &Validator{c: c, Address: nil, LoginBodyReq: nil, AuthUser: nil, Claims: nil, Err: nil}
 
 }
 
@@ -56,15 +55,15 @@ func (validator *Validator) ParseLoginRequestBody() *Validator {
 		return validator
 	}
 
-	if validator.Req == nil {
-		var req auth.LoginReq
+	if validator.LoginBodyReq == nil {
+		var req auth.LoginBodyReq
 
 		err := validator.c.Bind(&req)
 
 		if err != nil {
 			validator.Err = routes.ErrorReq(err)
 		} else {
-			validator.Req = &req
+			validator.LoginBodyReq = &req
 		}
 	}
 
@@ -80,7 +79,7 @@ func (validator *Validator) CheckUsernameIsWellFormed() *Validator {
 
 	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
 
-	err := auth.CheckUsername(validator.Req.Username)
+	err := auth.CheckUsername(validator.LoginBodyReq.Username)
 
 	if err != nil {
 		validator.Err = routes.ErrorReq(err)
@@ -98,7 +97,7 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 
 	//address, err := auth.CheckEmailIsWellFormed(validator.Req.Email)
 
-	address, err := mail.ParseAddress(validator.Req.Email)
+	address, err := mail.ParseAddress(validator.LoginBodyReq.Email)
 
 	if err != nil {
 		validator.Err = routes.ErrorReq(err)
@@ -109,13 +108,13 @@ func (validator *Validator) CheckEmailIsWellFormed() *Validator {
 	return validator
 }
 
-func (validator *Validator) LoadAuthUserFromPublicId() *Validator {
+func (validator *Validator) LoadAuthUserFromUuid() *Validator {
 
 	if validator.Err != nil {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.Req.PublicId)
+	authUser, err := userdbcache.FindUserByUuid(validator.LoginBodyReq.Uuid)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
@@ -153,7 +152,7 @@ func (validator *Validator) LoadAuthUserFromUsername() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByUsername(validator.Req.Username)
+	authUser, err := userdbcache.FindUserByUsername(validator.LoginBodyReq.Username)
 
 	//log.Debug().Msgf("beep2 %s", authUser.Username)
 
@@ -174,20 +173,14 @@ func (validator *Validator) LoadAuthUserFromSession() *Validator {
 		return validator
 	}
 
-	sess, _ := session.Get(consts.SESSION_NAME, validator.c)
-	publicId, _ := sess.Values[SESSION_PUBLICID].(string)
-
-	if validator.Err != nil {
-		return validator
-	}
-
-	authUser, err := userdbcache.FindUserByPublicId(publicId)
+	sessionData, err := ReadSessionInfo(validator.c)
 
 	if err != nil {
-		validator.Err = routes.UserDoesNotExistReq()
-	} else {
-		validator.AuthUser = authUser
+		validator.Err = routes.ErrorReq("user not in session")
+		validator.CheckIsValidRefreshToken().CheckUsernameIsWellFormed()
 	}
+
+	validator.AuthUser = sessionData.AuthUser
 
 	return validator
 }
@@ -245,7 +238,7 @@ func (validator *Validator) LoadAuthUserFromToken() *Validator {
 		return validator
 	}
 
-	authUser, err := userdbcache.FindUserByPublicId(validator.Claims.PublicId)
+	authUser, err := userdbcache.FindUserByUuid(validator.Claims.Uuid)
 
 	if err != nil {
 		validator.Err = routes.UserDoesNotExistReq()
