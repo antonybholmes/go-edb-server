@@ -78,7 +78,13 @@ func GeneDBInfoRoute(c echo.Context) error {
 }
 
 func AssembliesRoute(c echo.Context) error {
-	return routes.MakeDataPrettyResp(c, "", genedbcache.GetInstance().List())
+	infos, err := genedbcache.GetInstance().List()
+
+	if err != nil {
+		return routes.ErrorReq(err)
+	}
+
+	return routes.MakeDataPrettyResp(c, "", infos)
 }
 
 func OverlappingGenesRoute(c echo.Context) error {
