@@ -77,7 +77,7 @@ func GeneDBInfoRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", &info)
 }
 
-func AssembliesRoute(c echo.Context) error {
+func GenomesRoute(c echo.Context) error {
 	infos, err := genedbcache.GetInstance().List()
 
 	if err != nil {
