@@ -154,7 +154,7 @@ func ParseDNAQuery(c echo.Context) (*DNAQuery, error) {
 	return &DNAQuery{Rev: rev, Comp: comp, Format: format, RepeatMask: repeatMask}, nil
 }
 
-func AssembliesRoute(c echo.Context) error {
+func GenomesRoute(c echo.Context) error {
 	return routes.MakeDataPrettyResp(c, "", dnadbcache.GetInstance().List())
 }
 

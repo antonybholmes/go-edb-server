@@ -32,13 +32,13 @@ replace github.com/antonybholmes/go-beds => ../go-beds
 
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20241223034309-5f70a342a0e3 // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20241224152815-2f2ef0e3ce2b
+	github.com/antonybholmes/go-dna v0.0.0-20241231004053-571f6c9d6eb6
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20241228022537-a0d4c74ad553
+	github.com/antonybholmes/go-auth v0.0.0-20250101192611-ce4e7f6d596b
 	github.com/antonybholmes/go-genes v0.0.0-20241225054554-d10c7e194b23
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
