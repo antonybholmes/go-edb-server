@@ -414,7 +414,7 @@ func main() {
 	genesGroup.POST("/overlap/:assembly", generoutes.OverlappingGenesRoute)
 	genesGroup.GET("/info/:assembly", generoutes.GeneInfoRoute)
 	// get version info about the database itself
-	genesGroup.GET("/db/:assembly", generoutes.GeneDBInfoRoute)
+	//genesGroup.GET("/db/:assembly", generoutes.GeneDBInfoRoute)
 
 	// mutationsGroup := moduleGroup.Group("/mutations",
 	// 	jwtMiddleWare,
