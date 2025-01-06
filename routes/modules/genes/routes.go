@@ -61,21 +61,21 @@ func ParseGeneQuery(c echo.Context, assembly string) (*GeneQuery, error) {
 	return &GeneQuery{Assembly: assembly, Db: db, Level: level, Canonical: canonical}, nil
 }
 
-func GeneDBInfoRoute(c echo.Context) error {
-	query, err := ParseGeneQuery(c, c.Param("assembly"))
+// func GeneDBInfoRoute(c echo.Context) error {
+// 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
-	if err != nil {
-		return routes.ErrorReq(err)
-	}
+// 	if err != nil {
+// 		return routes.ErrorReq(err)
+// 	}
 
-	info, _ := query.Db.GeneDBInfo()
+// 	info, _ := query.Db.GeneDBInfo()
 
-	// if err != nil {
-	// 	return routes.ErrorReq(err)
-	// }
+// 	// if err != nil {
+// 	// 	return routes.ErrorReq(err)
+// 	// }
 
-	return routes.MakeDataPrettyResp(c, "", &info)
-}
+// 	return routes.MakeDataPrettyResp(c, "", &info)
+// }
 
 func GenomesRoute(c echo.Context) error {
 	infos, err := genedbcache.GetInstance().List()
