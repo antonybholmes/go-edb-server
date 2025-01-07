@@ -403,17 +403,18 @@ func main() {
 
 	dnaGroup.POST("/:assembly", dnaroutes.DNARoute)
 
-	dnaGroup.GET("/assemblies", dnaroutes.AssembliesRoute)
+	dnaGroup.GET("/genomes", dnaroutes.GenomesRoute)
 
 	genesGroup := moduleGroup.Group("/genes")
 
-	genesGroup.GET("/assemblies", generoutes.AssembliesRoute)
+	genesGroup.GET("/genomes", generoutes.GenomesRoute)
 	genesGroup.POST("/within/:assembly", generoutes.WithinGenesRoute)
 	genesGroup.POST("/closest/:assembly", generoutes.ClosestGeneRoute)
 	genesGroup.POST("/annotate/:assembly", generoutes.AnnotateRoute)
 	genesGroup.POST("/overlap/:assembly", generoutes.OverlappingGenesRoute)
 	genesGroup.GET("/info/:assembly", generoutes.GeneInfoRoute)
-	genesGroup.GET("/db/:assembly", generoutes.GeneDBInfoRoute)
+	// get version info about the database itself
+	//genesGroup.GET("/db/:assembly", generoutes.GeneDBInfoRoute)
 
 	// mutationsGroup := moduleGroup.Group("/mutations",
 	// 	jwtMiddleWare,
