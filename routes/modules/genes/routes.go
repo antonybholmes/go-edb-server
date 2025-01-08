@@ -227,7 +227,7 @@ func AnnotateRoute(c echo.Context) error {
 	}
 
 	// limit amount of data returned per request to 1000 entries at a time
-	locations = locations[0:basemath.IntMin(len(locations), MAX_ANNOTATIONS)]
+	locations = locations[0:basemath.Min(len(locations), MAX_ANNOTATIONS)]
 
 	query, err := ParseGeneQuery(c, c.Param("assembly"))
 
