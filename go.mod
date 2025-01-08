@@ -31,14 +31,14 @@ replace github.com/antonybholmes/go-cytobands => ../go-cytobands
 replace github.com/antonybholmes/go-beds => ../go-beds
 
 require (
-	github.com/antonybholmes/go-basemath v0.0.0-20241223034309-5f70a342a0e3 // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20241231004053-571f6c9d6eb6
+	github.com/antonybholmes/go-basemath v0.0.0-20250107213632-9971295f8456 // indirect
+	github.com/antonybholmes/go-dna v0.0.0-20250107213628-1199d0a50a63
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20250101192611-ce4e7f6d596b
+	github.com/antonybholmes/go-auth v0.0.0-20250106231240-4e055d4b6816
 	github.com/antonybholmes/go-genes v0.0.0-20241225054554-d10c7e194b23
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -48,8 +48,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20241204182257-78d1094d458e
-	github.com/antonybholmes/go-sys v0.0.0-20241219150701-64d5bd9623f7
+	github.com/antonybholmes/go-mailer v0.0.0-20250106231238-5ca4cacd538a
+	github.com/antonybholmes/go-sys v0.0.0-20250106231244-0d0c227dc641
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.2
 )
@@ -94,8 +94,8 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xyproto/randomstring v1.2.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
