@@ -32,13 +32,13 @@ replace github.com/antonybholmes/go-beds => ../go-beds
 
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20250107213632-9971295f8456 // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20250107213628-1199d0a50a63
+	github.com/antonybholmes/go-dna v0.0.0-20250108011036-cba189338a1b
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20250106231240-4e055d4b6816
+	github.com/antonybholmes/go-auth v0.0.0-20250108011052-99836adaf641
 	github.com/antonybholmes/go-genes v0.0.0-20241225054554-d10c7e194b23
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -49,7 +49,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-mailer v0.0.0-20250106231238-5ca4cacd538a
-	github.com/antonybholmes/go-sys v0.0.0-20250106231244-0d0c227dc641
+	github.com/antonybholmes/go-sys v0.0.0-20250108011046-3565a1fbce78
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.2
 )
@@ -89,7 +89,7 @@ require (
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
