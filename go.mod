@@ -32,13 +32,13 @@ replace github.com/antonybholmes/go-beds => ../go-beds
 
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20250107213632-9971295f8456 // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20250108011036-cba189338a1b
+	github.com/antonybholmes/go-dna v0.0.0-20250110222441-27b549fda20d
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20250108011052-99836adaf641
+	github.com/antonybholmes/go-auth v0.0.0-20250110222440-dd55620811bf
 	github.com/antonybholmes/go-genes v0.0.0-20241225054554-d10c7e194b23
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -48,8 +48,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20250106231238-5ca4cacd538a
-	github.com/antonybholmes/go-sys v0.0.0-20250108011046-3565a1fbce78
+	github.com/antonybholmes/go-mailer v0.0.0-20250110222437-d062d791b918
+	github.com/antonybholmes/go-sys v0.0.0-20250110222450-c5aa7b14c79a
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.2
 )
@@ -76,7 +76,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/xuri/efp v0.0.0-20241211021726-c4e992084aa6 // indirect
 	github.com/xuri/excelize/v2 v2.9.0 // indirect
-	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
+	github.com/xuri/nfp v0.0.0-20250111060730-82a408b9aa71 // indirect
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
