@@ -38,7 +38,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20250110222440-dd55620811bf
+	github.com/antonybholmes/go-auth v0.0.0-20250113143741-d6cf1d634ada
 	github.com/antonybholmes/go-genes v0.0.0-20241225054554-d10c7e194b23
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -49,7 +49,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-mailer v0.0.0-20250110222437-d062d791b918
-	github.com/antonybholmes/go-sys v0.0.0-20250110222450-c5aa7b14c79a
+	github.com/antonybholmes/go-sys v0.0.0-20250113143747-03c4e3605208
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.2
 )
@@ -84,7 +84,7 @@ require (
 require (
 	github.com/antonybholmes/go-cytobands v0.0.0-20250106231237-61eae5ddde13
 	github.com/antonybholmes/go-gex v0.0.0-20250106231241-9cda35af06bc
-	github.com/aws/aws-sdk-go v1.55.5 // indirect
+	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect

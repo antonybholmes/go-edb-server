@@ -113,6 +113,7 @@ func BinsRoute(c echo.Context) error {
 		reader, err := seqsdbcache.ReaderFromId(track, params.BinSize, params.Scale)
 
 		if err != nil {
+			//log.Debug().Msgf("stupid err %s", err)
 			return routes.ErrorReq(err)
 		}
 
