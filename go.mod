@@ -39,7 +39,7 @@ require (
 
 require (
 	github.com/antonybholmes/go-auth v0.0.0-20250113143741-d6cf1d634ada
-	github.com/antonybholmes/go-genes v0.0.0-20241225054554-d10c7e194b23
+	github.com/antonybholmes/go-genes v0.0.0-20250113143746-9246da82bc47
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo-jwt/v4 v4.3.0
@@ -55,13 +55,13 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-beds v0.0.0-20250106231237-1587042d2f4a
-	github.com/antonybholmes/go-geneconv v0.0.0-20250106231245-2f6f021c0e75
+	github.com/antonybholmes/go-beds v0.0.0-20250113143739-af286db2a33a
+	github.com/antonybholmes/go-geneconv v0.0.0-20250113143747-5a766d6d259a
 	github.com/antonybholmes/go-math v0.0.0-20250107213632-9971295f8456
-	github.com/antonybholmes/go-motifs v0.0.0-20250106231242-e0ec9f05d136
-	github.com/antonybholmes/go-mutations v0.0.0-20250106231241-53ff716f6932
-	github.com/antonybholmes/go-pathway v0.0.0-20250106231236-e1c15ff7c559
-	github.com/antonybholmes/go-seqs v0.0.0-20250107213627-9f0d7689e726
+	github.com/antonybholmes/go-motifs v0.0.0-20250113143744-ecede76bcf68
+	github.com/antonybholmes/go-mutations v0.0.0-20250113143742-0863f2deb9f3
+	github.com/antonybholmes/go-pathway v0.0.0-20250113143738-be266628ab1a
+	github.com/antonybholmes/go-seqs v0.0.0-20250114235934-62d6d351e63f
 	github.com/redis/go-redis/v9 v9.7.0
 )
 
@@ -82,8 +82,8 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-cytobands v0.0.0-20250106231237-61eae5ddde13
-	github.com/antonybholmes/go-gex v0.0.0-20250106231241-9cda35af06bc
+	github.com/antonybholmes/go-cytobands v0.0.0-20250113143738-d358dd8ef3b8
+	github.com/antonybholmes/go-gex v0.0.0-20250110222442-95fc36ceefe0
 	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
