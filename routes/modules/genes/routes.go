@@ -30,8 +30,9 @@ type GeneQuery struct {
 	Canonical bool
 }
 
-type GenesRes struct {
-	Genes []*genes.GenomicFeatures `json:"genes"`
+type GenesResp struct {
+	Location *dna.Location           `json:"location"`
+	Features []*genes.GenomicFeature `json:"features"`
 }
 
 const MAX_ANNOTATIONS = 1000
@@ -104,13 +105,20 @@ func OverlappingGenesRoute(c echo.Context) error {
 		return routes.ErrorReq(fmt.Errorf("must supply at least 1 location"))
 	}
 
-	features, err := query.Db.OverlappingGenes(locations[0], query.Canonical)
+	ret := make([]*GenesResp, 0, len(locations))
 
-	if err != nil {
-		return routes.ErrorReq(err)
+	for _, location := range locations {
+		features, err := query.Db.OverlappingGenes(location, query.Canonical)
+
+		if err != nil {
+			return routes.ErrorReq(err)
+		}
+
+		ret = append(ret, &GenesResp{Location: location, Features: features})
+
 	}
 
-	return routes.MakeDataPrettyResp(c, "", &features)
+	return routes.MakeDataPrettyResp(c, "", &ret)
 }
 
 func GeneInfoRoute(c echo.Context) error {
