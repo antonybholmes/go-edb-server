@@ -46,6 +46,7 @@ type LoginResp struct {
 }
 
 func JsonResp[V any](c echo.Context, status int, data V, pretty bool) error {
+
 	if pretty {
 		return c.JSONPretty(status, data, " ")
 	} else {

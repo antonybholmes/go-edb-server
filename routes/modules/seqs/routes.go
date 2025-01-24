@@ -6,23 +6,29 @@ import (
 	"github.com/antonybholmes/go-dna"
 	"github.com/antonybholmes/go-edb-server/routes"
 	seq "github.com/antonybholmes/go-seqs"
+	"github.com/rs/zerolog/log"
 
 	"github.com/antonybholmes/go-seqs/seqsdbcache"
 	"github.com/labstack/echo/v4"
 )
 
 type ReqSeqParams struct {
-	Location string   `json:"location"`
-	Scale    float64  `json:"scale"`
-	BinSize  uint     `json:"bin"`
-	Tracks   []string `json:"tracks"`
+	Locations []string `json:"locations"`
+	Scale     float64  `json:"scale"`
+	BinSizes  []uint   `json:"binSizes"`
+	Tracks    []string `json:"tracks"`
 }
 
 type SeqParams struct {
-	Location *dna.Location `json:"location"`
-	Scale    float64       `json:"scale"`
-	BinSize  uint          `json:"bin"`
-	Tracks   []string      `json:"tracks"`
+	Locations []*dna.Location
+	Scale     float64
+	BinSizes  []uint
+	Tracks    []string
+}
+
+type SeqResp struct {
+	Location  *dna.Location    `json:"location"`
+	BinCounts []*seq.BinCounts `json:"binCounts"`
 }
 
 func ParseSeqParamsFromPost(c echo.Context) (*SeqParams, error) {
@@ -35,13 +41,19 @@ func ParseSeqParamsFromPost(c echo.Context) (*SeqParams, error) {
 		return nil, err
 	}
 
-	location, err := dna.ParseLocation(params.Location)
+	locations := make([]*dna.Location, 0, len(params.Locations))
 
-	if err != nil {
-		return nil, err
+	for _, loc := range params.Locations {
+		location, err := dna.ParseLocation(loc)
+
+		if err != nil {
+			return nil, err
+		}
+
+		locations = append(locations, location)
 	}
 
-	return &SeqParams{Location: location, BinSize: params.BinSize, Tracks: params.Tracks, Scale: params.Scale}, nil
+	return &SeqParams{Locations: locations, BinSizes: params.BinSizes, Tracks: params.Tracks, Scale: params.Scale}, nil
 }
 
 func GenomeRoute(c echo.Context) error {
@@ -102,31 +114,42 @@ func BinsRoute(c echo.Context) error {
 	params, err := ParseSeqParamsFromPost(c)
 
 	if err != nil {
-
+		log.Debug().Msgf("err %s", err)
 		return routes.ErrorReq(err)
 	}
 
-	ret := make([]*seq.BinCounts, 0, len(params.Tracks))
+	log.Debug().Msgf("binz %v %v", params.Locations, params.BinSizes)
 
-	for _, track := range params.Tracks {
+	ret := make([]*SeqResp, 0, len(params.Locations)) //make([]*seq.BinCounts, 0, len(params.Tracks))
 
-		reader, err := seqsdbcache.ReaderFromId(track, params.BinSize, params.Scale)
+	for li, location := range params.Locations {
+		resp := SeqResp{Location: location, BinCounts: make([]*seq.BinCounts, 0, len(params.Tracks))}
 
-		if err != nil {
-			return routes.ErrorReq(err)
+		for _, track := range params.Tracks {
+
+			reader, err := seqsdbcache.ReaderFromId(track, params.BinSizes[li], params.Scale)
+
+			if err != nil {
+				log.Debug().Msgf("stupid err %s", err)
+				return routes.ErrorReq(err)
+			}
+
+			// guarantees something is returned even with error
+			// so we can ignore the errors for now to make the api
+			// more robus
+			binCounts, _ := reader.BinCounts(location)
+
+			// if err != nil {
+			// 	return routes.ErrorReq(err)
+			// }
+
+			resp.BinCounts = append(resp.BinCounts, binCounts)
 		}
 
-		// guarantees something is returned even with error
-		// so we can ignore the errors for now to make the api
-		// more robus
-		binCounts, _ := reader.BinCounts(params.Location)
-
-		// if err != nil {
-		// 	return routes.ErrorReq(err)
-		// }
-
-		ret = append(ret, binCounts)
+		ret = append(ret, &resp)
 	}
+
+	log.Debug().Msgf("ret %v", len(ret))
 
 	return routes.MakeDataPrettyResp(c, "", ret)
 }
