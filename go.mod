@@ -32,13 +32,13 @@ replace github.com/antonybholmes/go-beds => ../go-beds
 
 require (
 	github.com/antonybholmes/go-basemath v0.0.0-20250107213632-9971295f8456 // indirect
-	github.com/antonybholmes/go-dna v0.0.0-20250110222441-27b549fda20d
+	github.com/antonybholmes/go-dna v0.0.0-20250122235121-a7c6aaac21fd
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2 // indirect
 )
 
 require (
-	github.com/antonybholmes/go-auth v0.0.0-20250113143741-d6cf1d634ada
+	github.com/antonybholmes/go-auth v0.0.0-20250120143519-cdfc796720e1
 	github.com/antonybholmes/go-genes v0.0.0-20250113143746-9246da82bc47
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
@@ -48,7 +48,7 @@ require (
 )
 
 require (
-	github.com/antonybholmes/go-mailer v0.0.0-20250110222437-d062d791b918
+	github.com/antonybholmes/go-mailer v0.0.0-20250117234145-f0c83d229437
 	github.com/antonybholmes/go-sys v0.0.0-20250113143747-03c4e3605208
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.2
@@ -67,18 +67,40 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/bytedance/sonic v1.11.6 // indirect
+	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/cloudwego/base64x v0.1.4 // indirect
+	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gin-gonic/gin v1.10.0 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
+	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/matoous/go-nanoid/v2 v2.1.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
+	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
+	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xuri/efp v0.0.0-20241211021726-c4e992084aa6 // indirect
 	github.com/xuri/excelize/v2 v2.9.0 // indirect
 	github.com/xuri/nfp v0.0.0-20250111060730-82a408b9aa71 // indirect
-	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
+	golang.org/x/arch v0.8.0 // indirect
+	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
+	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
