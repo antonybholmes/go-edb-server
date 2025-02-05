@@ -118,7 +118,7 @@ func BinsRoute(c echo.Context) error {
 		return routes.ErrorReq(err)
 	}
 
-	log.Debug().Msgf("binz %v %v", params.Locations, params.BinSizes)
+	//log.Debug().Msgf("bin %v %v", params.Locations, params.BinSizes)
 
 	ret := make([]*SeqResp, 0, len(params.Locations)) //make([]*seq.BinCounts, 0, len(params.Tracks))
 
@@ -130,7 +130,7 @@ func BinsRoute(c echo.Context) error {
 			reader, err := seqsdbcache.ReaderFromId(track, params.BinSizes[li], params.Scale)
 
 			if err != nil {
-				log.Debug().Msgf("stupid err %s", err)
+				//log.Debug().Msgf("stupid err %s", err)
 				return routes.ErrorReq(err)
 			}
 
@@ -149,7 +149,7 @@ func BinsRoute(c echo.Context) error {
 		ret = append(ret, &resp)
 	}
 
-	log.Debug().Msgf("ret %v", len(ret))
+	//log.Debug().Msgf("ret %v", len(ret))
 
 	return routes.MakeDataPrettyResp(c, "", ret)
 }
